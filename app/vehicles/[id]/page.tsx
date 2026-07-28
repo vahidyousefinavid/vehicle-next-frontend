@@ -5,14 +5,16 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import {
   api, downloadPdf, Vehicle, ServiceRecord, FuelLog, FuelStats, VehicleDoc, Reminder,
-  SERVICE_TYPES, DOC_TYPES, FUEL_TYPES, COLORS_HEX, daysUntil, expiryStatus, toJalali,
+  SERVICE_TYPES, DOC_TYPES, FUEL_TYPES, COLORS, COLORS_HEX, daysUntil, expiryStatus, toJalali,
 } from '@/lib/api';
 import PersianDatePicker from '@/components/PersianDatePicker';
+import PersianYearPicker from '@/components/PersianYearPicker';
+import PlateInput from '@/components/PlateInput';
 import Chat from '@/components/Chat';
 import { svcMeta } from '@/components/serviceMeta';
 import {
   C, STATUS_THEME,
-  Card, SectionCard, Button, IconButton, FormField, Input,
+  Card, SectionCard, Button, IconButton, FormField, Input, TextArea, ChipGroup,
   IconBadge, StatGrid, StatusRow, EmptyState, Spinner, Sheet,
 } from '@/components/ui';
 import {
@@ -44,6 +46,7 @@ export default function VehiclePage() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'overview');
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('vtoken')) { router.replace('/'); return; }
@@ -96,18 +99,33 @@ export default function VehiclePage() {
       <Navbar />
       <main style={{ maxWidth: 560, margin: '0 auto', padding: '0 14px calc(88px + env(safe-area-inset-bottom))' }}>
 
-        <button
-          onClick={() => router.back()}
-          style={{
-            background: 'none', border: 'none',
-            color: C.muted, fontSize: 13, fontWeight: 600,
-            padding: '14px 0 10px',
-            display: 'flex', alignItems: 'center', gap: 5,
-            transition: 'color 0.15s',
-          }}
-        >
-          <ChevronRightIcon size={16} /> بازگشت
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0 10px' }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              background: 'none', border: 'none',
+              color: C.muted, fontSize: 13, fontWeight: 600,
+              padding: 0,
+              display: 'flex', alignItems: 'center', gap: 5,
+              transition: 'color 0.15s',
+            }}
+          >
+            <ChevronRightIcon size={16} /> بازگشت
+          </button>
+          <button
+            onClick={() => setShowEdit(true)}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: `1px solid ${C.border}`,
+              borderRadius: 11, padding: '7px 13px',
+              color: C.muted, fontSize: 12.5, fontWeight: 700,
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontFamily: 'Vazirmatn, sans-serif',
+            }}
+          >
+            <SettingsIcon size={13} /> ویرایش مشخصات
+          </button>
+        </div>
 
         {/* ── Hero Card ─────────────────────────────────────── */}
         <div style={{
@@ -324,8 +342,107 @@ export default function VehiclePage() {
         {tab === 'reminders'  && <RemindersTab vehicleId={id} currentMileage={vehicle.currentMileage} />}
         {tab === 'ai'         && <AiTab        vehicleId={id} />}
       </main>
+      {showEdit && (
+        <EditVehicleModal vehicle={vehicle} onClose={() => setShowEdit(false)} onSaved={refresh} />
+      )}
       <BottomNav />
     </div>
+  );
+}
+
+/* ─── Edit Vehicle ─────────────────────────────────────────────── */
+function EditVehicleModal({ vehicle, onClose, onSaved }: { vehicle: Vehicle; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    make: vehicle.make, model: vehicle.model, year: vehicle.year,
+    plateNumber: vehicle.plateNumber || '', color: vehicle.color || 'سفید',
+    currentMileage: vehicle.currentMileage,
+    fuelType: vehicle.fuelType || 'بنزین', engineCapacity: vehicle.engineCapacity || '',
+    transmission: vehicle.transmission || 'دستی', vin: vehicle.vin || '', notes: vehicle.notes || '',
+    insuranceExpiry: vehicle.insuranceExpiry || '', technicalExpiry: vehicle.technicalExpiry || '',
+    registrationExpiry: vehicle.registrationExpiry || '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+
+  function set(key: string, val: string | number) { setForm(f => ({ ...f, [key]: val })); }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true); setError('');
+    try {
+      const payload = Object.fromEntries(Object.entries(form).filter(([, v]) => v !== ''));
+      await api.vehicles.update(vehicle.id, payload as Partial<Vehicle>);
+      onSaved(); onClose();
+    } catch (err: any) { setError(err.message); setLoading(false); }
+  }
+
+  return (
+    <Sheet title="ویرایش مشخصات خودرو" icon={<SettingsIcon size={17} />} onClose={onClose}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormField label="سازنده" required>
+            <Input value={form.make} onChange={e => set('make', e.target.value)} required />
+          </FormField>
+          <FormField label="مدل" required>
+            <Input value={form.model} onChange={e => set('model', e.target.value)} required />
+          </FormField>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormField label="سال ساخت (شمسی)" required>
+            <PersianYearPicker value={form.year} onChange={y => set('year', y)} />
+          </FormField>
+          <FormField label="کارکرد فعلی (km)">
+            <Input type="number" value={String(form.currentMileage)} onChange={e => set('currentMileage', Number(e.target.value))} />
+          </FormField>
+        </div>
+        <FormField label="شماره پلاک">
+          <PlateInput value={form.plateNumber} onChange={v => set('plateNumber', v)} />
+        </FormField>
+        <FormField label="نوع سوخت">
+          <ChipGroup options={FUEL_TYPES} value={form.fuelType} onChange={v => set('fuelType', v)} />
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormField label="حجم موتور">
+            <Input placeholder="1600cc" value={form.engineCapacity} onChange={e => set('engineCapacity', e.target.value)} />
+          </FormField>
+          <FormField label="گیربکس">
+            <ChipGroup options={['دستی', 'اتوماتیک']} value={form.transmission} onChange={v => set('transmission', v)} />
+          </FormField>
+        </div>
+        <FormField label="رنگ">
+          <ChipGroup options={COLORS} value={form.color} onChange={v => set('color', v)} />
+        </FormField>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormField label="انقضای بیمه شخص ثالث">
+            <PersianDatePicker value={form.insuranceExpiry} onChange={v => set('insuranceExpiry', v)} />
+          </FormField>
+          <FormField label="انقضای معاینه فنی">
+            <PersianDatePicker value={form.technicalExpiry} onChange={v => set('technicalExpiry', v)} />
+          </FormField>
+        </div>
+        <FormField label="انقضای کارت خودرو">
+          <PersianDatePicker value={form.registrationExpiry} onChange={v => set('registrationExpiry', v)} />
+        </FormField>
+        <FormField label="VIN / شماره شاسی">
+          <Input value={form.vin} dir="ltr" onChange={e => set('vin', e.target.value)} />
+        </FormField>
+        <FormField label="یادداشت">
+          <TextArea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} />
+        </FormField>
+
+        {error && (
+          <div style={{
+            fontSize: 12, color: '#F87171',
+            background: 'rgba(239,68,68,0.10)',
+            border: '1px solid rgba(239,68,68,0.20)',
+            borderRadius: 11, padding: '10px 14px',
+          }}>
+            {error}
+          </div>
+        )}
+
+        <Button type="submit" loading={loading} fullWidth size="lg" icon={<CheckIcon size={16} />}>ذخیره تغییرات</Button>
+      </form>
+    </Sheet>
   );
 }
 

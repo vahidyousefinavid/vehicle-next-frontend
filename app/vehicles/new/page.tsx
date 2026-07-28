@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { api, COLORS, FUEL_TYPES } from '@/lib/api';
 import PersianDatePicker from '@/components/PersianDatePicker';
+import PersianYearPicker, { currentJalaliYear } from '@/components/PersianYearPicker';
 import PlateInput from '@/components/PlateInput';
 import { C, SectionCard, FormField, Input, TextArea, ChipGroup, Button } from '@/components/ui';
 import {
@@ -14,7 +15,7 @@ import {
 export default function NewVehiclePage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    make: '', model: '', year: new Date().getFullYear(),
+    make: '', model: '', year: currentJalaliYear(),
     plateNumber: '', color: 'سفید', currentMileage: 0,
     fuelType: 'بنزین', engineCapacity: '', transmission: 'دستی',
     vin: '', notes: '',
@@ -66,8 +67,8 @@ export default function NewVehiclePage() {
                 </FormField>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <FormField label="سال ساخت" required>
-                  <Input type="number" value={String(form.year)} onChange={e => set('year', Number(e.target.value))} required />
+                <FormField label="سال ساخت (شمسی)" required>
+                  <PersianYearPicker value={form.year} onChange={y => set('year', y)} />
                 </FormField>
                 <FormField label="کارکرد فعلی (km)">
                   <Input type="number" value={String(form.currentMileage)} onChange={e => set('currentMileage', Number(e.target.value))} />

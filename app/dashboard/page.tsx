@@ -330,6 +330,14 @@ export default function Dashboard() {
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <h2 style={{ color: 'rgba(240,246,255,0.80)', fontSize: 14, fontWeight: 700, margin: 0 }}>خودروهای من</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {vehicles.length > 0 && (
+              <Link href="/vehicles" style={{
+                color: C.muted, fontSize: 12.5, fontWeight: 600, textDecoration: 'none',
+              }}>
+                مشاهده همه
+              </Link>
+            )}
             <Link href="/vehicles/new" style={{
               display: 'flex', alignItems: 'center', gap: 4,
               color: C.green, fontSize: 13, fontWeight: 700, textDecoration: 'none',
@@ -339,6 +347,7 @@ export default function Dashboard() {
             }}>
               <PlusIcon size={14} /> افزودن
             </Link>
+            </div>
           </div>
 
           {loading ? (

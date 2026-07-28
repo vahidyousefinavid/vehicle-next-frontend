@@ -49,7 +49,7 @@ export default function BottomNav() {
 
       {role === 'owner' && (
         <>
-          <Link href="/dashboard" style={tabStyle(onVehicle)}>
+          <Link href="/vehicles" style={tabStyle(onVehicle)}>
             <CarIcon size={22} strokeWidth={onVehicle ? 2 : 1.75} />
             <span style={{ fontSize: 10, fontWeight: onVehicle ? 800 : 600 }}>خودروها</span>
           </Link>

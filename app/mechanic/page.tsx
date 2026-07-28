@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import PlateInput from '@/components/PlateInput';
+import PersianYearPicker, { currentJalaliYear } from '@/components/PersianYearPicker';
 import { api, MechanicVehicle, CreateMechanicVehicleInput } from '@/lib/api';
 import { C, Card, StatGrid, EmptyState, SkeletonRow, Button, Input, FormField, Sheet } from '@/components/ui';
 import { CarIcon, WrenchIcon, WalletIcon, ChevronLeftIcon, LinkIcon, PlusIcon, CheckIcon } from '@/components/icons';
@@ -205,7 +206,7 @@ export default function MechanicDashboard() {
 
 function AddVehicleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (vehicleId: string) => void }) {
   const [form, setForm] = useState({
-    make: '', model: '', year: new Date().getFullYear(), plateNumber: '', customerName: '',
+    make: '', model: '', year: currentJalaliYear(), plateNumber: '', customerName: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -247,8 +248,8 @@ function AddVehicleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (
             <Input placeholder="Camry / پژو 206" value={form.model} onChange={e => set('model', e.target.value)} required />
           </FormField>
         </div>
-        <FormField label="سال ساخت" required>
-          <Input type="number" value={String(form.year)} onChange={e => set('year', Number(e.target.value))} required />
+        <FormField label="سال ساخت (شمسی)" required>
+          <PersianYearPicker value={form.year} onChange={y => set('year', y)} />
         </FormField>
         <FormField label="نام مشتری (اختیاری)">
           <Input placeholder="اگر مشتری هنوز در برنامه ثبت‌نام نکرده" value={form.customerName} onChange={e => set('customerName', e.target.value)} />
