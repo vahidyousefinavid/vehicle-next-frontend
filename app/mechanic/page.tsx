@@ -9,7 +9,7 @@ import PersianYearPicker, { currentJalaliYear } from '@/components/PersianYearPi
 import { api, MechanicVehicle, MechanicStats, CreateMechanicVehicleInput, User } from '@/lib/api';
 import { getToken, getUser, homeHref } from '@/lib/session';
 import { C, Card, StatGrid, EmptyState, SkeletonRow, Button, Input, FormField, Sheet, alpha } from '@/components/ui';
-import { CarIcon, WrenchIcon, WalletIcon, ChevronLeftIcon, LinkIcon, PlusIcon, CheckIcon, CalendarIcon } from '@/components/icons';
+import { CarIcon, WrenchIcon, WalletIcon, ChevronLeftIcon, LinkIcon, PlusIcon, CheckIcon, CalendarIcon, SettingsIcon, BoxIcon, MessageIcon } from '@/components/icons';
 
 export default function MechanicDashboard() {
   const router = useRouter();
@@ -80,8 +80,31 @@ export default function MechanicDashboard() {
           </h1>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 16 }}>
           <StatGrid stats={statCards} />
+        </div>
+
+        {/* The screens the tab bar can't fit, one tap from the panel. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9, marginBottom: 18 }}>
+          {[
+            { label: 'خدمات من', hint: 'قیمت و نوع', icon: <SettingsIcon size={18} />, href: '/mechanic/services', color: C.green },
+            { label: 'قطعات', hint: 'کاتالوگ', icon: <BoxIcon size={18} />, href: '/mechanic/parts', color: C.statusInfo },
+            { label: 'گفتگوها', hint: 'با مشتری', icon: <MessageIcon size={18} />, href: '/messages', color: C.statusMint },
+          ].map(a => (
+            <button key={a.href} onClick={() => router.push(a.href)} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+              background: C.surface, border: `1px solid ${C.border}`,
+              borderRadius: 18, padding: '13px 5px', fontFamily: 'Vazirmatn, sans-serif',
+            }}>
+              <span style={{
+                width: 38, height: 38, borderRadius: 13,
+                background: alpha(a.color, 12), border: `1px solid ${alpha(a.color, 25)}`,
+                color: a.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{a.icon}</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: C.text }}>{a.label}</span>
+              <span style={{ fontSize: 9.5, color: C.subtle }}>{a.hint}</span>
+            </button>
+          ))}
         </div>
 
         {/* A pending request is the one thing on this screen that needs an

@@ -78,6 +78,13 @@ export const api = {
     update: (vid: string, id: string, d: Partial<VehicleDoc>) => req<VehicleDoc>('PATCH', `/vehicles/${vid}/documents/${id}`, d),
     remove: (vid: string, id: string)                        => req<void>('DELETE', `/vehicles/${vid}/documents/${id}`),
   },
+  agenda: {
+    /** every reminder, expiring document and due service, across all vehicles */
+    list: (days = 90) => req<AgendaItem[]>('GET', `/agenda?days=${days}`),
+  },
+  expenses: {
+    summary: (months = 6) => req<ExpenseSummary>('GET', `/expenses?months=${months}`),
+  },
   reminders: {
     list:   (vid: string)                       => req<Reminder[]>('GET', `/vehicles/${vid}/reminders`),
     create: (vid: string, d: Partial<Reminder>) => req<Reminder>('POST', `/vehicles/${vid}/reminders`, d),
@@ -103,6 +110,8 @@ export const api = {
   },
   mechanic: {
     stats:        ()                              => req<MechanicStats>('GET', '/mechanic/stats'),
+    customers:    ()                              => req<MechanicCustomer[]>('GET', '/mechanic/customers'),
+    accounting:   (months = 6)                    => req<MechanicAccounting>('GET', `/mechanic/accounting?months=${months}`),
     listVehicles: ()                              => req<MechanicVehicle[]>('GET', '/mechanic/vehicles'),
     getVehicle:   (id: string)                    => req<MechanicVehicleDetail>('GET', `/mechanic/vehicles/${id}`),
     createVehicle: (d: CreateMechanicVehicleInput) => req<MechanicVehicleDetail>('POST', '/mechanic/vehicles', d),
@@ -188,7 +197,75 @@ export const api = {
     setActive: (id: string, active: boolean) => req<Product>('PATCH', `/seller/products/${id}/active`, { active }),
     remove:    (id: string) => req<void>('DELETE', `/seller/products/${id}`),
   },
+  sales: {
+    list:       ()                        => req<Sale[]>('GET', '/seller/sales'),
+    create:     (d: CreateSaleInput)      => req<Sale>('POST', '/seller/sales', d),
+    setPaid:    (id: string, paidAmount: number) => req<Sale>('PATCH', `/seller/sales/${id}/paid`, { paidAmount }),
+    remove:     (id: string)              => req<void>('DELETE', `/seller/sales/${id}`),
+    customers:  ()                        => req<SellerCustomer[]>('GET', '/seller/customers'),
+    accounting: (months = 6)              => req<SellerAccounting>('GET', `/seller/accounting?months=${months}`),
+  },
 };
+
+/* ── agenda / expenses ─────────────────────────────────────────── */
+export type AgendaKind = 'reminder' | 'document' | 'service';
+export interface AgendaItem {
+  id: string; kind: AgendaKind; title: string;
+  dueDate: string | null; daysLeft: number | null; dueMileage: number | null;
+  priority: 'low' | 'medium' | 'high';
+  vehicleId: string; vehicleName: string; plateNumber?: string;
+  completable: boolean;
+}
+
+export interface ExpenseMonth { month: string; service: number; fuel: number; total: number }
+export interface ExpenseSummary {
+  monthly: ExpenseMonth[];
+  totalService: number; totalFuel: number; total: number;
+  byVehicle: { vehicleId: string; label: string; plateNumber: string | null; service: number; fuel: number; total: number }[];
+  recent: { date: string; label: string; amount: number; kind: 'service' | 'fuel'; vehicleId: string; vehicleName: string }[];
+}
+
+/* ── provider books ────────────────────────────────────────────── */
+export interface MechanicCustomer {
+  key: string; name: string; phone: string | null; registered: boolean;
+  vehicleCount: number; vehicles: { id: string; label: string; plateNumber: string | null }[];
+  serviceCount: number; lastServiceDate: string | null;
+  totalInvoiced: number; outstanding: number;
+}
+export interface MechanicAccounting {
+  monthly: { month: string; invoiced: number; collected: number }[];
+  lifetimeInvoiced: number; lifetimeCollected: number; outstanding: number; unpaidCount: number;
+  unpaidInvoices: {
+    invoiceId: string; serviceType: string; serviceDate: string;
+    vehicle: string; plateNumber: string | null;
+    customerName: string; customerPhone: string | null;
+    total: number; paid: number; remaining: number;
+  }[];
+}
+
+/* ── seller books ──────────────────────────────────────────────── */
+export interface SaleLine { id?: string; productId?: string | null; name: string; quantity: number; unitPrice: number }
+export interface Sale {
+  id: string; customerName: string | null; customerPhone: string | null;
+  soldAt: string; discount: number; paidAmount: number; notes: string | null;
+  items: SaleLine[]; subtotal: number; total: number; remaining: number;
+  paymentStatus: 'paid' | 'partial' | 'unpaid'; createdAt: string;
+}
+export interface CreateSaleInput {
+  customerName?: string; customerPhone?: string; soldAt?: string;
+  discount?: number; paidAmount?: number; notes?: string;
+  items: { productId?: string; name?: string; quantity: number; unitPrice?: number }[];
+}
+export interface SellerCustomer {
+  key: string; name: string; phone: string | null;
+  purchaseCount: number; lastPurchase: string | null; totalSpent: number; outstanding: number;
+}
+export interface SellerAccounting {
+  monthly: { month: string; sold: number; collected: number; count: number }[];
+  lifetimeSold: number; lifetimeCollected: number; outstanding: number; unpaidCount: number;
+  unpaidSales: Sale[];
+  lowStock: { id: string; name: string; stock: number; unit: string }[];
+}
 
 export function productImageUrl(path?: string | null): string | undefined {
   return path ? `${BASE}${path}` : undefined;

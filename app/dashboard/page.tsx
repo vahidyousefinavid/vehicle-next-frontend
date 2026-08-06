@@ -5,6 +5,9 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import RequestServiceModal from '@/components/RequestServiceModal';
+import NetworkGrowingNotice from '@/components/NetworkGrowingNotice';
+import QuickEntry from '@/components/QuickEntry';
+import AgendaPreview from '@/components/AgendaPreview';
 import { svcMeta } from '@/components/serviceMeta';
 import { api, Vehicle, daysUntil, expiryStatus, SERVICE_TYPES } from '@/lib/api';
 import { C, EmptyState, SkeletonRow, SkeletonHero, alpha } from '@/components/ui';
@@ -275,57 +278,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        <QuickServices onPick={setRequestType} />
+        <QuickEntry vehicleId={vehicles[0]?.id} />
 
-        {alerts.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <h2 style={{ color: C.text2, fontSize: 14, fontWeight: 700, margin: '0 0 10px' }}>هشدارها</h2>
-            <div style={{
-              background: alpha(C.statusExpired, 7),
-              border: `1px solid ${alpha(C.statusExpired, 17)}`,
-              borderRadius: 20, overflow: 'hidden',
-              backdropFilter: 'blur(14px)',
-            }}>
-              {alerts.flatMap(v => {
-                const rows: { v: Vehicle; type: string; icon: React.ReactNode; days: number | null }[] = [];
-                const ins = daysUntil(v.insuranceExpiry);
-                const tec = daysUntil(v.technicalExpiry);
-                if (expiryStatus(ins) !== 'ok') rows.push({ v, type: 'بیمه شخص ثالث', icon: <ShieldIcon size={17} />, days: ins });
-                if (expiryStatus(tec) !== 'ok') rows.push({ v, type: 'معاینه فنی',    icon: <SearchIcon size={17} />, days: tec });
-                return rows;
-              }).map((a, i, arr) => (
-                <Link key={i} href={`/vehicles/${a.v.id}?tab=documents`} style={{ textDecoration: 'none', display: 'block' }}>
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px',
-                    borderBottom: i < arr.length - 1 ? `1px solid ${alpha(C.statusExpired, 10)}` : 'none',
-                  }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 13,
-                      background: alpha(C.statusExpired, 12),
-                      border: `1px solid ${alpha(C.statusExpired, 22)}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: C.statusExpired, flexShrink: 0,
-                    }}>{a.icon}</div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ color: C.text, fontSize: 13, fontWeight: 700, margin: 0 }}>
-                        {a.v.make} {a.v.model}
-                      </p>
-                      <p style={{ color: C.muted, fontSize: 12, margin: '2px 0 0' }}>{a.type}</p>
-                    </div>
-                    <span style={{
-                      fontSize: 12, fontWeight: 700,
-                      color: a.days !== null && a.days < 0 ? C.statusExpired
-                           : a.days !== null && a.days < 14 ? C.statusDanger
-                           : C.statusWarn,
-                    }}>
-                      {a.days !== null && a.days < 0 ? 'منقضی شده' : `${a.days} روز`}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        <AgendaPreview />
 
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -375,6 +330,12 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* The marketplace sits below the record-keeping surfaces: those work
+            from the first car you add, while finding a workshop depends on one
+            having signed up near you. */}
+        <NetworkGrowingNotice />
+        <QuickServices onPick={setRequestType} />
 
       </main>
 

@@ -7,3 +7,4 @@ export * from './StatCard';
 export * from './StatusChip';
 export * from './EmptyState';
 export * from './Sheet';
+export * from './Money';

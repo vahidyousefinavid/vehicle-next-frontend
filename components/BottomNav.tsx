@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  HomeIcon, CarIcon, PlusIcon, UserIcon, CalendarIcon, StoreIcon, WrenchIcon, BoxIcon,
+  HomeIcon, CarIcon, PlusIcon, UserIcon, CalendarIcon, WrenchIcon, BoxIcon,
+  BellIcon, UsersIcon, WalletIcon,
 } from './icons';
 import { C } from './ui';
 import type { Role } from '@/lib/api';
@@ -18,23 +19,29 @@ interface Tab {
 
 /**
  * The tab bar used to show only Home and Profile to anyone who wasn't a car
- * owner, which left mechanics and sellers with no route to their own screens —
- * appointments, services and the parts catalogue were reachable only by deep
- * link or via the profile menu. Each role now gets the destinations it uses.
+ * owner, which left mechanics and sellers with no route to their own screens.
+ *
+ * Five slots is the most that stays legible on a phone, so they go to what each
+ * role does regularly — recording, chasing what's due, and the books. The
+ * marketplace screens (finding a workshop, publishing services) are one step
+ * further in, from the dashboard and the profile menu, because they depend on
+ * the provider network rather than on the user's own data.
  */
 function tabsFor(role: Role): Tab[] {
   if (role === 'mechanic') {
     return [
       { href: '/mechanic', label: 'خانه', icon: HomeIcon },
       { href: '/appointments', label: 'نوبت‌ها', icon: CalendarIcon },
-      { href: '/mechanic/services', label: 'خدمات', icon: WrenchIcon },
-      { href: '/mechanic/parts', label: 'قطعات', icon: BoxIcon },
+      { href: '/mechanic/customers', label: 'مشتری‌ها', icon: UsersIcon },
+      { href: '/mechanic/accounting', label: 'حساب', icon: WalletIcon },
       { href: '/profile', label: 'پروفایل', icon: UserIcon },
     ];
   }
   if (role === 'seller') {
     return [
       { href: '/seller/products', label: 'محصولات', icon: BoxIcon },
+      { href: '/seller/sales', label: 'فروش‌ها', icon: WrenchIcon },
+      { href: '/seller/accounting', label: 'حساب', icon: WalletIcon },
       { href: '/profile', label: 'پروفایل', icon: UserIcon },
     ];
   }
@@ -46,8 +53,8 @@ function tabsFor(role: Role): Tab[] {
       icon: CarIcon,
       match: (p) => p.startsWith('/vehicles') && p !== '/vehicles/new',
     },
-    { href: '/workshops', label: 'تعمیرگاه', icon: StoreIcon, match: (p) => p.startsWith('/workshops') },
-    { href: '/appointments', label: 'نوبت‌ها', icon: CalendarIcon },
+    { href: '/reminders', label: 'یادآورها', icon: BellIcon },
+    { href: '/expenses', label: 'هزینه‌ها', icon: WalletIcon },
     { href: '/profile', label: 'پروفایل', icon: UserIcon },
   ];
 }

@@ -3,6 +3,7 @@ import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
+import NetworkGrowingNotice from '@/components/NetworkGrowingNotice';
 import { api, Workshop, SERVICE_TYPES } from '@/lib/api';
 import { C, Card, Button, Input, EmptyState, Spinner, alpha } from '@/components/ui';
 import { CompassIcon, StoreIcon, StarIcon, PinIcon } from '@/components/icons';
@@ -65,6 +66,7 @@ function WorkshopsPageInner() {
     <div style={{ minHeight: '100vh' }}>
       <Navbar title="پیدا کردن تعمیرگاه" />
       <main style={{ maxWidth: 560, margin: '0 auto', padding: '14px 14px calc(88px + env(safe-area-inset-bottom))' }}>
+        <NetworkGrowingNotice compact />
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <div style={{ flex: 1, position: 'relative' }}>
             <Input value={q} onChange={e => setQ(e.target.value)} placeholder="جستجوی نام تعمیرگاه..." />

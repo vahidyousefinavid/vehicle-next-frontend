@@ -10,6 +10,7 @@ import SmsToggle from '@/components/SmsToggle';
 import {
   UserIcon, LogOutIcon, ShieldIcon, CarIcon, ChevronLeftIcon, WrenchIcon,
   StoreIcon, CalendarIcon, BoxIcon, UsersIcon, CompassIcon, MessageIcon, SettingsIcon, PinIcon,
+  BellIcon, WalletIcon,
 } from '@/components/icons';
 import { C, Card, Button, alpha} from '@/components/ui';
 import { api } from '@/lib/api';
@@ -69,10 +70,12 @@ export default function ProfilePage() {
           <>
             <Card style={{ marginBottom: 12 }} padding="4px">
               <MenuRow icon={<WrenchIcon size={18} />} label="خودروهای متصل" onClick={() => router.push('/mechanic')} />
+              <MenuRow icon={<UsersIcon size={18} />} label="مشتری‌های من" onClick={() => router.push('/mechanic/customers')} />
+              <MenuRow icon={<WalletIcon size={18} />} label="حسابداری و درآمد" onClick={() => router.push('/mechanic/accounting')} />
+              <MenuRow icon={<BoxIcon size={18} />} label="کاتالوگ قطعات" onClick={() => router.push('/mechanic/parts')} />
+              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌ها" onClick={() => router.push('/appointments')} />
               <MenuRow icon={<SettingsIcon size={18} />} label="خدمات من" onClick={() => router.push('/mechanic/services')} />
               <MenuRow icon={<MessageIcon size={18} />} label="گفتگوها" onClick={() => router.push('/messages')} />
-              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌ها" onClick={() => router.push('/appointments')} />
-              <MenuRow icon={<BoxIcon size={18} />} label="کاتالوگ قطعات" onClick={() => router.push('/mechanic/parts')} />
               <MenuRow icon={<UsersIcon size={18} />} label="سازمان‌ها / ناوگان" onClick={() => router.push('/organizations')} />
             </Card>
 
@@ -92,6 +95,8 @@ export default function ProfilePage() {
           <>
             <Card style={{ marginBottom: 12 }} padding="4px">
               <MenuRow icon={<BoxIcon size={18} />} label="محصولات من" onClick={() => router.push('/seller/products')} />
+              <MenuRow icon={<WrenchIcon size={18} />} label="ثبت و سابقه فروش" onClick={() => router.push('/seller/sales')} />
+              <MenuRow icon={<WalletIcon size={18} />} label="حسابداری و مشتری‌ها" onClick={() => router.push('/seller/accounting')} />
             </Card>
 
             <div style={{ marginBottom: 12 }}>
@@ -110,9 +115,11 @@ export default function ProfilePage() {
           <>
             <Card style={{ marginBottom: 12 }} padding="4px">
               <MenuRow icon={<CarIcon size={18} />} label="خودروهای من" onClick={() => router.push('/dashboard')} />
+              <MenuRow icon={<BellIcon size={18} />} label="یادآورها و سررسیدها" onClick={() => router.push('/reminders')} />
+              <MenuRow icon={<WalletIcon size={18} />} label="هزینه‌ها" onClick={() => router.push('/expenses')} />
+              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌های من" onClick={() => router.push('/appointments')} />
               <MenuRow icon={<StoreIcon size={18} />} label="پیدا کردن تعمیرگاه" onClick={() => router.push('/workshops')} />
               <MenuRow icon={<MessageIcon size={18} />} label="گفتگوها" onClick={() => router.push('/messages')} />
-              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌های من" onClick={() => router.push('/appointments')} />
               <MenuRow icon={<UsersIcon size={18} />} label="سازمان‌ها / ناوگان" onClick={() => router.push('/organizations')} />
               <MenuRow icon={<ShieldIcon size={18} />} label="حریم خصوصی و امنیت" />
             </Card>
