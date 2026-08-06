@@ -60,7 +60,7 @@ export default function NotificationsBell() {
         {count > 0 && (
           <span style={{
             position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8,
-            background: '#F87171', color: 'white', fontSize: 9, fontWeight: 800,
+            background: C.statusExpired, color: C.onAccent, fontSize: 9, fontWeight: 800,
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px',
             border: `2px solid ${C.bg}`,
           }}>
@@ -84,7 +84,7 @@ export default function NotificationsBell() {
               WebkitBackdropFilter: 'blur(24px)',
               border: `1px solid ${C.borderStrong}`,
               borderRadius: 20,
-              boxShadow: '0 20px 56px rgba(0,0,0,0.45)',
+              boxShadow: C.shadowPopover,
               animation: 'fadeInDown 0.22s cubic-bezier(.34,1.2,.64,1) both',
               padding: '14px 14px 16px',
             }}
@@ -102,7 +102,7 @@ export default function NotificationsBell() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {items.map(n => (
                   <div key={n.id} style={{
-                    background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`,
+                    background: C.fill1, border: `1px solid ${C.border}`,
                     borderRadius: 16, padding: '13px 14px',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
@@ -131,7 +131,7 @@ export default function NotificationsBell() {
                         </Button>
                       </div>
                     ) : (
-                      <p style={{ fontSize: 11, fontWeight: 700, margin: '10px 0 0', color: n.status === 'confirmed' ? C.green : n.status === 'rejected' ? '#F87171' : C.subtle }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, margin: '10px 0 0', color: n.status === 'confirmed' ? C.green : n.status === 'rejected' ? C.statusExpired : C.subtle }}>
                         {n.status === 'confirmed' ? 'تایید شد' : n.status === 'rejected' ? 'رد شد' : ''}
                       </p>
                     )}

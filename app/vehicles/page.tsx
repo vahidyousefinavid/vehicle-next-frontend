@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { api, Vehicle, COLORS_HEX, daysUntil, expiryStatus } from '@/lib/api';
-import { C, Input, EmptyState, Skeleton } from '@/components/ui';
+import { C, Input, EmptyState, Skeleton, alpha } from '@/components/ui';
 import {
   CarIcon, PlusIcon, SearchIcon, ChevronLeftIcon, RoadIcon, FuelIcon,
   AlertTriangleIcon, CheckIcon,
@@ -16,7 +16,7 @@ function VehicleCard({ v }: { v: Vehicle }) {
   const tecDays  = daysUntil(v.technicalExpiry);
   const hasAlert = expiryStatus(insDays) !== 'ok' || expiryStatus(tecDays) !== 'ok';
   const dotColor = COLORS_HEX[v.color || ''] || C.green;
-  const accent   = hasAlert ? '#F87171' : C.green;
+  const accent   = hasAlert ? C.statusExpired : C.green;
 
   return (
     <Link href={`/vehicles/${v.id}`} style={{ textDecoration: 'none', display: 'block' }}>
@@ -25,19 +25,19 @@ function VehicleCard({ v }: { v: Vehicle }) {
         border: `1px solid ${C.border}`,
         borderRadius: 22,
         overflow: 'hidden',
-        boxShadow: '0 4px 18px rgba(0,0,0,0.20)',
+        boxShadow: C.shadowLift,
         transition: 'transform 0.15s, box-shadow 0.15s',
       }}>
         <div style={{
           height: 4,
-          background: `linear-gradient(90deg, ${dotColor}, ${dotColor}30)`,
+          background: `linear-gradient(90deg, ${dotColor}, ${alpha(dotColor, 19)})`,
         }} />
         <div style={{ padding: '16px 16px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 15, flexShrink: 0,
-                background: `${dotColor}22`, border: `1px solid ${dotColor}45`,
+                background: `${alpha(dotColor, 13)}`, border: `1px solid ${alpha(dotColor, 27)}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: dotColor,
               }}><CarIcon size={22} /></div>
               <div style={{ minWidth: 0 }}>
@@ -55,7 +55,7 @@ function VehicleCard({ v }: { v: Vehicle }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {v.plateNumber && (
               <span style={{
-                background: 'rgba(255,255,255,0.06)',
+                background: C.fill2,
                 border: `1px solid ${C.border}`,
                 color: C.muted, fontSize: 11,
                 padding: '4px 10px', borderRadius: 8,
@@ -128,7 +128,7 @@ export default function VehiclesListPage() {
           </h1>
           <Link href="/vehicles/new" style={{
             display: 'flex', alignItems: 'center', gap: 5,
-            color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+            color: C.onAccent, fontSize: 13, fontWeight: 700, textDecoration: 'none',
             background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
             borderRadius: 12, padding: '9px 15px',
             boxShadow: `0 4px 16px ${C.greenGlow}`,

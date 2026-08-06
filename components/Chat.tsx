@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api, ChatMessage, toJalali } from '@/lib/api';
-import { C, Button, Sheet, Spinner } from './ui';
+import { C, Button, Sheet, Spinner, alpha } from './ui';
 import { MessageIcon, SendIcon } from './icons';
 
 function dayLabel(dateStr: string) {
@@ -100,7 +100,7 @@ export default function Chat({
                     <div style={{
                       maxWidth: '78%', padding: '9px 13px', borderRadius: mine ? '14px 14px 14px 4px' : '14px 14px 4px 14px',
                       background: mine ? `linear-gradient(135deg, ${C.green}, ${C.greenDark})` : C.surface2,
-                      color: mine ? 'white' : C.text,
+                      color: mine ? C.onAccent : C.text,
                       border: mine ? 'none' : `1px solid ${C.border}`,
                     }}>
                       <p style={{ fontSize: 13, margin: 0, lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{m.body}</p>
@@ -125,9 +125,9 @@ export default function Chat({
             onBlur={() => setInputFocused(false)}
             placeholder="پیام بنویس..."
             style={{
-              flex: 1, background: 'rgba(255,255,255,0.05)',
+              flex: 1, background: C.fill2,
               border: `1px solid ${inputFocused ? C.green : C.border}`,
-              boxShadow: inputFocused ? `0 0 0 3px ${C.green}1a` : 'none',
+              boxShadow: inputFocused ? `0 0 0 3px ${alpha(C.green, 10)}` : 'none',
               borderRadius: 14,
               padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'Vazirmatn, sans-serif', outline: 'none',
               transition: 'border-color 0.15s, box-shadow 0.15s',

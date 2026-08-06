@@ -1,5 +1,5 @@
 'use client';
-import { C } from './tokens';
+import { C, alpha } from './tokens';
 
 export interface Stat {
   label: string;
@@ -22,13 +22,13 @@ export function StatGrid({ stats }: { stats: Stat[] }) {
           {s.color && (
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-              background: `linear-gradient(90deg, ${s.color}, ${s.color}55)`,
+              background: `linear-gradient(90deg, ${s.color}, ${alpha(s.color, 33)})`,
             }} />
           )}
           {s.icon && (
             <div style={{
               width: 34, height: 34, borderRadius: 11,
-              background: `${s.color ?? C.green}1F`,
+              background: `${alpha(s.color ?? C.green, 12)}`,
               color: s.color ?? C.green,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 8px',

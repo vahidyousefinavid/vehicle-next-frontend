@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { api, Product, productImageUrl } from '@/lib/api';
-import { C, Card, Button, IconButton, FormField, Input, TextArea, Sheet, EmptyState, Spinner } from '@/components/ui';
+import { C, Card, Button, IconButton, FormField, Input, TextArea, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
 import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon, ImageIcon } from '@/components/icons';
 
 export default function SellerProductsPage() {
@@ -90,7 +90,7 @@ export default function SellerProductsPage() {
                       <span style={{
                         fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 7,
                         color: p.stock > 0 ? C.green : C.red,
-                        background: p.stock > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                        background: p.stock > 0 ? alpha(C.green, 12) : alpha(C.statusExpired, 12),
                       }}>
                         {p.stock > 0 ? `موجود · ${p.stock} ${p.unit}` : 'ناموجود'}
                       </span>
@@ -204,7 +204,7 @@ function ProductEditSheet({ product, onClose, onSaved }: { product: Product | nu
         </div>
 
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">{product ? 'ذخیره تغییرات' : 'افزودن محصول'}</Button>
       </form>

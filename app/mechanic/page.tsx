@@ -6,56 +6,37 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import PlateInput from '@/components/PlateInput';
 import PersianYearPicker, { currentJalaliYear } from '@/components/PersianYearPicker';
-import { api, MechanicVehicle, CreateMechanicVehicleInput } from '@/lib/api';
-import { C, Card, StatGrid, EmptyState, SkeletonRow, Button, Input, FormField, Sheet } from '@/components/ui';
-import { CarIcon, WrenchIcon, WalletIcon, ChevronLeftIcon, LinkIcon, PlusIcon, CheckIcon } from '@/components/icons';
-
-function isThisMonth(dateStr: string) {
-  const d = new Date(dateStr);
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-}
+import { api, MechanicVehicle, MechanicStats, CreateMechanicVehicleInput, User } from '@/lib/api';
+import { getToken, getUser, homeHref } from '@/lib/session';
+import { C, Card, StatGrid, EmptyState, SkeletonRow, Button, Input, FormField, Sheet, alpha } from '@/components/ui';
+import { CarIcon, WrenchIcon, WalletIcon, ChevronLeftIcon, LinkIcon, PlusIcon, CheckIcon, CalendarIcon } from '@/components/icons';
 
 export default function MechanicDashboard() {
   const router = useRouter();
   const [vehicles, setVehicles] = useState<MechanicVehicle[]>([]);
   const [loading, setLoading]   = useState(true);
-  const [workshop, setWorkshop] = useState<{ name: string; workshopName?: string } | null>(null);
-  const [servicesThisMonth, setServicesThisMonth] = useState(0);
-  const [invoicedThisMonth, setInvoicedThisMonth]   = useState(0);
+  const [workshop, setWorkshop] = useState<User | null>(null);
+  const [stats, setStats] = useState<MechanicStats | null>(null);
 
   const [code, setCode]         = useState('');
   const [redeeming, setRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
   const [showAddVehicle, setShowAddVehicle] = useState(false);
 
+  /* Counters come from the server in one call. They used to be assembled here
+     by fetching every connected vehicle's full detail — one request per car on
+     every dashboard load. */
   function load() {
     setLoading(true);
-    api.mechanic.listVehicles().then(async (list) => {
-      setVehicles(list);
-      const details = await Promise.all(list.map((v) => api.mechanic.getVehicle(v.vehicleId).catch(() => null)));
-      let services = 0, invoiced = 0;
-      for (const d of details) {
-        if (!d) continue;
-        for (const r of d.serviceRecords) {
-          if (isThisMonth(r.serviceDate)) {
-            services++;
-            if (r.invoice) invoiced += r.invoice.total;
-          }
-        }
-      }
-      setServicesThisMonth(services);
-      setInvoicedThisMonth(invoiced);
-    }).finally(() => setLoading(false));
+    api.mechanic.listVehicles().then(setVehicles).finally(() => setLoading(false));
+    api.mechanic.stats().then(setStats).catch(() => {});
   }
 
   useEffect(() => {
-    if (!localStorage.getItem('vtoken')) { router.replace('/'); return; }
-    try {
-      const u = JSON.parse(localStorage.getItem('vuser') || '{}');
-      if (u.role !== 'mechanic') { router.replace('/dashboard'); return; }
-      setWorkshop(u);
-    } catch {}
+    if (!getToken()) { router.replace('/'); return; }
+    const u = getUser();
+    if (u && u.role !== 'mechanic') { router.replace(homeHref(u.role)); return; }
+    if (u) setWorkshop(u);
     load();
   }, [router]);
 
@@ -76,13 +57,14 @@ export default function MechanicDashboard() {
     }
   }
 
-  const stats = [
-    { label: 'خودروها', value: String(vehicles.length), icon: <CarIcon size={17} />, color: C.green },
-    { label: 'سرویس این ماه', value: String(servicesThisMonth), icon: <WrenchIcon size={17} />, color: '#818CF8' },
+  const invoiced = stats?.invoicedThisMonth ?? 0;
+  const statCards = [
+    { label: 'خودروها', value: String(stats?.vehicles ?? vehicles.length), icon: <CarIcon size={17} />, color: C.green },
+    { label: 'سرویس این ماه', value: String(stats?.servicesThisMonth ?? 0), icon: <WrenchIcon size={17} />, color: C.statusInfo },
     {
-      label: 'درآمد این ماه', icon: <WalletIcon size={17} />, color: '#34D399',
-      value: invoicedThisMonth > 0 ? `${(invoicedThisMonth / 1_000_000).toFixed(1)}M` : '—',
-      sub: invoicedThisMonth > 0 ? 'تومان' : '',
+      label: 'درآمد این ماه', icon: <WalletIcon size={17} />, color: C.statusMint,
+      value: invoiced > 0 ? `${(invoiced / 1_000_000).toFixed(1)}M` : '—',
+      sub: invoiced > 0 ? 'تومان' : '',
     },
   ];
 
@@ -99,14 +81,38 @@ export default function MechanicDashboard() {
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <StatGrid stats={stats} />
+          <StatGrid stats={statCards} />
         </div>
+
+        {/* A pending request is the one thing on this screen that needs an
+            answer today, so it gets a route out of the dashboard rather than
+            only living behind the tab bar. */}
+        {(stats?.pendingAppointments ?? 0) > 0 && (
+          <Card style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                background: alpha(C.statusWarn, 12), border: `1px solid ${alpha(C.statusWarn, 25)}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.statusWarn,
+              }}><CalendarIcon size={18} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13.5, fontWeight: 800, color: C.text, margin: 0 }}>
+                  {stats!.pendingAppointments} درخواست نوبت در انتظار پاسخ
+                </p>
+                <p style={{ fontSize: 11, color: C.muted, margin: '3px 0 0' }}>
+                  تا تایید نکنی، مشتری منتظر می‌مونه
+                </p>
+              </div>
+              <Button size="sm" onClick={() => router.push('/appointments')}>بررسی</Button>
+            </div>
+          </Card>
+        )}
 
         <Card style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
             <div style={{
               width: 30, height: 30, borderRadius: 10,
-              background: 'rgba(34,197,94,0.12)', border: `1px solid ${C.green}30`,
+              background: alpha(C.green, 12), border: `1px solid ${alpha(C.green, 19)}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
             }}><CarIcon size={15} /></div>
             <h2 style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: 0 }}>افزودن ماشین با پلاک</h2>
@@ -121,7 +127,7 @@ export default function MechanicDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
             <div style={{
               width: 30, height: 30, borderRadius: 10,
-              background: 'rgba(34,197,94,0.12)', border: `1px solid ${C.green}30`,
+              background: alpha(C.green, 12), border: `1px solid ${alpha(C.green, 19)}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
             }}><LinkIcon size={15} /></div>
             <h2 style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: 0 }}>اتصال با کد دعوت مالک</h2>
@@ -137,7 +143,7 @@ export default function MechanicDashboard() {
               />
             </FormField>
             {redeemError && (
-              <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
                 {redeemError}
               </div>
             )}
@@ -146,7 +152,7 @@ export default function MechanicDashboard() {
         </Card>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h2 style={{ color: 'rgba(240,246,255,0.80)', fontSize: 14, fontWeight: 700, margin: 0 }}>خودروهای متصل</h2>
+          <h2 style={{ color: C.text2, fontSize: 14, fontWeight: 700, margin: 0 }}>خودروهای متصل</h2>
         </div>
 
         {loading ? (
@@ -169,7 +175,7 @@ export default function MechanicDashboard() {
                 }}>
                   <div style={{
                     width: 46, height: 46, borderRadius: 15, flexShrink: 0,
-                    background: `${C.green}1F`, border: `1px solid ${C.green}40`,
+                    background: `${alpha(C.green, 12)}`, border: `1px solid ${alpha(C.green, 25)}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
                   }}><CarIcon size={21} /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -180,7 +186,7 @@ export default function MechanicDashboard() {
                     {v.linkStatus === 'pending' && (
                       <span style={{
                         display: 'inline-block', marginTop: 6, fontSize: 10, fontWeight: 800,
-                        color: '#FBBF24', background: 'rgba(245,158,11,0.14)',
+                        color: C.statusWarn, background: alpha(C.statusWarn, 14),
                         padding: '2px 9px', borderRadius: 8,
                       }}>در انتظار تایید مالک</span>
                     )}
@@ -256,7 +262,7 @@ function AddVehicleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (
         </FormField>
 
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
             {error}
           </div>
         )}

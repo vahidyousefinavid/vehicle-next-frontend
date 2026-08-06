@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import Chat from '@/components/Chat';
 import { api, Conversation, toJalali } from '@/lib/api';
-import { C, Card, Button, EmptyState, Spinner } from '@/components/ui';
+import { C, Card, Button, EmptyState, Spinner, alpha } from '@/components/ui';
 import { ChevronRightIcon, MessageIcon, StoreIcon, CarIcon } from '@/components/icons';
 
 export default function MessagesPage() {
@@ -57,7 +57,7 @@ export default function MessagesPage() {
                 <div onClick={() => openChat(c)} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: 13, flexShrink: 0,
-                    background: `${C.green}1F`, border: `1px solid ${C.green}40`,
+                    background: `${alpha(C.green, 12)}`, border: `1px solid ${alpha(C.green, 25)}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
                   }}>{role === 'owner' ? <StoreIcon size={19} /> : <CarIcon size={19} />}</div>
 
@@ -83,7 +83,7 @@ export default function MessagesPage() {
 
                   {c.unreadCount > 0 && (
                     <span style={{
-                      minWidth: 20, height: 20, borderRadius: 10, background: C.green, color: 'white',
+                      minWidth: 20, height: 20, borderRadius: 10, background: C.green, color: C.onAccent,
                       fontSize: 10.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       padding: '0 5px', flexShrink: 0,
                     }}>{c.unreadCount > 9 ? '9+' : c.unreadCount}</span>

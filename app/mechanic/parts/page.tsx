@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import VoiceAgentWidget from '@/components/VoiceAgentWidget';
 import { api, Part } from '@/lib/api';
-import { C, Card, Button, IconButton, FormField, Input, Sheet, EmptyState, Spinner } from '@/components/ui';
+import { C, Card, Button, IconButton, FormField, Input, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
 import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon } from '@/components/icons';
 
 export default function PartsCatalogPage() {
@@ -65,7 +65,7 @@ export default function PartsCatalogPage() {
                       <span style={{
                         fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 7,
                         color: p.inStock ? C.green : C.red,
-                        background: p.inStock ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                        background: p.inStock ? alpha(C.green, 12) : alpha(C.statusExpired, 12),
                       }}>
                         {p.inStock ? `موجود · ${p.quantity}` : 'ناموجود'}
                       </span>
@@ -146,7 +146,7 @@ function PartEditSheet({ part, onClose, onSaved }: { part: Part | null; onClose:
           </FormField>
         </div>
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">{part ? 'ذخیره تغییرات' : 'افزودن به کاتالوگ'}</Button>
       </form>

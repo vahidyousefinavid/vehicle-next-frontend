@@ -6,12 +6,14 @@ import BottomNav from '@/components/BottomNav';
 import NeshanMap from '@/components/NeshanMap';
 import InteractiveMapPicker from '@/components/InteractiveMapPicker';
 import PushToggle from '@/components/PushToggle';
+import SmsToggle from '@/components/SmsToggle';
 import {
   UserIcon, LogOutIcon, ShieldIcon, CarIcon, ChevronLeftIcon, WrenchIcon,
   StoreIcon, CalendarIcon, BoxIcon, UsersIcon, CompassIcon, MessageIcon, SettingsIcon, PinIcon,
 } from '@/components/icons';
-import { C, Card, Button } from '@/components/ui';
+import { C, Card, Button, alpha} from '@/components/ui';
 import { api } from '@/lib/api';
+import { getToken, getUser, refreshUser, clearSession } from '@/lib/session';
 import type { User } from '@/lib/api';
 
 export default function ProfilePage() {
@@ -19,13 +21,15 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    if (!localStorage.getItem('vtoken')) { router.replace('/'); return; }
-    try { setUser(JSON.parse(localStorage.getItem('vuser') || '{}')); } catch {}
+    if (!getToken()) { router.replace('/'); return; }
+    // show the cached profile immediately, then reconcile with the server —
+    // the cached copy is written at login and otherwise never refreshed
+    setUser(getUser());
+    refreshUser().then((u) => u && setUser(u));
   }, [router]);
 
   function logout() {
-    localStorage.removeItem('vtoken');
-    localStorage.removeItem('vuser');
+    clearSession();
     router.push('/');
   }
 
@@ -44,7 +48,7 @@ export default function ProfilePage() {
             width: 76, height: 76, borderRadius: '50%',
             background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', boxShadow: `0 10px 30px ${C.greenGlow}`,
+            color: C.onAccent, boxShadow: `0 10px 30px ${C.greenGlow}`,
           }}>
             <UserIcon size={34} />
           </div>
@@ -76,6 +80,10 @@ export default function ProfilePage() {
               <WorkshopLocationCard user={user} onSaved={setUser} />
             </div>
 
+            <div style={{ marginBottom: 12 }}>
+              <SmsToggle user={user} onChange={setUser} />
+            </div>
+
             <div style={{ marginBottom: 20 }}>
               <PushToggle />
             </div>
@@ -88,6 +96,10 @@ export default function ProfilePage() {
 
             <div style={{ marginBottom: 12 }}>
               <WorkshopLocationCard user={user} onSaved={setUser} />
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <SmsToggle user={user} onChange={setUser} />
             </div>
 
             <div style={{ marginBottom: 20 }}>
@@ -105,6 +117,12 @@ export default function ProfilePage() {
               <MenuRow icon={<ShieldIcon size={18} />} label="حریم خصوصی و امنیت" />
             </Card>
 
+            {user && (
+              <div style={{ marginBottom: 12 }}>
+                <SmsToggle user={user} onChange={setUser} />
+              </div>
+            )}
+
             <div style={{ marginBottom: 20 }}>
               <PushToggle />
             </div>
@@ -115,8 +133,8 @@ export default function ProfilePage() {
           onClick={logout}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            background: 'rgba(239,68,68,0.10)', color: '#F87171',
-            border: '1px solid rgba(239,68,68,0.22)',
+            background: alpha(C.statusExpired, 10), color: C.statusExpired,
+            border: `1px solid ${alpha(C.statusExpired, 22)}`,
             borderRadius: 16, padding: '13px', fontSize: 14, fontWeight: 700,
             fontFamily: 'Vazirmatn, sans-serif',
           }}
@@ -178,7 +196,7 @@ function WorkshopLocationCard({ user, onSaved }: { user: User; onSaved: (u: User
       <div style={{ marginBottom: 10 }}>
         <NeshanMap lat={coords?.lat} lng={coords?.lng} height={140} onOpenPicker={() => setShowPicker(true)} />
       </div>
-      {error && <p style={{ fontSize: 11, color: '#F87171', margin: '0 0 8px' }}>{error}</p>}
+      {error && <p style={{ fontSize: 11, color: C.statusExpired, margin: '0 0 8px' }}>{error}</p>}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <Button variant="secondary" fullWidth loading={locating} onClick={locate} icon={<CompassIcon size={14} />}>موقعیت فعلی من</Button>
         <Button variant="secondary" fullWidth onClick={() => setShowPicker(true)} icon={<PinIcon size={14} />}>انتخاب روی نقشه</Button>

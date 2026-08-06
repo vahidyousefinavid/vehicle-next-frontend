@@ -1,5 +1,5 @@
 'use client';
-import { C } from './tokens';
+import { C, alpha } from './tokens';
 import { IconButton } from './Button';
 import { XIcon } from '../icons';
 
@@ -31,11 +31,11 @@ export function Sheet({
         width: '100%', maxWidth: 480,
         maxHeight: '92vh', overflowY: 'auto',
         border: `1px solid ${C.borderStrong}`,
-        boxShadow: '0 -16px 56px rgba(0,0,0,0.55)',
+        boxShadow: C.shadowSheet,
         animation: 'fadeInUp 0.28s cubic-bezier(.34,1.2,.64,1) both',
       }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 4px' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.18)' }} />
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: C.fill5 }} />
         </div>
 
         <div style={{
@@ -48,8 +48,8 @@ export function Sheet({
             {icon && (
               <div style={{
                 width: 36, height: 36, borderRadius: 11,
-                background: `${C.green}1F`,
-                border: `1px solid ${C.green}30`,
+                background: `${alpha(C.green, 12)}`,
+                border: `1px solid ${alpha(C.green, 19)}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: C.green,
               }}>{icon}</div>

@@ -1,5 +1,5 @@
 'use client';
-import { C } from './ui/tokens';
+import { C, alpha} from './ui/tokens';
 import { MicIcon, Volume2Icon, XIcon } from './icons';
 import { ExecutedAction, useVoiceAgent } from '@/hooks/useVoiceAgent';
 
@@ -23,7 +23,7 @@ export default function VoiceAgentWidget({ tenantId, onExecuted }: { tenantId: s
             background: C.surfaceSolid,
             border: `1px solid ${C.borderStrong}`,
             borderRadius: 18,
-            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+            boxShadow: C.shadowPopover,
             width: 280,
             padding: '14px 16px',
             marginBottom: 10,
@@ -49,7 +49,7 @@ export default function VoiceAgentWidget({ tenantId, onExecuted }: { tenantId: s
           </div>
 
           {error && (
-            <p style={{ fontSize: 12, color: '#F87171', margin: 0 }}>{error}</p>
+            <p style={{ fontSize: 12, color: C.statusExpired, margin: 0 }}>{error}</p>
           )}
 
           {!error && transcript && (
@@ -73,8 +73,8 @@ export default function VoiceAgentWidget({ tenantId, onExecuted }: { tenantId: s
           width: 56, height: 56, borderRadius: '50%',
           background: phase === 'recording' ? C.red : `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
           border: 'none',
-          boxShadow: phase === 'recording' ? '0 8px 24px rgba(239,68,68,0.4)' : `0 8px 24px ${C.greenGlow}`,
-          color: 'white',
+          boxShadow: phase === 'recording' ? `0 8px 24px ${alpha(C.statusExpired, 40)}` : `0 8px 24px ${C.greenGlow}`,
+          color: C.onAccent,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: phase === 'thinking' || phase === 'speaking' ? 'not-allowed' : 'pointer',
           opacity: phase === 'thinking' || phase === 'speaking' ? 0.6 : 1,

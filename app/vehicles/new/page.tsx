@@ -7,7 +7,7 @@ import { api, COLORS, FUEL_TYPES } from '@/lib/api';
 import PersianDatePicker from '@/components/PersianDatePicker';
 import PersianYearPicker, { currentJalaliYear } from '@/components/PersianYearPicker';
 import PlateInput from '@/components/PlateInput';
-import { C, SectionCard, FormField, Input, TextArea, ChipGroup, Button } from '@/components/ui';
+import { C, SectionCard, FormField, Input, TextArea, ChipGroup, Button, alpha} from '@/components/ui';
 import {
   ChevronRightIcon, CarIcon, SettingsIcon, CalendarIcon, FileTextIcon,
 } from '@/components/icons';
@@ -126,9 +126,9 @@ export default function NewVehiclePage() {
 
           {error && (
             <div style={{
-              fontSize: 12, color: '#F87171',
-              background: 'rgba(239,68,68,0.10)',
-              border: '1px solid rgba(239,68,68,0.20)',
+              fontSize: 12, color: C.statusExpired,
+              background: alpha(C.statusExpired, 10),
+              border: `1px solid ${alpha(C.statusExpired, 20)}`,
               borderRadius: 11, padding: '10px 14px',
             }}>
               {error}

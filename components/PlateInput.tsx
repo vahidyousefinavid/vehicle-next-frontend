@@ -2,6 +2,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { IranFlag } from './icons';
+import { C, alpha } from './ui/tokens';
+
+/* Everything below that draws the plate itself keeps literal colours: an
+   Iranian plate is blue/white with a green-white-red band whichever theme the
+   app is in. Only the surrounding chrome — labels and the letter picker —
+   follows the theme. */
 
 /* ── Persian letters used in Iranian plates ─────────────────────── */
 const LETTERS = [
@@ -270,13 +276,13 @@ export default function PlateInput({
 
       {/* ── Helper labels below ───────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', marginTop: 8, direction: 'ltr', gap: 0 }}>
-        <span style={{ width: 52, textAlign: 'center', fontSize: 10, color: 'rgba(200,215,235,0.38)', fontFamily: 'Vazirmatn, sans-serif' }}>ایران</span>
+        <span style={{ width: 52, textAlign: 'center', fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>ایران</span>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around' }}>
-          <span style={{ fontSize: 10, color: 'rgba(200,215,235,0.38)', fontFamily: 'Vazirmatn, sans-serif' }}>۲ رقم</span>
-          <span style={{ fontSize: 10, color: 'rgba(200,215,235,0.38)', fontFamily: 'Vazirmatn, sans-serif' }}>حرف</span>
-          <span style={{ fontSize: 10, color: 'rgba(200,215,235,0.38)', fontFamily: 'Vazirmatn, sans-serif' }}>۳ رقم</span>
+          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>۲ رقم</span>
+          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>حرف</span>
+          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>۳ رقم</span>
         </div>
-        <span style={{ width: 58, textAlign: 'center', fontSize: 10, color: 'rgba(200,215,235,0.38)', fontFamily: 'Vazirmatn, sans-serif' }}>استان</span>
+        <span style={{ width: 58, textAlign: 'center', fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>استان</span>
       </div>
 
       {/* ── Letter picker popup (via portal) ─────────────────────── */}
@@ -285,15 +291,15 @@ export default function PlateInput({
           id="__pl_letters__"
           style={{
             ...letterPos,
-            background: '#0D1F38',
-            border: '1px solid rgba(255,255,255,0.13)',
+            background: C.surfaceSolid,
+            border: `1px solid ${C.borderStrong}`,
             borderRadius: 18, padding: '12px 12px 14px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.65)',
+            boxShadow: C.shadowCard,
             direction: 'rtl',
           }}
         >
           <p style={{
-            color: 'rgba(200,215,235,0.55)', fontSize: 11, fontWeight: 700,
+            color: C.muted, fontSize: 11, fontWeight: 700,
             margin: '0 0 10px', fontFamily: 'Vazirmatn, sans-serif', textAlign: 'center',
           }}>
             انتخاب حرف پلاک
@@ -308,15 +314,15 @@ export default function PlateInput({
                   onClick={() => pickLetter(l)}
                   style={{
                     padding: '9px 4px', borderRadius: 10,
-                    border: `1.5px solid ${active ? '#22C55E' : 'rgba(255,255,255,0.09)'}`,
-                    background: active ? 'rgba(34,197,94,0.18)' : 'rgba(255,255,255,0.05)',
-                    color: active ? '#22C55E' : 'rgba(240,246,255,0.88)',
+                    border: `1.5px solid ${active ? C.green : C.border}`,
+                    background: active ? alpha(C.green, 18) : C.fill2,
+                    color: active ? C.green : C.text,
                     fontSize: 13, fontWeight: active ? 800 : 500,
                     cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif',
                     textAlign: 'center', transition: 'all 0.10s',
                   }}
-                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(34,197,94,0.12)'; }}
-                  onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; }}
+                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = alpha(C.green, 12); }}
+                  onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = C.fill2; }}
                 >
                   {l}
                 </button>

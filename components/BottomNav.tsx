@@ -2,15 +2,55 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HomeIcon, CarIcon, PlusIcon, UserIcon } from './icons';
+import {
+  HomeIcon, CarIcon, PlusIcon, UserIcon, CalendarIcon, StoreIcon, WrenchIcon, BoxIcon,
+} from './icons';
 import { C } from './ui';
 import type { Role } from '@/lib/api';
 
-const tabStyle = (active: boolean): React.CSSProperties => ({
-  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-  color: active ? C.green : C.muted,
-  textDecoration: 'none', width: 64, transition: 'color 0.15s',
-});
+interface Tab {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
+  /** matches when the current path is inside this tab's section, not just equal to it */
+  match?: (path: string) => boolean;
+}
+
+/**
+ * The tab bar used to show only Home and Profile to anyone who wasn't a car
+ * owner, which left mechanics and sellers with no route to their own screens —
+ * appointments, services and the parts catalogue were reachable only by deep
+ * link or via the profile menu. Each role now gets the destinations it uses.
+ */
+function tabsFor(role: Role): Tab[] {
+  if (role === 'mechanic') {
+    return [
+      { href: '/mechanic', label: 'خانه', icon: HomeIcon },
+      { href: '/appointments', label: 'نوبت‌ها', icon: CalendarIcon },
+      { href: '/mechanic/services', label: 'خدمات', icon: WrenchIcon },
+      { href: '/mechanic/parts', label: 'قطعات', icon: BoxIcon },
+      { href: '/profile', label: 'پروفایل', icon: UserIcon },
+    ];
+  }
+  if (role === 'seller') {
+    return [
+      { href: '/seller/products', label: 'محصولات', icon: BoxIcon },
+      { href: '/profile', label: 'پروفایل', icon: UserIcon },
+    ];
+  }
+  return [
+    { href: '/dashboard', label: 'خانه', icon: HomeIcon },
+    {
+      href: '/vehicles',
+      label: 'خودروها',
+      icon: CarIcon,
+      match: (p) => p.startsWith('/vehicles') && p !== '/vehicles/new',
+    },
+    { href: '/workshops', label: 'تعمیرگاه', icon: StoreIcon, match: (p) => p.startsWith('/workshops') },
+    { href: '/appointments', label: 'نوبت‌ها', icon: CalendarIcon },
+    { href: '/profile', label: 'پروفایل', icon: UserIcon },
+  ];
+}
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -23,10 +63,10 @@ export default function BottomNav() {
     } catch {}
   }, []);
 
-  const homeHref  = role === 'mechanic' ? '/mechanic' : role === 'seller' ? '/seller/products' : '/dashboard';
-  const onHome    = pathname === homeHref;
-  const onVehicle = pathname.startsWith('/vehicles') && pathname !== '/vehicles/new';
-  const onProfile = pathname === '/profile';
+  const tabs = tabsFor(role);
+  /* the owner's "add a car" action stays a raised centre button rather than
+     becoming another flat tab */
+  const fabAfter = role === 'owner' ? 1 : -1;
 
   return (
     <nav
@@ -35,47 +75,51 @@ export default function BottomNav() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-around',
         height: 64,
         paddingBottom: 'env(safe-area-inset-bottom)',
-        background: 'rgba(10,17,32,0.90)',
+        background: C.tabbarBg,
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         borderTop: `1px solid ${C.border}`,
-        boxShadow: '0 -4px 24px rgba(0,0,0,0.30)',
+        boxShadow: C.shadowTabbar,
       }}
     >
-      <Link href={homeHref} style={tabStyle(onHome)}>
-        <HomeIcon size={22} strokeWidth={onHome ? 2 : 1.75} />
-        <span style={{ fontSize: 10, fontWeight: onHome ? 800 : 600 }}>خانه</span>
-      </Link>
+      {tabs.map((tab, i) => {
+        const active = tab.match ? tab.match(pathname) : pathname === tab.href;
+        const Icon = tab.icon;
 
-      {role === 'owner' && (
-        <>
-          <Link href="/vehicles" style={tabStyle(onVehicle)}>
-            <CarIcon size={22} strokeWidth={onVehicle ? 2 : 1.75} />
-            <span style={{ fontSize: 10, fontWeight: onVehicle ? 800 : 600 }}>خودروها</span>
-          </Link>
+        return (
+          <div key={tab.href} style={{ display: 'contents' }}>
+            <Link
+              href={tab.href}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                color: active ? C.green : C.muted,
+                textDecoration: 'none', width: 56, transition: 'color 0.15s',
+              }}
+            >
+              <Icon size={21} strokeWidth={active ? 2 : 1.75} />
+              <span style={{ fontSize: 10, fontWeight: active ? 800 : 600 }}>{tab.label}</span>
+            </Link>
 
-          <Link
-            href="/vehicles/new"
-            aria-label="افزودن خودرو"
-            style={{
-              width: 52, height: 52, borderRadius: '50%',
-              background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white', marginTop: -28,
-              boxShadow: `0 8px 24px ${C.greenGlow}, 0 2px 0 ${C.bg}`,
-              border: `4px solid ${C.bg}`,
-              flexShrink: 0,
-            }}
-          >
-            <PlusIcon size={24} strokeWidth={2.25} />
-          </Link>
-        </>
-      )}
-
-      <Link href="/profile" style={tabStyle(onProfile)}>
-        <UserIcon size={22} strokeWidth={onProfile ? 2 : 1.75} />
-        <span style={{ fontSize: 10, fontWeight: onProfile ? 800 : 600 }}>پروفایل</span>
-      </Link>
+            {i === fabAfter && (
+              <Link
+                href="/vehicles/new"
+                aria-label="افزودن خودرو"
+                style={{
+                  width: 52, height: 52, borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: C.onAccent, marginTop: -28,
+                  boxShadow: `0 8px 24px ${C.greenGlow}, 0 2px 0 ${C.bg}`,
+                  border: `4px solid ${C.bg}`,
+                  flexShrink: 0,
+                }}
+              >
+                <PlusIcon size={24} strokeWidth={2.25} />
+              </Link>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 }

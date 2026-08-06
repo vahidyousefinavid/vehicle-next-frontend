@@ -15,8 +15,7 @@ import { svcMeta } from '@/components/serviceMeta';
 import {
   C, STATUS_THEME,
   Card, SectionCard, Button, IconButton, FormField, Input, TextArea, ChipGroup,
-  IconBadge, StatGrid, StatusRow, EmptyState, Spinner, Sheet,
-} from '@/components/ui';
+  IconBadge, StatGrid, StatusRow, EmptyState, Spinner, Sheet, alpha } from '@/components/ui';
 import {
   ChevronRightIcon, ChevronDownIcon, ChevronUpIcon, PlusIcon, XIcon, TrashIcon,
   CarIcon, ShieldIcon, SearchIcon, FileTextIcon, WrenchIcon, FuelIcon, BellIcon,
@@ -62,7 +61,7 @@ export default function VehiclePage() {
     }}>
       <div style={{
         width: 48, height: 48, borderRadius: '50%',
-        border: `3px solid ${C.green}26`,
+        border: `3px solid ${alpha(C.green, 15)}`,
         borderTopColor: C.green,
         animation: 'spin 0.75s linear infinite',
       }} />
@@ -84,7 +83,7 @@ export default function VehiclePage() {
   const healthPct = kmDone !== null && kmRange !== null && kmRange > 0
     ? Math.max(0, Math.min(100, 100 - (kmDone / kmRange) * 100))
     : 80;
-  const healthColor = healthPct > 60 ? C.green : healthPct > 30 ? '#F59E0B' : '#EF4444';
+  const healthColor = healthPct > 60 ? C.green : healthPct > 30 ? C.amber : C.red;
   const ringCirc    = 2 * Math.PI * 22;
 
   const vehicleStats = [
@@ -115,7 +114,7 @@ export default function VehiclePage() {
           <button
             onClick={() => setShowEdit(true)}
             style={{
-              background: 'rgba(255,255,255,0.06)',
+              background: C.fill2,
               border: `1px solid ${C.border}`,
               borderRadius: 11, padding: '7px 13px',
               color: C.muted, fontSize: 12.5, fontWeight: 700,
@@ -135,20 +134,20 @@ export default function VehiclePage() {
           marginBottom: 14,
           position: 'relative',
           overflow: 'hidden',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.30)',
+          boxShadow: C.shadowHero,
           animation: 'fadeInUp 0.45s cubic-bezier(.34,1.2,.64,1) both',
         }}>
           <div style={{
             position: 'absolute', top: -50, right: -50,
             width: 220, height: 220, borderRadius: '50%',
-            background: `radial-gradient(circle, ${dotColor}35 0%, transparent 65%)`,
+            background: `radial-gradient(circle, ${alpha(dotColor, 21)} 0%, transparent 65%)`,
             filter: 'blur(28px)',
             animation: 'blobPulse 6s ease-in-out infinite',
           }} />
           <div style={{
             position: 'absolute', bottom: -40, left: -30,
             width: 180, height: 180, borderRadius: '50%',
-            background: `radial-gradient(circle, ${C.blue}22 0%, transparent 65%)`,
+            background: `radial-gradient(circle, ${alpha(C.blue, 13)} 0%, transparent 65%)`,
             filter: 'blur(24px)',
             animation: 'blobPulse 8s ease-in-out infinite reverse',
           }} />
@@ -158,26 +157,26 @@ export default function VehiclePage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{
                   width: 58, height: 58, borderRadius: 18,
-                  background: 'rgba(255,255,255,0.1)',
+                  background: C.fill4,
                   backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.15)',
+                  border: `1px solid ${C.borderStrong}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'white',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
+                  color: C.onHero,
+                  boxShadow: `0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 ${C.subtle}`,
                   flexShrink: 0,
                 }}><CarIcon size={28} /></div>
 
                 <div>
                   <h1 style={{
-                    color: 'white',
+                    color: C.onHero,
                     fontSize: 21, fontWeight: 900, margin: 0,
                     letterSpacing: '-0.4px',
-                    textShadow: '0 2px 12px rgba(0,0,0,0.25)',
+                    textShadow: 'var(--hero-text-shadow)',
                   }}>
                     {vehicle.make} {vehicle.model}
                   </h1>
                   <p style={{
-                    color: 'rgba(255,255,255,0.6)',
+                    color: C.muted,
                     fontSize: 12, fontWeight: 500,
                     margin: '5px 0 0',
                   }}>
@@ -240,7 +239,7 @@ export default function VehiclePage() {
                       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                     </filter>
                   </defs>
-                  <circle cx={28} cy={28} r={22} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={5} />
+                  <circle cx={28} cy={28} r={22} fill="none" stroke={C.fill4} strokeWidth={5} />
                   <circle
                     cx={28} cy={28} r={22} fill="none"
                     stroke={healthColor} strokeWidth={5}
@@ -253,15 +252,15 @@ export default function VehiclePage() {
                       transition: 'stroke-dashoffset 1.2s cubic-bezier(.34,1.56,.64,1), stroke 0.5s',
                     }}
                   />
-                  <text x={28} y={25} textAnchor="middle" fill="white" fontSize={12} fontWeight="900">{Math.round(healthPct)}%</text>
-                  <text x={28} y={37} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={7} fontWeight="600">سلامت</text>
+                  <text x={28} y={25} textAnchor="middle" fill={C.onHero} fontSize={12} fontWeight="900">{Math.round(healthPct)}%</text>
+                  <text x={28} y={37} textAnchor="middle" fill={C.text4} fontSize={7} fontWeight="600">سلامت</text>
                 </svg>
                 {alertCount > 0 && (
                   <span style={{
                     display: 'flex', alignItems: 'center', gap: 3,
-                    background: 'rgba(239,68,68,0.25)',
-                    border: '1px solid rgba(239,68,68,0.4)',
-                    color: '#FF8585', fontSize: 10, fontWeight: 700,
+                    background: alpha(C.statusExpired, 25),
+                    border: `1px solid ${alpha(C.statusExpired, 40)}`,
+                    color: C.statusExpired, fontSize: 10, fontWeight: 700,
                     padding: '3px 10px', borderRadius: 20,
                     backdropFilter: 'blur(8px)',
                   }}>
@@ -275,20 +274,20 @@ export default function VehiclePage() {
               {vehicleStats.map(s => (
                 <div key={s.label} style={{
                   flex: 1,
-                  background: 'rgba(255,255,255,0.08)',
+                  background: C.fill3,
                   backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.11)',
+                  border: `1px solid ${C.border}`,
                   borderRadius: 14,
                   padding: '10px 6px',
                   textAlign: 'center',
                 }}>
                   <p style={{
-                    color: 'white', fontWeight: 900, fontSize: 14, margin: 0, lineHeight: 1,
+                    color: C.onHero, fontWeight: 900, fontSize: 14, margin: 0, lineHeight: 1,
                   }}>
                     {s.value}
                     {s.sub && <span style={{ fontSize: 9, opacity: 0.6, marginRight: 2, fontWeight: 500 }}>{s.sub}</span>}
                   </p>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 600, margin: '4px 0 0' }}>
+                  <p style={{ color: C.text4, fontSize: 10, fontWeight: 600, margin: '4px 0 0' }}>
                     {s.label}
                   </p>
                 </div>
@@ -321,8 +320,8 @@ export default function VehiclePage() {
                   border: 'none',
                   background: active
                     ? `linear-gradient(135deg, ${C.green} 0%, ${C.greenDark} 100%)`
-                    : 'rgba(255,255,255,0.06)',
-                  color: active ? 'white' : C.muted,
+                    : C.fill2,
+                  color: active ? C.onAccent : C.muted,
                   boxShadow: active ? `0 4px 20px ${C.greenGlow}` : 'none',
                   transform: active ? 'translateY(-2px)' : 'translateY(0)',
                   transition: 'all 0.22s cubic-bezier(.34,1.4,.64,1)',
@@ -431,9 +430,9 @@ function EditVehicleModal({ vehicle, onClose, onSaved }: { vehicle: Vehicle; onC
 
         {error && (
           <div style={{
-            fontSize: 12, color: '#F87171',
-            background: 'rgba(239,68,68,0.10)',
-            border: '1px solid rgba(239,68,68,0.20)',
+            fontSize: 12, color: C.statusExpired,
+            background: alpha(C.statusExpired, 10),
+            border: `1px solid ${alpha(C.statusExpired, 20)}`,
             borderRadius: 11, padding: '10px 14px',
           }}>
             {error}
@@ -495,8 +494,8 @@ function OverviewTab({ vehicle }: { vehicle: Vehicle }) {
             {lastService.nextServiceMileage && (
               <div style={{
                 textAlign: 'left', flexShrink: 0,
-                background: `${C.green}15`,
-                border: `1px solid ${C.green}30`,
+                background: `${alpha(C.green, 8)}`,
+                border: `1px solid ${alpha(C.green, 19)}`,
                 borderRadius: 12, padding: '8px 12px',
               }}>
                 <p style={{ fontSize: 10, color: C.muted, margin: 0, fontWeight: 600 }}>سرویس بعدی</p>
@@ -637,7 +636,7 @@ function InviteMechanicSheet({ vehicleId, onClose, onGranted }: { vehicleId: str
         {loading ? (
           <Spinner />
         ) : error ? (
-          <div style={{ fontSize: 13, color: '#F87171' }}>{error}</div>
+          <div style={{ fontSize: 13, color: C.statusExpired }}>{error}</div>
         ) : (
           <>
             <p style={{ color: C.muted, fontSize: 13, fontWeight: 500, lineHeight: 1.8, margin: 0 }}>
@@ -645,7 +644,7 @@ function InviteMechanicSheet({ vehicleId, onClose, onGranted }: { vehicleId: str
               کد تا ۷ روز معتبره و فقط یک‌بار قابل استفاده‌ست.
             </p>
             <div style={{
-              background: `${C.green}15`, border: `1.5px dashed ${C.green}50`, borderRadius: 18,
+              background: `${alpha(C.green, 8)}`, border: `1.5px dashed ${alpha(C.green, 31)}`, borderRadius: 18,
               padding: '18px 24px', width: '100%',
             }}>
               <p style={{
@@ -693,22 +692,22 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
   const pct       = nextKm && lastRec?.mileage && nextKm > lastRec.mileage
     ? Math.max(0, Math.min(100, ((vehicle.currentMileage - lastRec.mileage) / (nextKm - lastRec.mileage)) * 100))
     : null;
-  const barColor  = pct === null ? C.green : pct > 90 ? '#EF4444' : pct > 70 ? '#F59E0B' : C.green;
+  const barColor  = pct === null ? C.green : pct > 90 ? C.red : pct > 70 ? C.amber : C.green;
 
   const statItems = [
-    { label: 'کل سرویس',  value: String(records.length), sub: 'مورد', icon: <WrenchIcon size={17} />, color: '#818CF8' },
+    { label: 'کل سرویس',  value: String(records.length), sub: 'مورد', icon: <WrenchIcon size={17} />, color: C.statusInfo },
     {
       label: 'هزینه کل',
       value: totalCost > 0 ? `${(totalCost / 1_000_000).toFixed(1)}M` : '—',
       sub: totalCost > 0 ? 'تومان' : '',
-      icon: <WalletIcon size={17} />, color: '#34D399',
+      icon: <WalletIcon size={17} />, color: C.statusMint,
     },
     {
       label: 'تا سرویس',
       value: kmLeft !== null ? (kmLeft <= 0 ? 'سررسید' : `${Math.round(Math.abs(kmLeft) / 1000)}k`) : '—',
       sub: kmLeft !== null && kmLeft > 0 ? 'km' : '',
       icon: kmLeft !== null && kmLeft <= 0 ? <AlertTriangleIcon size={17} /> : <PinIcon size={17} />,
-      color: kmLeft !== null && kmLeft <= 0 ? '#F87171' : '#FBBF24',
+      color: kmLeft !== null && kmLeft <= 0 ? C.statusExpired : C.statusWarn,
     },
   ];
 
@@ -726,13 +725,13 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
             </div>
             <span style={{
               fontSize: 11, fontWeight: 800, color: barColor,
-              background: `${barColor}18`, padding: '4px 12px', borderRadius: 20,
-              border: `1px solid ${barColor}30`,
+              background: `${alpha(barColor, 9)}`, padding: '4px 12px', borderRadius: 20,
+              border: `1px solid ${alpha(barColor, 19)}`,
             }}>
               {kmLeft !== null && kmLeft <= 0 ? 'وقت سرویس!' : `${(kmLeft! / 1000).toFixed(1)}k km مانده`}
             </span>
           </div>
-          <div style={{ height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ height: 8, background: C.fill3, borderRadius: 8, overflow: 'hidden' }}>
             <div style={{
               height: '100%', width: `${pct}%`, borderRadius: 8,
               background: `linear-gradient(90deg, ${C.green}, ${barColor})`,
@@ -780,7 +779,7 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
           {records.length > 1 && (
             <div style={{
               position: 'absolute', right: 35, top: 56, bottom: 56, width: 2, zIndex: 0,
-              background: `linear-gradient(to bottom, ${C.green}60, transparent)`,
+              background: `linear-gradient(to bottom, ${alpha(C.green, 38)}, transparent)`,
               borderRadius: 2,
             }} />
           )}
@@ -793,11 +792,11 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
               <div key={r.id} style={{ position: 'relative', zIndex: 1 }}>
                 <div style={{
                   background: C.surface, borderRadius: 20, overflow: 'hidden',
-                  boxShadow: isExpanded ? `0 8px 32px rgba(0,0,0,0.20), 0 0 0 2px ${meta.color}35` : 'none',
+                  boxShadow: isExpanded ? `${C.shadowLift}, 0 0 0 2px ${alpha(meta.color, 21)}` : 'none',
                   border: `1px solid ${isExpanded ? meta.color + '25' : C.border}`,
                   transition: 'box-shadow 0.22s ease, border-color 0.22s ease',
                 }}>
-                  <div style={{ height: 3, background: `linear-gradient(90deg, ${meta.color}, ${meta.color}40)` }} />
+                  <div style={{ height: 3, background: `linear-gradient(90deg, ${meta.color}, ${alpha(meta.color, 25)})` }} />
 
                   <div style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -821,20 +820,20 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
                         {r.invoice ? (
                           <span style={{
-                            background: r.invoice.paymentStatus === 'paid' ? 'rgba(52,211,153,0.14)' : r.invoice.paymentStatus === 'partial' ? 'rgba(245,158,11,0.14)' : 'rgba(239,68,68,0.14)',
-                            color: r.invoice.paymentStatus === 'paid' ? '#34D399' : r.invoice.paymentStatus === 'partial' ? '#FBBF24' : '#F87171',
+                            background: r.invoice.paymentStatus === 'paid' ? alpha(C.statusMint, 14) : r.invoice.paymentStatus === 'partial' ? alpha(C.statusWarn, 14) : alpha(C.statusExpired, 14),
+                            color: r.invoice.paymentStatus === 'paid' ? C.statusMint : r.invoice.paymentStatus === 'partial' ? C.statusWarn : C.statusExpired,
                             fontSize: 11, fontWeight: 800,
                             padding: '3px 10px', borderRadius: 9,
-                            border: `1px solid ${r.invoice.paymentStatus === 'paid' ? 'rgba(52,211,153,0.25)' : r.invoice.paymentStatus === 'partial' ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                            border: `1px solid ${r.invoice.paymentStatus === 'paid' ? alpha(C.statusMint, 25) : r.invoice.paymentStatus === 'partial' ? alpha(C.statusWarn, 25) : alpha(C.statusExpired, 25)}`,
                           }}>
                             {(r.invoice.total / 1000).toFixed(0)}K ت
                           </span>
                         ) : r.cost ? (
                           <span style={{
-                            background: 'rgba(52,211,153,0.12)', color: '#34D399',
+                            background: alpha(C.statusMint, 12), color: C.statusMint,
                             fontSize: 11, fontWeight: 800,
                             padding: '3px 10px', borderRadius: 9,
-                            border: '1px solid rgba(52,211,153,0.25)',
+                            border: `1px solid ${alpha(C.statusMint, 25)}`,
                           }}>
                             {r.cost >= 1_000_000
                               ? `${(r.cost / 1_000_000).toFixed(1)}M`
@@ -855,7 +854,7 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
                     {isExpanded && (
                       <div style={{
                         marginTop: 14, paddingTop: 14,
-                        borderTop: `1px dashed ${meta.color}35`,
+                        borderTop: `1px dashed ${alpha(meta.color, 21)}`,
                         display: 'flex', flexDirection: 'column', gap: 10,
                         animation: 'fadeInUp 0.2s ease both',
                       }}>
@@ -871,9 +870,9 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
                         )}
                         {r.nextServiceMileage && (
                           <div style={{
-                            background: `${meta.color}1F`, borderRadius: 12,
+                            background: `${alpha(meta.color, 12)}`, borderRadius: 12,
                             padding: '11px 14px',
-                            border: `1px solid ${meta.color}25`,
+                            border: `1px solid ${alpha(meta.color, 15)}`,
                             display: 'flex', alignItems: 'center', gap: 10,
                           }}>
                             <PinIcon size={16} color={meta.color} />
@@ -956,7 +955,7 @@ function InvoiceDetails({ vehicleId, recordId }: { vehicleId: string; recordId: 
 
   if (!invoice) return null;
 
-  const statusColor = invoice.paymentStatus === 'paid' ? '#34D399' : invoice.paymentStatus === 'partial' ? '#FBBF24' : '#F87171';
+  const statusColor = invoice.paymentStatus === 'paid' ? C.statusMint : invoice.paymentStatus === 'partial' ? C.statusWarn : C.statusExpired;
   const statusLabel = invoice.paymentStatus === 'paid' ? 'پرداخت‌شده' : invoice.paymentStatus === 'partial' ? 'پرداخت جزئی' : 'پرداخت‌نشده';
 
   return (
@@ -965,7 +964,7 @@ function InvoiceDetails({ vehicleId, recordId }: { vehicleId: string; recordId: 
         <span style={{ fontSize: 12, fontWeight: 800, color: C.text, display: 'flex', alignItems: 'center', gap: 6 }}>
           <WalletIcon size={14} /> فاکتور
         </span>
-        <span style={{ fontSize: 10, fontWeight: 800, color: statusColor, background: `${statusColor}22`, padding: '2px 9px', borderRadius: 7 }}>
+        <span style={{ fontSize: 10, fontWeight: 800, color: statusColor, background: `${alpha(statusColor, 13)}`, padding: '2px 9px', borderRadius: 7 }}>
           {statusLabel}
         </span>
       </div>
@@ -992,7 +991,7 @@ function InvoiceDetails({ vehicleId, recordId }: { vehicleId: string; recordId: 
       </div>
 
       {payError && (
-        <div style={{ fontSize: 11, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 9, padding: '8px 12px', marginTop: 9 }}>
+        <div style={{ fontSize: 11, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 9, padding: '8px 12px', marginTop: 9 }}>
           {payError}
         </div>
       )}
@@ -1029,9 +1028,9 @@ function FuelTab({ vehicleId }: { vehicleId: string }) {
   if (loading) return <Spinner />;
 
   const fuelStats = stats && stats.totalLiters > 0 ? [
-    { label: 'مصرف / ۱۰۰km', value: stats.avgConsumption ? `${stats.avgConsumption}` : '—', sub: stats.avgConsumption ? 'L' : '', icon: <GaugeIcon size={17} />, color: '#818CF8' },
-    { label: 'کل سوخت',       value: `${stats.totalLiters}`, sub: 'L', icon: <FuelIcon size={17} />, color: '#FB923C' },
-    { label: 'کل هزینه',      value: stats.totalCost ? `${(stats.totalCost / 1_000_000).toFixed(1)}M` : '—', sub: 'تومان', icon: <WalletIcon size={17} />, color: '#34D399' },
+    { label: 'مصرف / ۱۰۰km', value: stats.avgConsumption ? `${stats.avgConsumption}` : '—', sub: stats.avgConsumption ? 'L' : '', icon: <GaugeIcon size={17} />, color: C.statusInfo },
+    { label: 'کل سوخت',       value: `${stats.totalLiters}`, sub: 'L', icon: <FuelIcon size={17} />, color: C.statusDanger },
+    { label: 'کل هزینه',      value: stats.totalCost ? `${(stats.totalCost / 1_000_000).toFixed(1)}M` : '—', sub: 'تومان', icon: <WalletIcon size={17} />, color: C.statusMint },
   ] : null;
 
   return (
@@ -1055,14 +1054,14 @@ function FuelTab({ vehicleId }: { vehicleId: string }) {
               border: `1px solid ${C.border}`,
               display: 'flex', alignItems: 'center', gap: 12,
             }}>
-              <IconBadge color="#FB923C" size={44}><FuelIcon size={20} /></IconBadge>
+              <IconBadge color={C.statusDanger} size={44}><FuelIcon size={20} /></IconBadge>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontWeight: 800, color: C.text, fontSize: 14 }}>{l.liters} لیتر</span>
                   {l.isFullTank && (
                     <span style={{
                       fontSize: 10, fontWeight: 700,
-                      background: 'rgba(59,130,246,0.12)', color: '#60A5FA',
+                      background: alpha(C.blueLight, 12), color: C.blueLight,
                       padding: '2px 9px', borderRadius: 7,
                       border: '1px solid rgba(96,165,250,0.25)',
                     }}>باک پر</span>
@@ -1076,7 +1075,7 @@ function FuelTab({ vehicleId }: { vehicleId: string }) {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 {l.cost && (
-                  <span style={{ fontSize: 12, fontWeight: 800, color: '#34D399' }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: C.statusMint }}>
                     {(l.cost / 1000).toFixed(0)}K ت
                   </span>
                 )}
@@ -1167,7 +1166,7 @@ function DocumentsTab({ vehicleId, vehicle }: { vehicleId: string; vehicle: Vehi
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{
-                      width: 42, height: 42, borderRadius: 13, background: 'rgba(255,255,255,0.07)',
+                      width: 42, height: 42, borderRadius: 13, background: C.fill3,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: C.text,
                     }}>
@@ -1241,9 +1240,9 @@ function RemindersTab({ vehicleId, currentMileage }: { vehicleId: string; curren
   };
 
   const priorityMap = {
-    high:   { label: 'زیاد',  color: '#F87171', bg: 'rgba(239,68,68,0.10)' },
-    medium: { label: 'متوسط', color: '#FBBF24', bg: 'rgba(245,158,11,0.10)' },
-    low:    { label: 'کم',    color: '#60A5FA', bg: 'rgba(59,130,246,0.10)' },
+    high:   { label: 'زیاد',  color: C.statusExpired, bg: alpha(C.statusExpired, 10) },
+    medium: { label: 'متوسط', color: C.statusWarn, bg: alpha(C.statusWarn, 10) },
+    low:    { label: 'کم',    color: C.blueLight, bg: alpha(C.blueLight, 10) },
   };
 
   if (loading) return <Spinner />;
@@ -1256,7 +1255,7 @@ function RemindersTab({ vehicleId, currentMileage }: { vehicleId: string; curren
         background: C.surface, borderRadius: 18,
         padding: '14px 16px',
         opacity: r.isCompleted ? 0.55 : 1,
-        border: overdue ? '1.5px solid rgba(239,68,68,0.25)' : `1px solid ${C.border}`,
+        border: overdue ? `1.5px solid ${alpha(C.statusExpired, 25)}` : `1px solid ${C.border}`,
         display: 'flex', alignItems: 'flex-start', gap: 12,
         transition: 'opacity 0.2s',
       }}>
@@ -1265,11 +1264,11 @@ function RemindersTab({ vehicleId, currentMileage }: { vehicleId: string; curren
           aria-label={r.isCompleted ? 'علامت‌گذاری به‌عنوان انجام‌نشده' : 'علامت‌گذاری به‌عنوان انجام‌شده'}
           style={{
             width: 26, height: 26, borderRadius: '50%',
-            border: `2px solid ${r.isCompleted ? C.green : '#7C8BA3'}`,
+            border: `2px solid ${r.isCompleted ? C.green : C.subtle}`,
             background: r.isCompleted ? `linear-gradient(135deg, ${C.green}, ${C.greenDark})` : 'transparent',
             flexShrink: 0, marginTop: 1,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white',
+            color: C.onAccent,
             transition: 'all 0.2s',
             boxShadow: r.isCompleted ? `0 2px 8px ${C.greenGlow}` : 'none',
           }}
@@ -1290,9 +1289,9 @@ function RemindersTab({ vehicleId, currentMileage }: { vehicleId: string; curren
             {overdue && (
               <span style={{
                 display: 'flex', alignItems: 'center', gap: 3,
-                fontSize: 10, fontWeight: 700, color: '#F87171',
-                background: 'rgba(239,68,68,0.10)', padding: '1px 8px', borderRadius: 7,
-                border: '1px solid rgba(239,68,68,0.22)',
+                fontSize: 10, fontWeight: 700, color: C.statusExpired,
+                background: alpha(C.statusExpired, 10), padding: '1px 8px', borderRadius: 7,
+                border: `1px solid ${alpha(C.statusExpired, 22)}`,
               }}><AlertTriangleIcon size={10} /> سررسید</span>
             )}
           </div>
@@ -1327,7 +1326,7 @@ function RemindersTab({ vehicleId, currentMileage }: { vehicleId: string; curren
           {active.length > 0 && (
             <span style={{
               fontSize: 11, fontWeight: 800, color: C.green,
-              background: `${C.green}15`, border: `1px solid ${C.green}30`,
+              background: `${alpha(C.green, 8)}`, border: `1px solid ${alpha(C.green, 19)}`,
               padding: '2px 9px', borderRadius: 10, marginRight: 7,
             }}>
               {active.length} فعال
@@ -1405,7 +1404,7 @@ function AiTab({ vehicleId }: { vehicleId: string }) {
               width: 74, height: 74, borderRadius: '50%',
               background: `linear-gradient(135deg, ${C.green} 0%, ${C.blue} 100%)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'white',
+              color: C.onAccent,
               boxShadow: `0 12px 36px ${C.greenGlow}`,
               animation: 'float 3s ease-in-out infinite',
             }}><SparklesIcon size={32} /></div>
@@ -1441,7 +1440,7 @@ function AiTab({ vehicleId }: { vehicleId: string }) {
                 maxWidth: '86%',
                 borderRadius: m.role === 'user' ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
                 padding: '12px 16px', fontSize: 13, fontWeight: 500, lineHeight: 1.8,
-                background: m.role === 'user' ? `${C.green}18` : C.surface,
+                background: m.role === 'user' ? `${alpha(C.green, 9)}` : C.surface,
                 border: `1px solid ${m.role === 'user' ? C.green + '25' : C.border}`,
                 color: C.text,
                 animation: 'fadeInUp 0.2s ease both',
@@ -1536,7 +1535,7 @@ function AddServiceModal({ vehicleId, record, onClose, onSaved }: { vehicleId: s
                 <button
                   key={type} type="button" onClick={() => set('serviceType', type)}
                   style={{
-                    background: selected ? `${meta.color}1F` : 'rgba(255,255,255,0.04)',
+                    background: selected ? `${alpha(meta.color, 12)}` : C.fill1,
                     border: `2px solid ${selected ? meta.color : 'transparent'}`,
                     borderRadius: 14, padding: '10px 6px',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
@@ -1631,7 +1630,7 @@ function AddFuelModal({ vehicleId, onClose, onSaved }: { vehicleId: string; onCl
         <label style={{
           display: 'flex', alignItems: 'center', gap: 12,
           cursor: 'pointer', padding: '12px 14px',
-          background: 'rgba(255,255,255,0.04)', borderRadius: 14,
+          background: C.fill1, borderRadius: 14,
           border: `1px solid ${C.border}`,
         }}>
           <input
@@ -1675,7 +1674,7 @@ function AddDocModal({ vehicleId, onClose, onSaved }: { vehicleId: string; onClo
                   display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px',
                   borderRadius: 14,
                   border: `2px solid ${selected ? C.green : 'transparent'}`,
-                  background: selected ? `${C.green}1F` : 'rgba(255,255,255,0.04)',
+                  background: selected ? `${alpha(C.green, 12)}` : C.fill1,
                   color: selected ? C.text : C.muted,
                   fontSize: 12.5, fontWeight: selected ? 700 : 500,
                   fontFamily: 'Vazirmatn, sans-serif',
@@ -1721,9 +1720,9 @@ function AddReminderModal({ vehicleId, onClose, onSaved }: { vehicleId: string; 
   }
 
   const priorities = [
-    { v: 'low',    l: 'کم',    color: '#60A5FA' },
-    { v: 'medium', l: 'متوسط', color: '#FBBF24' },
-    { v: 'high',   l: 'زیاد',  color: '#F87171' },
+    { v: 'low',    l: 'کم',    color: C.blueLight },
+    { v: 'medium', l: 'متوسط', color: C.statusWarn },
+    { v: 'high',   l: 'زیاد',  color: C.statusExpired },
   ];
 
   return (
@@ -1749,7 +1748,7 @@ function AddReminderModal({ vehicleId, onClose, onSaved }: { vehicleId: string; 
               <button key={p.v} type="button" onClick={() => set('priority', p.v)} style={{
                 flex: 1, padding: '11px 8px', borderRadius: 14,
                 border: `2px solid ${f.priority === p.v ? p.color : 'transparent'}`,
-                background: f.priority === p.v ? `${p.color}1F` : C.surface2,
+                background: f.priority === p.v ? `${alpha(p.color, 12)}` : C.surface2,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
               }}>
                 <CircleIcon size={16} color={p.color} />

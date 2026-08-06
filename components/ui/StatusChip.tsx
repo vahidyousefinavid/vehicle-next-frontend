@@ -1,5 +1,5 @@
 'use client';
-import { STATUS_THEME, Status, statusLabel } from './tokens';
+import { STATUS_THEME, Status, statusLabel, alpha } from './tokens';
 
 export function StatusChip({ status, days }: { status: Status; days: number | null }) {
   const t = STATUS_THEME[status];
@@ -9,7 +9,7 @@ export function StatusChip({ status, days }: { status: Status; days: number | nu
     <span style={{
       display: 'inline-block',
       fontSize: 11, fontWeight: 800, color: t.color,
-      background: `${t.color}22`,
+      background: `${alpha(t.color, 13)}`,
       padding: '2px 10px', borderRadius: 8,
     }}>
       {label}

@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { svcMeta } from '@/components/serviceMeta';
 import { api, MechanicServiceOffering, SERVICE_TYPES } from '@/lib/api';
-import { C, Card, IconBadge, Button, IconButton, FormField, Input, ChipGroup, Sheet, EmptyState, Spinner } from '@/components/ui';
+import { C, Card, IconBadge, Button, IconButton, FormField, Input, ChipGroup, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
 import { ChevronRightIcon, WrenchIcon, PlusIcon, TrashIcon, StoreIcon, NavigationIcon } from '@/components/icons';
 
 export default function MechanicServicesPage() {
@@ -155,12 +155,12 @@ function ServiceEditSheet({ existing, takenTypes, onClose, onSaved }: {
 
         <FormField label="نحوه ارائه">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${C.border}` }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: C.fill1, borderRadius: 12, border: `1px solid ${C.border}` }}>
               <input type="checkbox" checked={supportsInShop} onChange={e => setSupportsInShop(e.target.checked)} style={{ width: 16, height: 16, accentColor: C.green }} />
               <StoreIcon size={15} />
               <span style={{ fontSize: 12.5, fontWeight: 600, color: C.text }}>حضوری در تعمیرگاه</span>
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${C.border}` }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: C.fill1, borderRadius: 12, border: `1px solid ${C.border}` }}>
               <input type="checkbox" checked={supportsOnSite} onChange={e => setSupportsOnSite(e.target.checked)} style={{ width: 16, height: 16, accentColor: C.green }} />
               <NavigationIcon size={15} />
               <span style={{ fontSize: 12.5, fontWeight: 600, color: C.text }}>در محل مشتری (سیار)</span>
@@ -169,7 +169,7 @@ function ServiceEditSheet({ existing, takenTypes, onClose, onSaved }: {
         </FormField>
 
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">{existing ? 'ذخیره تغییرات' : 'افزودن خدمت'}</Button>
       </form>

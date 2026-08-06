@@ -38,7 +38,7 @@ export default function MessagesBell() {
       {count > 0 && (
         <span style={{
           position: 'absolute', top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 8,
-          background: '#F87171', color: 'white', fontSize: 9, fontWeight: 800,
+          background: C.statusExpired, color: C.onAccent, fontSize: 9, fontWeight: 800,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px',
           border: `2px solid ${C.bg}`,
         }}>

@@ -1,5 +1,5 @@
 'use client';
-import { C } from './tokens';
+import { C, alpha} from './tokens';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -26,8 +26,8 @@ export function Button({
 
   const variants: Record<Variant, React.CSSProperties> = {
     primary: {
-      background: isDisabled ? 'rgba(34,197,94,0.35)' : `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
-      color: 'white',
+      background: isDisabled ? alpha(C.green, 35) : `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
+      color: C.onAccent,
       border: 'none',
       boxShadow: isDisabled ? 'none' : `0 6px 20px ${C.greenGlow}`,
     },
@@ -42,9 +42,9 @@ export function Button({
       border: 'none',
     },
     danger: {
-      background: 'rgba(239,68,68,0.10)',
-      color: '#F87171',
-      border: '1px solid rgba(239,68,68,0.22)',
+      background: alpha(C.statusExpired, 10),
+      color: C.statusExpired,
+      border: `1px solid ${alpha(C.statusExpired, 22)}`,
     },
   };
 
@@ -92,7 +92,7 @@ export function IconButton({
       title={label}
       style={{
         width: size, height: size, borderRadius: 11,
-        background: active ? 'rgba(34,197,94,0.14)' : C.surface2,
+        background: active ? alpha(C.green, 14) : C.surface2,
         border: `1px solid ${active ? C.green + '40' : C.border}`,
         color: active ? C.green : C.muted,
         display: 'flex', alignItems: 'center', justifyContent: 'center',

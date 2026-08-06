@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { api, OrganizationSummary } from '@/lib/api';
-import { C, Card, Button, FormField, Input, Sheet, EmptyState, Spinner } from '@/components/ui';
+import { C, Card, Button, FormField, Input, Sheet, EmptyState, Spinner, alpha } from '@/components/ui';
 import { ChevronRightIcon, UsersIcon, PlusIcon, ChevronLeftIcon } from '@/components/icons';
 
 export default function OrganizationsPage() {
@@ -49,7 +49,7 @@ export default function OrganizationsPage() {
               <Card key={o.id} padding="14px 16px" style={{ cursor: 'pointer' }}>
                 <div onClick={() => router.push(`/organizations/${o.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
-                    width: 44, height: 44, borderRadius: 13, background: `${C.green}1F`, border: `1px solid ${C.green}40`,
+                    width: 44, height: 44, borderRadius: 13, background: `${alpha(C.green, 12)}`, border: `1px solid ${alpha(C.green, 25)}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green, flexShrink: 0,
                   }}><UsersIcon size={19} /></div>
                   <div style={{ flex: 1 }}>
@@ -98,7 +98,7 @@ function CreateOrgSheet({ onClose, onCreated }: { onClose: () => void; onCreated
           <Input value={name} onChange={e => setName(e.target.value)} placeholder="مثلاً شرکت حمل‌ونقل آریا" required />
         </FormField>
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">ساخت سازمان</Button>
       </form>

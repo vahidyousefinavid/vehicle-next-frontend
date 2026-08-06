@@ -1,5 +1,5 @@
 'use client';
-import { C } from './tokens';
+import { C, alpha } from './tokens';
 
 export function Card({
   children, style, accentColor, padding = '16px 18px', className,
@@ -17,7 +17,7 @@ export function Card({
         background: C.surface,
         border: `1px solid ${C.border}`,
         borderRadius: 20,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+        boxShadow: C.shadowSoft,
         position: 'relative',
         overflow: 'hidden',
         ...style,
@@ -26,7 +26,7 @@ export function Card({
       {accentColor && (
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-          background: `linear-gradient(90deg, ${accentColor}, ${accentColor}40)`,
+          background: `linear-gradient(90deg, ${accentColor}, ${alpha(accentColor, 25)})`,
         }} />
       )}
       <div style={{ padding }}>{children}</div>
@@ -47,7 +47,7 @@ export function SectionCard({
       background: C.surface,
       border: `1px solid ${C.border}`,
       borderRadius: 20,
-      boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+      boxShadow: C.shadowSoft,
       padding: '16px 18px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -55,8 +55,8 @@ export function SectionCard({
           {icon && (
             <div style={{
               width: 30, height: 30, borderRadius: 10,
-              background: 'rgba(34,197,94,0.12)',
-              border: `1px solid ${C.green}30`,
+              background: alpha(C.green, 12),
+              border: `1px solid ${alpha(C.green, 19)}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: C.green, flexShrink: 0,
             }}>{icon}</div>

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { C } from './tokens';
+import { C, alpha } from './tokens';
 import { ChevronDownIcon } from '../icons';
 
 export function FormField({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
@@ -20,7 +20,7 @@ export function FormField({ label, children, required }: { label: string; childr
 
 const baseInputStyle: React.CSSProperties = {
   width: '100%',
-  background: 'rgba(255,255,255,0.05)',
+  background: C.fill2,
   borderRadius: 14, padding: '11px 14px', fontSize: 13,
   fontWeight: 500, outline: 'none',
   color: C.text, fontFamily: 'Vazirmatn, sans-serif',
@@ -38,7 +38,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
       style={{
         ...baseInputStyle,
         border: `1px solid ${focused ? C.green : C.border}`,
-        boxShadow: focused ? `0 0 0 3px ${C.green}1a` : 'none',
+        boxShadow: focused ? `0 0 0 3px ${alpha(C.green, 10)}` : 'none',
         ...props.style,
       }}
     />
@@ -55,7 +55,7 @@ export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
       style={{
         ...baseInputStyle,
         border: `1px solid ${focused ? C.green : C.border}`,
-        boxShadow: focused ? `0 0 0 3px ${C.green}1a` : 'none',
+        boxShadow: focused ? `0 0 0 3px ${alpha(C.green, 10)}` : 'none',
         resize: 'none',
         ...props.style,
       }}
@@ -78,7 +78,7 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
           cursor: 'pointer',
           paddingLeft: 34,
           border: `1px solid ${focused ? C.green : C.border}`,
-          boxShadow: focused ? `0 0 0 3px ${C.green}1a` : 'none',
+          boxShadow: focused ? `0 0 0 3px ${alpha(C.green, 10)}` : 'none',
           ...props.style,
         }}
       />
@@ -113,7 +113,7 @@ export function ChipGroup<T extends string>({
               padding: '7px 14px', borderRadius: 11,
               fontSize: 12.5, fontWeight: selected ? 700 : 500,
               fontFamily: 'Vazirmatn, sans-serif',
-              background: selected ? 'rgba(34,197,94,0.14)' : 'rgba(255,255,255,0.04)',
+              background: selected ? alpha(C.green, 14) : C.fill1,
               border: `1px solid ${selected ? C.green + '55' : C.border}`,
               color: selected ? C.green : C.muted,
               transition: 'all 0.15s',

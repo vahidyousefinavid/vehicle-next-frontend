@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { api, OrgMember, Vehicle, Role } from '@/lib/api';
-import { C, Card, SectionCard, Button, IconButton, FormField, Input, Sheet, EmptyState, Spinner } from '@/components/ui';
+import { C, Card, SectionCard, Button, IconButton, FormField, Input, Sheet, EmptyState, Spinner, alpha } from '@/components/ui';
 import { ChevronRightIcon, UsersIcon, PlusIcon, TrashIcon, CarIcon } from '@/components/icons';
 
 export default function OrganizationDetailPage() {
@@ -74,7 +74,7 @@ export default function OrganizationDetailPage() {
                   <p style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: 0 }}>{m.name}</p>
                   <p style={{ fontSize: 10.5, color: C.muted, margin: '3px 0 0', direction: 'ltr', textAlign: 'right' }}>{m.phone}</p>
                 </div>
-                <span style={{ fontSize: 10, fontWeight: 800, color: m.role === 'admin' ? C.green : C.muted, background: m.role === 'admin' ? `${C.green}1F` : 'transparent', padding: '3px 9px', borderRadius: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: m.role === 'admin' ? C.green : C.muted, background: m.role === 'admin' ? `${alpha(C.green, 12)}` : 'transparent', padding: '3px 9px', borderRadius: 8 }}>
                   {m.role === 'admin' ? 'مدیر' : 'راننده'}
                 </span>
                 {isAdmin && m.userId !== meId && (
@@ -163,7 +163,7 @@ function AddMemberSheet({ orgId, onClose, onAdded }: { orgId: string; onClose: (
                   flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 13, fontWeight: 700,
                   fontFamily: 'Vazirmatn, sans-serif',
                   border: `1.5px solid ${memberRole === r ? C.green : C.border}`,
-                  background: memberRole === r ? `${C.green}1F` : 'transparent',
+                  background: memberRole === r ? `${alpha(C.green, 12)}` : 'transparent',
                   color: memberRole === r ? C.green : C.muted,
                 }}
               >{r === 'driver' ? 'راننده' : 'مدیر'}</button>
@@ -174,7 +174,7 @@ function AddMemberSheet({ orgId, onClose, onAdded }: { orgId: string; onClose: (
           عضو باید قبلاً در اپ ثبت‌نام کرده باشد.
         </p>
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">افزودن عضو</Button>
       </form>

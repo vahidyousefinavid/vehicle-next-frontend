@@ -1,5 +1,5 @@
 'use client';
-import { C } from './tokens';
+import { C, alpha } from './tokens';
 
 export function IconBadge({
   children, color = C.green, size = 44, radius = 14,
@@ -12,11 +12,11 @@ export function IconBadge({
   return (
     <div style={{
       width: size, height: size, borderRadius: radius, flexShrink: 0,
-      background: `${color}1F`,
-      border: `1px solid ${color}40`,
+      background: `${alpha(color, 12)}`,
+      border: `1px solid ${alpha(color, 25)}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       color,
-      boxShadow: `0 4px 12px ${color}22`,
+      boxShadow: `0 4px 12px ${alpha(color, 13)}`,
     }}>
       {children}
     </div>

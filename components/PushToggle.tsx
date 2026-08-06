@@ -76,7 +76,7 @@ export default function PushToggle() {
       >
         {subscribed ? 'اعلان‌های فوری فعال است' : 'فعال‌سازی اعلان‌های فوری'}
       </Button>
-      {error && <p style={{ fontSize: 11, color: '#F87171', margin: 0 }}>{error}</p>}
+      {error && <p style={{ fontSize: 11, color: C.statusExpired, margin: 0 }}>{error}</p>}
     </div>
   );
 }

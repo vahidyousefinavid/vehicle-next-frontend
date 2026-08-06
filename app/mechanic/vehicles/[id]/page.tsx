@@ -11,8 +11,7 @@ import {
 } from '@/lib/api';
 import {
   C, Card, IconBadge, Button, IconButton, FormField, Input, Select, ChipGroup, Sheet,
-  EmptyState, Spinner,
-} from '@/components/ui';
+  EmptyState, Spinner, alpha } from '@/components/ui';
 import {
   ChevronRightIcon, CarIcon, WrenchIcon, CalendarIcon, RoadIcon, WalletIcon,
   PlusIcon, XIcon, CheckIcon, SettingsIcon, BoxIcon, MessageIcon,
@@ -66,20 +65,20 @@ export default function MechanicVehiclePage() {
         <div style={{
           background: `linear-gradient(145deg, ${C.heroStart} 0%, ${C.heroMid} 45%, ${C.heroEnd} 100%)`,
           borderRadius: 26, padding: '22px 20px', marginBottom: 16,
-          boxShadow: '0 16px 48px rgba(0,0,0,0.30)',
+          boxShadow: C.shadowHero,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
             <div style={{
-              width: 54, height: 54, borderRadius: 17, background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', color: 'white', flexShrink: 0,
+              width: 54, height: 54, borderRadius: 17, background: C.fill4,
+              border: `1px solid ${C.borderStrong}`, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', color: C.onHero, flexShrink: 0,
             }}><CarIcon size={26} /></div>
             <div>
-              <h1 style={{ color: 'white', fontSize: 19, fontWeight: 900, margin: 0 }}>{vehicle.make} {vehicle.model}</h1>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 500, margin: '5px 0 0' }}>
+              <h1 style={{ color: C.onHero, fontSize: 19, fontWeight: 900, margin: 0 }}>{vehicle.make} {vehicle.model}</h1>
+              <p style={{ color: C.muted, fontSize: 12, fontWeight: 500, margin: '5px 0 0' }}>
                 {vehicle.year}{vehicle.color ? ` · ${vehicle.color}` : ''}{vehicle.plateNumber ? ` · ${vehicle.plateNumber}` : ''}
               </p>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 500, margin: '4px 0 0' }}>
+              <p style={{ color: C.text4, fontSize: 11, fontWeight: 500, margin: '4px 0 0' }}>
                 مالک: {vehicle.ownerName || '—'}
               </p>
               {vehicle.linkStatus !== 'pending' && (
@@ -87,15 +86,15 @@ export default function MechanicVehiclePage() {
                   onClick={() => setShowChat(true)}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 9,
-                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-                    color: 'white', fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 10,
+                    background: C.fill4, border: `1px solid ${C.borderStrong}`,
+                    color: C.onHero, fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 10,
                   }}
                 ><MessageIcon size={12} /> پیام به مالک</button>
               )}
               {vehicle.linkStatus === 'pending' && (
                 <span style={{
                   display: 'inline-block', marginTop: 8, fontSize: 11, fontWeight: 800,
-                  color: '#FBBF24', background: 'rgba(245,158,11,0.16)', border: '1px solid rgba(245,158,11,0.30)',
+                  color: C.statusWarn, background: alpha(C.statusWarn, 16), border: `1px solid ${alpha(C.statusWarn, 30)}`,
                   padding: '3px 11px', borderRadius: 9,
                 }}>در انتظار تایید مالک</span>
               )}
@@ -108,13 +107,13 @@ export default function MechanicVehiclePage() {
               ...(vehicle.fuelType ? [{ label: 'سوخت', value: vehicle.fuelType, sub: '' }] : []),
             ].map(s => (
               <div key={s.label} style={{
-                flex: 1, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.11)',
+                flex: 1, background: C.fill3, border: `1px solid ${C.border}`,
                 borderRadius: 14, padding: '10px 6px', textAlign: 'center',
               }}>
-                <p style={{ color: 'white', fontWeight: 900, fontSize: 14, margin: 0 }}>
+                <p style={{ color: C.onHero, fontWeight: 900, fontSize: 14, margin: 0 }}>
                   {s.value}{s.sub && <span style={{ fontSize: 9, opacity: 0.6, marginRight: 2 }}>{s.sub}</span>}
                 </p>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 600, margin: '4px 0 0' }}>{s.label}</p>
+                <p style={{ color: C.text4, fontSize: 10, fontWeight: 600, margin: '4px 0 0' }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -146,8 +145,8 @@ export default function MechanicVehiclePage() {
                   {r.invoice && (
                     <span style={{
                       fontSize: 11, fontWeight: 800,
-                      color: r.invoice.paymentStatus === 'paid' ? '#4ADE80' : r.invoice.paymentStatus === 'partial' ? '#FBBF24' : '#F87171',
-                      background: r.invoice.paymentStatus === 'paid' ? 'rgba(34,197,94,0.14)' : r.invoice.paymentStatus === 'partial' ? 'rgba(245,158,11,0.14)' : 'rgba(239,68,68,0.14)',
+                      color: r.invoice.paymentStatus === 'paid' ? C.statusOk : r.invoice.paymentStatus === 'partial' ? C.statusWarn : C.statusExpired,
+                      background: r.invoice.paymentStatus === 'paid' ? alpha(C.green, 14) : r.invoice.paymentStatus === 'partial' ? alpha(C.statusWarn, 14) : alpha(C.statusExpired, 14),
                       padding: '3px 10px', borderRadius: 9, flexShrink: 0, whiteSpace: 'nowrap',
                     }}>
                       {(r.invoice.total / 1000).toFixed(0)}K ت
@@ -283,7 +282,7 @@ function AddServiceWithInvoiceSheet({ vehicleId, record, onClose, onSaved }: { v
 
         <label style={{
           display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '12px 14px',
-          background: 'rgba(255,255,255,0.04)', borderRadius: 14, border: `1px solid ${C.border}`,
+          background: C.fill1, borderRadius: 14, border: `1px solid ${C.border}`,
         }}>
           <input type="checkbox" checked={withInvoice} onChange={e => setWithInvoice(e.target.checked)} style={{ width: 17, height: 17, accentColor: C.green }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: C.text, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -328,7 +327,7 @@ function AddServiceWithInvoiceSheet({ vehicleId, record, onClose, onSaved }: { v
 
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              background: `${C.green}15`, border: `1px solid ${C.green}30`, borderRadius: 14, padding: '12px 16px',
+              background: `${alpha(C.green, 8)}`, border: `1px solid ${alpha(C.green, 19)}`, borderRadius: 14, padding: '12px 16px',
             }}>
               <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>مبلغ نهایی</span>
               <span style={{ fontSize: 16, fontWeight: 900, color: C.green }}>{total.toLocaleString()} ت</span>
@@ -337,7 +336,7 @@ function AddServiceWithInvoiceSheet({ vehicleId, record, onClose, onSaved }: { v
         )}
 
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
             {error}
           </div>
         )}

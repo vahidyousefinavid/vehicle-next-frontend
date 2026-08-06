@@ -50,8 +50,8 @@ export const api = {
     requestOtp: (phone: string)              => req<{ sent: boolean }>('POST', '/auth/otp/request', { phone }),
     register:   (d: RegisterInput)           => req<AuthRes>('POST', '/auth/register', d),
     login:      (phone: string, code: string) => req<AuthRes>('POST', '/auth/login', { phone, code }),
-    updateProfile: (d: { workshopName?: string; workshopAddress?: string; workshopLat?: number; workshopLng?: number }) =>
-      req<User>('PATCH', '/auth/me', d),
+    me:         ()                           => req<User>('GET', '/auth/me'),
+    updateProfile: (d: UpdateProfileInput)   => req<User>('PATCH', '/auth/me', d),
   },
   vehicles: {
     list:   ()                               => req<Vehicle[]>('GET', '/vehicles'),
@@ -102,6 +102,7 @@ export const api = {
     remove: (vid: string, recordId: string) => req<void>('DELETE', `/vehicles/${vid}/records/${recordId}/invoice`),
   },
   mechanic: {
+    stats:        ()                              => req<MechanicStats>('GET', '/mechanic/stats'),
     listVehicles: ()                              => req<MechanicVehicle[]>('GET', '/mechanic/vehicles'),
     getVehicle:   (id: string)                    => req<MechanicVehicleDetail>('GET', `/mechanic/vehicles/${id}`),
     createVehicle: (d: CreateMechanicVehicleInput) => req<MechanicVehicleDetail>('POST', '/mechanic/vehicles', d),
@@ -223,6 +224,17 @@ export interface User {
   id: string; phone: string; name: string; role: Role;
   workshopName?: string | null; workshopAddress?: string | null;
   workshopLat?: number | null; workshopLng?: number | null;
+  smsNotifications?: boolean;
+}
+export interface UpdateProfileInput {
+  name?: string;
+  workshopName?: string; workshopAddress?: string;
+  workshopLat?: number; workshopLng?: number;
+  smsNotifications?: boolean;
+}
+
+export interface MechanicStats {
+  vehicles: number; servicesThisMonth: number; invoicedThisMonth: number; pendingAppointments: number;
 }
 
 export interface MechanicReview { id: string; rating: number; comment?: string; createdAt: string; ownerName?: string }
@@ -233,7 +245,9 @@ export interface Workshop {
   workshopLat?: number | null; workshopLng?: number | null;
   rating: number; reviewCount: number; distanceKm?: number | null;
 }
+
 export interface WorkshopDetail extends Workshop {
+  phone?: string;
   services: MechanicServiceOffering[];
 }
 

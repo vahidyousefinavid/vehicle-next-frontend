@@ -1,36 +1,112 @@
+/**
+ * Design tokens for inline styles.
+ *
+ * Every value is a CSS variable reference rather than a literal, so the same
+ * inline style renders correctly in both themes — the variables are redefined
+ * under `html[data-theme="light"]` in globals.css. Dark values are unchanged
+ * from the original palette, so the dark theme is pixel-identical.
+ *
+ * Because these are `var(...)` strings and no longer hex, the old
+ * `${C.green}1F` alpha-suffix trick can't work. Use `alpha()` instead:
+ *   background: alpha(C.green, 12)
+ */
 export const C = {
-  green:      '#22C55E',
-  greenDark:  '#16A34A',
-  greenGlow:  'rgba(34,197,94,0.35)',
-  amber:      '#F59E0B',
-  red:        '#EF4444',
-  blue:       '#3B82F6',
+  green:      'var(--green)',
+  greenDark:  'var(--green-dark)',
+  greenGlow:  'var(--green-glow)',
+  amber:      'var(--amber)',
+  red:        'var(--red)',
+  blue:       'var(--blue)',
 
-  bg:         '#0A1120',
-  bgElevated: '#0D1526',
-  heroStart:  '#0C1830',
-  heroMid:    '#0F2A28',
-  heroEnd:    '#0A1120',
+  bg:         'var(--bg)',
+  bgElevated: 'var(--bg-elevated)',
+  heroStart:  'var(--hero-start)',
+  heroMid:    'var(--hero-mid)',
+  heroEnd:    'var(--hero-end)',
 
-  surface:      'rgba(255,255,255,0.06)',
-  surface2:     'rgba(255,255,255,0.03)',
-  surfaceSolid: '#111B2E',
+  surface:      'var(--surface)',
+  surface2:     'var(--surface-2)',
+  surfaceSolid: 'var(--surface-solid)',
 
-  text:   'rgba(240,246,255,0.92)',
-  muted:  'rgba(200,215,235,0.60)',
-  subtle: 'rgba(200,215,235,0.38)',
+  /* neutral overlay fills — what used to be literal rgba(255,255,255,0.0X) */
+  fill1: 'var(--fill-1)',
+  fill2: 'var(--fill-2)',
+  fill3: 'var(--fill-3)',
+  fill4: 'var(--fill-4)',
+  fill5: 'var(--fill-5)',
 
-  border:       'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(255,255,255,0.16)',
+  textStrong: 'var(--text-strong)',
+  text:       'var(--text)',
+  text2:      'var(--text-2)',
+  muted:      'var(--muted)',
+  text4:      'var(--text-4)',
+  subtle:     'var(--subtle)',
+  onAccent:   'var(--on-accent)',
+
+  navBg:    'var(--nav-bg)',
+  tabbarBg: 'var(--tabbar-bg)',
+
+  border:       'var(--border)',
+  borderStrong: 'var(--border-strong)',
+
+  shadowGlass:  'var(--shadow-glass)',
+  shadowCard:   'var(--shadow-card)',
+  shadowNav:    'var(--shadow-nav)',
+  shadowTabbar: 'var(--shadow-tabbar)',
+  shadowSoft:    'var(--shadow-soft)',
+  shadowHero:    'var(--shadow-hero)',
+  shadowPopover: 'var(--shadow-popover)',
+  shadowSheet:   'var(--shadow-sheet)',
+  shadowLift:    'var(--shadow-lift)',
+  onHero:        'var(--on-hero)',
+  onHeroMuted:   'var(--on-hero-muted)',
+  glassBlur:    'var(--glass-blur)',
+
+  statusOk:      'var(--status-ok)',
+  statusWarn:    'var(--status-warn)',
+  statusDanger:  'var(--status-danger)',
+  statusExpired: 'var(--status-expired)',
+  statusInfo:    'var(--status-info)',
+  statusNeutral: 'var(--status-neutral)',
+  statusMint:    'var(--status-mint)',
+  blueLight:     'var(--blue-light)',
 } as const;
+
+/** One hue per service type — see --svc-* in globals.css. */
+export const SVC_COLOR = {
+  oil:        'var(--svc-oil)',
+  tire:       'var(--svc-tire)',
+  brake:      'var(--svc-brake)',
+  filter:     'var(--svc-filter)',
+  plug:       'var(--svc-plug)',
+  gearbox:    'var(--svc-gearbox)',
+  timing:     'var(--svc-timing)',
+  battery:    'var(--svc-battery)',
+  tuning:     'var(--svc-tuning)',
+  ac:         'var(--svc-ac)',
+  paint:      'var(--svc-paint)',
+  suspension: 'var(--svc-suspension)',
+  other:      'var(--svc-other)',
+} as const;
+
+/**
+ * Translucent variant of any colour — a hex literal, a `var(--x)`, or a prop
+ * passed down from a caller. `color-mix` is what makes this work on variables;
+ * the hex-suffix form it replaces only ever worked on literals.
+ *
+ * @param percent opacity 0–100.
+ */
+export function alpha(color: string, percent: number): string {
+  return `color-mix(in srgb, ${color} ${percent}%, transparent)`;
+}
 
 export type Status = 'ok' | 'warn' | 'danger' | 'expired';
 
 export const STATUS_THEME: Record<Status, { color: string; bg: string; border: string }> = {
-  ok:      { color: '#4ADE80', bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.28)' },
-  warn:    { color: '#FBBF24', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.28)' },
-  danger:  { color: '#FB923C', bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.28)' },
-  expired: { color: '#F87171', bg: 'rgba(239,68,68,0.10)',  border: 'rgba(239,68,68,0.28)' },
+  ok:      { color: C.statusOk,      bg: alpha(C.statusOk, 10),      border: alpha(C.statusOk, 28) },
+  warn:    { color: C.statusWarn,    bg: alpha(C.statusWarn, 10),    border: alpha(C.statusWarn, 28) },
+  danger:  { color: C.statusDanger,  bg: alpha(C.statusDanger, 10),  border: alpha(C.statusDanger, 28) },
+  expired: { color: C.statusExpired, bg: alpha(C.statusExpired, 10), border: alpha(C.statusExpired, 28) },
 };
 
 export function statusLabel(status: Status, days: number | null): string {

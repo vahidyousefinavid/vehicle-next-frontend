@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, Role } from '@/lib/api';
-import { C } from '@/components/ui';
+import { C, alpha } from '@/components/ui';
+import ThemeToggle from '@/components/ThemeToggle';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
 import {
@@ -23,18 +24,18 @@ function AccountCardPreview() {
       borderRadius: 22,
       padding: '20px 22px 18px',
       border: `1px solid ${C.borderStrong}`,
-      boxShadow: `0 24px 64px rgba(0,0,0,0.55), 0 4px 16px ${C.greenGlow}`,
+      boxShadow: `${C.shadowCard}, 0 4px 16px ${C.greenGlow}`,
       position: 'relative',
       overflow: 'hidden',
     }}>
       <div style={{
         position: 'absolute', top: -45, right: -45, width: 180, height: 180, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.green}33 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${alpha(C.green, 20)} 0%, transparent 70%)`,
         filter: 'blur(22px)',
       }} />
       <div style={{
         position: 'absolute', bottom: -35, left: -35, width: 140, height: 140, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.blue}22 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${alpha(C.blue, 13)} 0%, transparent 70%)`,
         filter: 'blur(18px)',
       }} />
 
@@ -46,36 +47,36 @@ function AccountCardPreview() {
             boxShadow: `0 3px 10px ${C.greenGlow}`,
           }} />
           <div style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
+            background: C.fill3,
+            border: `1px solid ${C.border}`,
             borderRadius: 10, padding: '5px 11px',
             display: 'flex', alignItems: 'center', gap: 6,
           }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, boxShadow: `0 0 7px ${C.green}` }} />
-            <span style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: 600 }}>وضعیت عالی</span>
+            <span style={{ color: C.text2, fontSize: 11, fontWeight: 600 }}>وضعیت عالی</span>
           </div>
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <span style={{ color: 'rgba(255,255,255,0.22)', fontSize: 17, letterSpacing: '7px', fontFamily: 'monospace', direction: 'ltr' }}>
+          <span style={{ color: C.subtle, fontSize: 17, letterSpacing: '7px', fontFamily: 'monospace', direction: 'ltr' }}>
             •• ••••• ••
           </span>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
           <div>
-            <p style={{ color: 'rgba(255,255,255,0.40)', fontSize: 9, fontWeight: 600, margin: '0 0 3px', letterSpacing: '0.5px' }}>مدیر ناوگان</p>
-            <p style={{ color: 'rgba(255,255,255,0.90)', fontSize: 14, fontWeight: 800, margin: 0 }}>احمد رضایی</p>
+            <p style={{ color: C.subtle, fontSize: 9, fontWeight: 600, margin: '0 0 3px', letterSpacing: '0.5px' }}>مدیر ناوگان</p>
+            <p style={{ color: C.textStrong, fontSize: 14, fontWeight: 800, margin: 0 }}>احمد رضایی</p>
           </div>
           <div style={{ textAlign: 'left' }}>
-            <p style={{ color: 'rgba(255,255,255,0.40)', fontSize: 9, fontWeight: 600, margin: '0 0 3px' }}>سلامت ناوگان</p>
+            <p style={{ color: C.subtle, fontSize: 9, fontWeight: 600, margin: '0 0 3px' }}>سلامت ناوگان</p>
             <p style={{ color: C.green, fontSize: 18, fontWeight: 900, margin: 0, textShadow: `0 0 12px ${C.greenGlow}` }}>94%</p>
           </div>
         </div>
 
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
-          paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.07)',
+          paddingTop: 14, borderTop: `1px solid ${C.border}`,
         }}>
           {[
             { label: 'خودروها', value: '3', color: C.green },
@@ -83,12 +84,12 @@ function AccountCardPreview() {
             { label: 'هشدارها', value: '0', color: C.green },
           ].map(s => (
             <div key={s.label} style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.07)',
+              background: C.fill2,
+              border: `1px solid ${C.border}`,
               borderRadius: 11, padding: '9px 6px', textAlign: 'center',
             }}>
               <p style={{ color: s.color, fontWeight: 900, fontSize: 17, margin: 0, lineHeight: 1 }}>{s.value}</p>
-              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 9, fontWeight: 600, margin: '3px 0 0' }}>{s.label}</p>
+              <p style={{ color: C.subtle, fontSize: 9, fontWeight: 600, margin: '3px 0 0' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -109,14 +110,14 @@ function TrustBadges() {
       {badges.map((b, i) => (
         <div key={i} style={{
           display: 'flex', alignItems: 'center', gap: 5,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.09)',
+          background: C.fill2,
+          border: `1px solid ${C.border}`,
           borderRadius: 20, padding: '6px 13px',
           backdropFilter: 'blur(12px)',
           color: C.green,
         }}>
           {b.icon}
-          <span style={{ color: 'rgba(200,215,235,0.72)', fontSize: 11, fontWeight: 600 }}>{b.label}</span>
+          <span style={{ color: C.text2, fontSize: 11, fontWeight: 600 }}>{b.label}</span>
         </div>
       ))}
     </div>
@@ -132,8 +133,8 @@ function SecurityStrip() {
   ];
   return (
     <div style={{
-      background: 'rgba(34,197,94,0.06)',
-      border: `1px solid ${C.green}28`,
+      background: alpha(C.green, 6),
+      border: `1px solid ${alpha(C.green, 16)}`,
       borderRadius: 18, padding: '14px 16px',
       display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10,
     }}>
@@ -141,14 +142,14 @@ function SecurityStrip() {
         <div key={i} style={{ textAlign: 'center' }}>
           <div style={{
             width: 34, height: 34, borderRadius: 11,
-            background: 'rgba(34,197,94,0.12)',
-            border: `1px solid ${C.green}33`,
+            background: alpha(C.green, 12),
+            border: `1px solid ${alpha(C.green, 20)}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: C.green,
             margin: '0 auto 6px',
           }}>{s.icon}</div>
-          <p style={{ color: '#4ADE80', fontSize: 11, fontWeight: 800, margin: 0 }}>{s.title}</p>
-          <p style={{ color: 'rgba(200,215,235,0.45)', fontSize: 10, fontWeight: 500, margin: '2px 0 0' }}>{s.desc}</p>
+          <p style={{ color: C.statusOk, fontSize: 11, fontWeight: 800, margin: 0 }}>{s.title}</p>
+          <p style={{ color: C.text4, fontSize: 10, fontWeight: 500, margin: '2px 0 0' }}>{s.desc}</p>
         </div>
       ))}
     </div>
@@ -232,12 +233,12 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
       <div style={{
         position: 'fixed', top: -120, right: -120, width: 480, height: 480, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.green}1C 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${alpha(C.green, 11)} 0%, transparent 70%)`,
         filter: 'blur(50px)', zIndex: 0, animation: 'blobPulse 9s ease-in-out infinite',
       }} />
       <div style={{
         position: 'fixed', bottom: -100, left: -100, width: 400, height: 400, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.blue}17 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${alpha(C.blue, 9)} 0%, transparent 70%)`,
         filter: 'blur(45px)', zIndex: 0, animation: 'blobPulse 11s ease-in-out infinite reverse',
       }} />
 
@@ -248,14 +249,16 @@ export default function LoginPage() {
             width: 44, height: 44, borderRadius: 15,
             background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white',
+            color: C.onAccent,
             boxShadow: `0 6px 18px ${C.greenGlow}`,
             flexShrink: 0,
           }}><CarIcon size={22} /></div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ color: C.text, fontWeight: 900, fontSize: 16, margin: 0 }}>دستیار خودرو</p>
             <p style={{ color: C.muted, fontSize: 11, fontWeight: 500, margin: 0 }}>هوشمند · امن · دقیق</p>
           </div>
+          {/* the rest of the app puts this in the navbar, which the login screen has no room for */}
+          <ThemeToggle size={36} />
         </div>
 
         <div style={{ marginBottom: 22, animation: 'fadeInUp 0.5s cubic-bezier(.34,1.2,.64,1) both' }}>
@@ -280,7 +283,7 @@ export default function LoginPage() {
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           border: `1px solid ${C.borderStrong}`,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.06)',
+          boxShadow: C.shadowGlass,
           borderRadius: 24, padding: '22px 20px',
           marginBottom: 18,
           animation: 'fadeInUp 0.55s cubic-bezier(.34,1.2,.64,1) 0.16s both',
@@ -288,7 +291,7 @@ export default function LoginPage() {
           <div style={{
             display: 'flex', borderRadius: 14, overflow: 'hidden',
             border: `1px solid ${C.border}`,
-            background: 'rgba(255,255,255,0.04)', marginBottom: 20,
+            background: C.fill1, marginBottom: 20,
           }}>
             {(['login', 'register'] as const).map(m => (
               <button
@@ -301,7 +304,7 @@ export default function LoginPage() {
                   background: mode === m
                     ? `linear-gradient(135deg, ${C.green}, ${C.greenDark})`
                     : 'transparent',
-                  color: mode === m ? 'white' : C.muted,
+                  color: mode === m ? C.onAccent : C.muted,
                   borderRadius: 12,
                   boxShadow: mode === m ? `0 4px 16px ${C.greenGlow}` : 'none',
                 }}
@@ -332,7 +335,7 @@ export default function LoginPage() {
                           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                           padding: '11px 8px', borderRadius: 14,
                           border: `2px solid ${role === opt.v ? C.green : 'transparent'}`,
-                          background: role === opt.v ? `${C.green}1F` : 'rgba(255,255,255,0.04)',
+                          background: role === opt.v ? `${alpha(C.green, 12)}` : C.fill1,
                           color: role === opt.v ? C.green : C.muted,
                           fontSize: 13, fontWeight: role === opt.v ? 800 : 500,
                           fontFamily: 'Vazirmatn, sans-serif',
@@ -434,9 +437,9 @@ export default function LoginPage() {
 
             {error && (
               <div style={{
-                fontSize: 12, color: '#F87171',
-                background: 'rgba(239,68,68,0.10)',
-                border: '1px solid rgba(239,68,68,0.20)',
+                fontSize: 12, color: C.statusExpired,
+                background: alpha(C.statusExpired, 10),
+                border: `1px solid ${alpha(C.statusExpired, 20)}`,
                 borderRadius: 11, padding: '10px 14px',
               }}>
                 {error}

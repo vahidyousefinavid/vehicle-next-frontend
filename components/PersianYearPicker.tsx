@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import * as jalaali from 'jalaali-js';
 import { CalendarIcon } from './icons';
+import { C, alpha } from './ui/tokens';
 
 function toFa(n: number) {
   return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[+d]);
@@ -13,16 +14,10 @@ export function currentJalaliYear(): number {
   return jalaali.toJalaali(t.getFullYear(), t.getMonth() + 1, t.getDate()).jy;
 }
 
-const C = {
-  primary: '#22C55E',
-  border: 'rgba(255,255,255,0.09)',
-  text: 'rgba(240,246,255,0.92)',
-  muted: 'rgba(200,215,235,0.60)',
-};
 
 const navBtn: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.10)',
+  background: C.fill3,
+  border: `1px solid ${C.border}`,
   borderRadius: 9, width: 30, height: 30,
   cursor: 'pointer', color: C.muted,
   fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -88,11 +83,11 @@ export default function PersianYearPicker({
       style={{
         ...popupPos,
         zIndex: 99999,
-        background: '#0D1F38',
-        border: '1px solid rgba(255,255,255,0.13)',
+        background: C.surfaceSolid,
+        border: `1px solid ${C.borderStrong}`,
         borderRadius: 18,
         padding: '12px 12px 14px',
-        boxShadow: '0 24px 72px rgba(0,0,0,0.70), 0 4px 16px rgba(0,0,0,0.40)',
+        boxShadow: C.shadowPopover,
         userSelect: 'none',
         direction: 'rtl',
       }}
@@ -117,14 +112,14 @@ export default function PersianYearPicker({
               style={{
                 padding: '10px 4px', borderRadius: 11,
                 border: isToday && !isSel ? '1.5px solid rgba(0,206,180,0.55)' : '1.5px solid transparent',
-                background: isSel ? C.primary : 'rgba(255,255,255,0.05)',
-                color: isSel ? 'white' : isToday ? C.primary : C.text,
+                background: isSel ? C.green : C.fill2,
+                color: isSel ? C.onAccent : isToday ? C.green : C.text,
                 fontSize: 12, fontWeight: isSel || isToday ? 800 : 500,
                 cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif',
                 textAlign: 'center', transition: 'background 0.10s',
               }}
               onMouseEnter={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,206,180,0.15)'; }}
-              onMouseLeave={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; }}
+              onMouseLeave={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = C.fill2; }}
             >
               {toFa(y)}
             </button>
@@ -142,8 +137,8 @@ export default function PersianYearPicker({
         onClick={openPicker}
         style={{
           width: '100%',
-          background: 'rgba(255,255,255,0.06)',
-          border: `1px solid ${open ? C.primary : C.border}`,
+          background: C.fill2,
+          border: `1px solid ${open ? C.green : C.border}`,
           borderRadius: 14, padding: '11px 14px',
           fontSize: 13, fontWeight: value ? 600 : 400,
           color: value ? C.text : C.muted,

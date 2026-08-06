@@ -4,6 +4,18 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
 
+/* ═══════════════════════════════════════════════════════════════════
+   THEMES
+   Two themes live here. Dark is the product's identity and the default:
+   every value under `:root` is the original palette, untouched. Light is
+   an alternate skin modelled on the Defuse project — paper-white surfaces,
+   hairline borders instead of shadows, near-black text, green as an accent
+   rather than a wash.
+
+   `html[data-theme="light"]` is set by the inline script in layout.tsx
+   before first paint, so switching never flashes.
+   ═══════════════════════════════════════════════════════════════════ */
+
 :root {
   color-scheme: dark;
 
@@ -30,10 +42,59 @@
   --surface-solid: #111B2E;
   --surface-mid:   rgba(13,21,38,0.92);
 
+  /* ── Overlay fill ladder ──
+     The old code reached for literal rgba(255,255,255,0.0X) inline. Those are
+     now these five steps, so a light theme can invert them in one place. */
+  --fill-1: rgba(255,255,255,0.03);
+  --fill-2: rgba(255,255,255,0.05);
+  --fill-3: rgba(255,255,255,0.07);
+  --fill-4: rgba(255,255,255,0.10);
+  --fill-5: rgba(255,255,255,0.13);
+
   /* ── Text ── */
+  --text-strong: #FFFFFF;
   --text:        rgba(240,246,255,0.92);
+  --text-2:      rgba(255,255,255,0.72);
   --muted:       rgba(200,215,235,0.60);
+  --text-4:      rgba(255,255,255,0.45);
   --subtle:      rgba(200,215,235,0.38);
+  /* text drawn on top of an accent fill (green button, coloured badge) */
+  --on-accent:   #FFFFFF;
+
+  /* ── Chrome (sticky header + bottom tab bar) ── */
+  --nav-bg:      rgba(10,17,32,0.88);
+  --tabbar-bg:   rgba(10,17,32,0.90);
+
+  /* ── Expiry / status hues ──
+     Four distinct steps so a document's remaining life reads at a glance.
+     Kept as their own vars because the light theme has to darken every one of
+     them to survive on white. */
+  --status-ok:      #4ADE80;
+  --status-warn:    #FBBF24;
+  --status-danger:  #FB923C;
+  --status-expired: #F87171;
+  --status-info:    #818CF8;
+  --status-neutral: #94A3B8;
+  --status-mint:    #34D399;
+  --blue-light:     #60A5FA;
+
+  /* ── Service-category hues ──
+     One hue per service type so a record is identifiable by colour alone.
+     They are tuned for a navy background; the light theme restates all
+     thirteen at a darkness that survives on paper. */
+  --svc-oil:      #FBBF24;
+  --svc-tire:     #60A5FA;
+  --svc-brake:    #F87171;
+  --svc-filter:   #34D399;
+  --svc-plug:     #A78BFA;
+  --svc-gearbox:  #818CF8;
+  --svc-timing:   #F472B6;
+  --svc-battery:  #FB923C;
+  --svc-tuning:   #2DD4BF;
+  --svc-ac:       #22D3EE;
+  --svc-paint:    #C084FC;
+  --svc-suspension: #A3E635;
+  --svc-other:    #94A3B8;
 
   /* ── Borders ── */
   --border:        rgba(255,255,255,0.08);
@@ -44,8 +105,26 @@
 
   /* ── Shadows ── */
   --shadow-glass: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-glass-strong: 0 12px 40px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.09);
   --shadow-green: 0 4px 20px rgba(34,197,94,0.28);
   --shadow-card:  0 20px 60px rgba(0,0,0,0.45);
+  --shadow-nav:   0 1px 0 rgba(0,0,0,0.30);
+  --shadow-tabbar: 0 -4px 24px rgba(0,0,0,0.30);
+  --shadow-account: 0 20px 60px rgba(0,0,0,0.50), 0 4px 20px rgba(34,197,94,0.10);
+  --shadow-soft:    0 2px 12px rgba(0,0,0,0.18);
+  --shadow-hero:    0 16px 48px rgba(0,0,0,0.30);
+  --shadow-popover: 0 24px 72px rgba(0,0,0,0.70), 0 4px 16px rgba(0,0,0,0.40);
+  --shadow-sheet:   0 -16px 56px rgba(0,0,0,0.55);
+  --shadow-lift:    0 4px 18px rgba(0,0,0,0.20);
+
+  /* Text drawn on the hero / account card. That card is deep navy in dark and
+     pale mint in light, so its foreground can't just be white in both. */
+  --hero-text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  --on-hero:        #FFFFFF;
+  --on-hero-muted:  rgba(255,255,255,0.60);
+
+  /* ── Blur (glass depth; light theme goes flat) ── */
+  --glass-blur: 22px;
 
   /* ── Scale ── */
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
@@ -83,6 +162,107 @@
   --radius-card:  var(--radius-xl);
 }
 
+/* ── LIGHT ──
+   Defuse's surface language: white paper, a single hairline grey for every
+   division, black-leaning text, and #00B86B doing the accent work. Depth is
+   removed rather than lightened — a blurred glass panel over white just reads
+   as grey, so the glass blur drops to zero and cards separate by their border.
+   Shape (radii, spacing, type scale) is deliberately inherited from dark: the
+   two themes are the same product, not two products. */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --green:        #00B86B;
+  --green-dark:   #009957;
+  --green-glow:   rgba(0,184,107,0.22);
+  --amber:        #B45309;
+  --amber-glow:   rgba(180,83,9,0.18);
+  --red:          #D92D20;
+  --blue:         #1D4ED8;
+
+  --bg:            #FFFFFF;
+  --bg-elevated:   #F7F8F7;
+  --bg-gradient:   linear-gradient(180deg, #FFFFFF 0%, #F7F8F7 45%, #FFFFFF 100%);
+  --hero-start:    #F4F7F4;
+  --hero-mid:      #EAF4EE;
+  --hero-end:      #FFFFFF;
+
+  --surface:       #FFFFFF;
+  --surface-2:     #F7F8F7;
+  --surface-solid: #FFFFFF;
+  --surface-mid:   rgba(255,255,255,0.96);
+
+  --fill-1: rgba(0,0,0,0.015);
+  --fill-2: #F7F8F7;
+  --fill-3: #F2F4F2;
+  --fill-4: #ECEFEC;
+  --fill-5: #E3E7E3;
+
+  --text-strong: #000000;
+  --text:        #0B0F0C;
+  --text-2:      #3A403A;
+  --muted:       #676E64;
+  --text-4:      #7D847C;
+  --subtle:      #8B918A;
+  --on-accent:   #FFFFFF;
+
+  --nav-bg:      rgba(255,255,255,0.92);
+  --tabbar-bg:   rgba(255,255,255,0.94);
+
+  /* same steps, pushed dark enough to read as text on paper */
+  --status-ok:      #047857;
+  --status-warn:    #B45309;
+  --status-danger:  #C2410C;
+  --status-expired: #B91C1C;
+  --status-info:    #4338CA;
+  --status-neutral: #64748B;
+  --status-mint:    #047857;
+  --blue-light:     #1D4ED8;
+
+  --svc-oil:      #B45309;
+  --svc-tire:     #1D4ED8;
+  --svc-brake:    #B91C1C;
+  --svc-filter:   #047857;
+  --svc-plug:     #6D28D9;
+  --svc-gearbox:  #4338CA;
+  --svc-timing:   #BE185D;
+  --svc-battery:  #C2410C;
+  --svc-tuning:   #0F766E;
+  --svc-ac:       #0E7490;
+  --svc-paint:    #7E22CE;
+  --svc-suspension: #4D7C0F;
+  --svc-other:    #64748B;
+
+  --border:        #D7DBD7;
+  --border-strong: #B9BFB8;
+  --green-border:  rgba(0,184,107,0.38);
+  --amber-border:  rgba(180,83,9,0.32);
+  --red-border:    rgba(217,45,32,0.32);
+
+  /* hairlines, not depth */
+  --shadow-glass: 0 1px 0 rgba(0,0,0,0.03);
+  --shadow-glass-strong: 0 2px 0 rgba(0,0,0,0.04);
+  --shadow-green: 0 4px 16px rgba(0,184,107,0.20);
+  --shadow-card:  0 18px 40px -28px rgba(0,0,0,0.45);
+  --shadow-nav:   0 1px 0 rgba(0,0,0,0.06);
+  --shadow-tabbar: 0 -1px 0 rgba(0,0,0,0.06);
+  --shadow-account: 0 18px 40px -30px rgba(0,0,0,0.40);
+  --shadow-soft:    0 1px 0 rgba(0,0,0,0.04);
+  --shadow-hero:    0 16px 36px -28px rgba(0,0,0,0.35);
+  --shadow-popover: 0 20px 48px -24px rgba(0,0,0,0.35), 0 0 0 1px #D7DBD7;
+  --shadow-sheet:   0 -16px 40px -28px rgba(0,0,0,0.30);
+  --shadow-lift:    0 1px 0 rgba(0,0,0,0.05);
+
+  --hero-text-shadow: none;
+  --on-hero:        #0B0F0C;
+  --on-hero-muted:  #55605A;
+
+  --glass-blur: 0px;
+
+  --gold-light:   #B45309;
+  --shadow-sm:    0 1px 0 rgba(0,0,0,0.04);
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
@@ -100,7 +280,7 @@ body {
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 
 button { font-family: inherit; }
 button:not(:disabled) { cursor: pointer; }
@@ -114,36 +294,36 @@ button:not(:disabled) { cursor: pointer; }
 /* ── Glassmorphism card ── */
 .glass {
   background: var(--surface);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border);
   box-shadow: var(--shadow-glass);
   border-radius: var(--radius-xl);
 }
 
 .glass-strong {
-  background: rgba(255,255,255,0.10);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: var(--fill-4);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border-strong);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.09);
+  box-shadow: var(--shadow-glass-strong);
   border-radius: var(--radius-xl);
 }
 
 header.glass {
   border-radius: 0;
   border-bottom: 1px solid var(--border);
-  background: rgba(10,17,32,0.88);
+  background: var(--nav-bg);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.30);
+  box-shadow: var(--shadow-nav);
 }
 
 /* ── Premium account card ── */
 .account-card {
   background: linear-gradient(135deg, var(--hero-start) 0%, var(--hero-mid) 55%, var(--hero-end) 100%);
   border: 1px solid var(--border-strong);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.50), 0 4px 20px rgba(34,197,94,0.10);
+  box-shadow: var(--shadow-account);
   border-radius: var(--radius-2xl);
   position: relative;
   overflow: hidden;
@@ -205,7 +385,7 @@ header.glass {
   .text-subtle { color: var(--subtle); }
   .text-gold   { color: var(--amber); }
   .text-teal   { color: var(--green); }
-  .text-white  { color: #ffffff; }
+  .text-white  { color: var(--text-strong); }
 
   .bg-surface { background: var(--surface); }
   .bg-accent  { background: var(--green); }
@@ -216,25 +396,25 @@ header.glass {
 
   .card-premium {
     background: var(--surface);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(var(--glass-blur));
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-glass);
   }
 }
 
-/* Accent buttons keep white text */
+/* Accent buttons keep their on-accent text colour */
 .bg-accent,
 .bg-accent.text-white,
 .bg-accent .text-white {
-  color: #ffffff !important;
+  color: var(--on-accent) !important;
 }
 
-/* ── Form inputs - dark glass ──
-   `color-scheme: dark` on :root already themes native chrome
-   (select popups, date/time pickers, checkboxes, spinners); the rest
-   here covers what that doesn't reach: placeholders, autofill, and
-   the <option> list background some browsers keep light regardless. */
+/* ── Form inputs ──
+   `color-scheme` on :root themes native chrome (select popups, date/time
+   pickers, checkboxes, spinners) for whichever theme is active; the rest here
+   covers what that doesn't reach: placeholders, autofill, and the <option>
+   list background some browsers keep light regardless. */
 ::placeholder {
   color: var(--subtle);
   opacity: 1;

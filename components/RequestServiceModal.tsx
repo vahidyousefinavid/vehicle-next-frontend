@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { svcMeta } from './serviceMeta';
 import AddressLocationField, { type Coords } from './AddressLocationField';
+import PersianDatePicker from './PersianDatePicker';
 import { api, Vehicle, Workshop, ServiceMode } from '@/lib/api';
-import { C, Button, IconBadge, FormField, Input, TextArea, Sheet, EmptyState, Spinner } from './ui';
+import { C, Button, IconBadge, FormField, Input, TextArea, Sheet, EmptyState, Spinner, alpha } from './ui';
 import { WrenchIcon, StoreIcon, StarIcon, PinIcon, NavigationIcon, CalendarIcon, CheckIcon } from './icons';
 
 type Step = 'setup' | 'results' | 'confirm' | 'done';
@@ -102,15 +103,17 @@ export default function RequestServiceModal({ serviceType, onClose }: { serviceT
       <Sheet title={`تعیین زمان · ${mechanicName}`} icon={<CalendarIcon size={16} />} onClose={onClose}>
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <FormField label="تاریخ" required><Input value={date} onChange={e => setDate(e.target.value)} type="date" required /></FormField>
+            {/* a native <input type="date"> shows a Gregorian calendar, which is
+                the wrong calendar for every user of this app */}
+            <FormField label="تاریخ" required><PersianDatePicker value={date} onChange={setDate} /></FormField>
             <FormField label="ساعت" required><Input value={time} onChange={e => setTime(e.target.value)} type="time" required /></FormField>
           </div>
           <FormField label="توضیحات (اختیاری)"><TextArea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="توضیح بیشتر درباره مشکل یا درخواستت..." /></FormField>
           {error && (
-            <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+            <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
           )}
           <Button type="button" variant="ghost" size="sm" onClick={() => setStep('results')}>بازگشت به لیست</Button>
-          <Button type="submit" loading={submitting} fullWidth size="lg">ثبت نهایی درخواست</Button>
+          <Button type="submit" loading={submitting} disabled={!date} fullWidth size="lg">ثبت نهایی درخواست</Button>
         </form>
       </Sheet>
     );
@@ -149,7 +152,7 @@ export default function RequestServiceModal({ serviceType, onClose }: { serviceT
                   <p style={{ fontSize: 13.5, fontWeight: 800, color: C.text, margin: 0 }}>{w.workshopName || 'تعمیرگاه'}</p>
                   <p style={{ fontSize: 11, color: C.muted, margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 8 }}>
                     {w.reviewCount > 0 ? (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#FBBF24', fontWeight: 700 }}><StarIcon size={11} /> {w.rating}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: C.statusWarn, fontWeight: 700 }}><StarIcon size={11} /> {w.rating}</span>
                     ) : <span style={{ color: C.subtle }}>بدون نظر</span>}
                     {w.distanceKm != null && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><PinIcon size={11} /> {w.distanceKm} km</span>}
                   </p>
@@ -175,7 +178,7 @@ export default function RequestServiceModal({ serviceType, onClose }: { serviceT
               value={vehicleId}
               onChange={e => setVehicleId(e.target.value)}
               style={{
-                width: '100%', background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.border}`, borderRadius: 14,
+                width: '100%', background: C.fill2, border: `1px solid ${C.border}`, borderRadius: 14,
                 padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'Vazirmatn, sans-serif',
               }}
             >
@@ -194,7 +197,7 @@ export default function RequestServiceModal({ serviceType, onClose }: { serviceT
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                 padding: '12px 0', borderRadius: 14, fontFamily: 'Vazirmatn, sans-serif',
                 border: `1.5px solid ${svcMode === m ? C.green : C.border}`,
-                background: svcMode === m ? `${C.green}1F` : 'transparent',
+                background: svcMode === m ? `${alpha(C.green, 12)}` : 'transparent',
                 color: svcMode === m ? C.green : C.muted,
               }}>
                 {m === 'in_shop' ? <StoreIcon size={18} /> : <NavigationIcon size={18} />}

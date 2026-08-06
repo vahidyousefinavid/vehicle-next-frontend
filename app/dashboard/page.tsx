@@ -7,7 +7,7 @@ import BottomNav from '@/components/BottomNav';
 import RequestServiceModal from '@/components/RequestServiceModal';
 import { svcMeta } from '@/components/serviceMeta';
 import { api, Vehicle, daysUntil, expiryStatus, SERVICE_TYPES } from '@/lib/api';
-import { C, EmptyState, SkeletonRow, SkeletonHero } from '@/components/ui';
+import { C, EmptyState, SkeletonRow, SkeletonHero, alpha } from '@/components/ui';
 import {
   CarIcon, ShieldIcon, SearchIcon, ChevronLeftIcon, PlusIcon, StoreIcon,
 } from '@/components/icons';
@@ -19,7 +19,7 @@ function QuickServices({ onPick }: { onPick: (type: string) => void }) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h2 style={{ color: 'rgba(240,246,255,0.80)', fontSize: 14, fontWeight: 700, margin: 0 }}>درخواست سریع خدمت</h2>
+        <h2 style={{ color: C.text2, fontSize: 14, fontWeight: 700, margin: 0 }}>درخواست سریع خدمت</h2>
         <Link href="/workshops" style={{
           display: 'flex', alignItems: 'center', gap: 4, color: C.muted, fontSize: 12, fontWeight: 600, textDecoration: 'none',
         }}>
@@ -42,7 +42,7 @@ function QuickServices({ onPick }: { onPick: (type: string) => void }) {
               }}
             >
               <div style={{
-                width: 40, height: 40, borderRadius: 13, background: `${meta.color}1F`, border: `1px solid ${meta.color}40`,
+                width: 40, height: 40, borderRadius: 13, background: `${alpha(meta.color, 12)}`, border: `1px solid ${alpha(meta.color, 25)}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: meta.color,
               }}><Icon size={19} /></div>
               <span style={{ fontSize: 11, fontWeight: 700, color: C.text, textAlign: 'center', lineHeight: 1.4 }}>{type}</span>
@@ -57,7 +57,7 @@ function QuickServices({ onPick }: { onPick: (type: string) => void }) {
 /* ── Health progress ring ─────────────────────────────────────── */
 function ProgressRing({ pct }: { pct: number }) {
   const r = 26, circ = 2 * Math.PI * r;
-  const color = pct > 80 ? C.green : pct > 50 ? '#FBBF24' : '#F87171';
+  const color = pct > 80 ? C.green : pct > 50 ? C.statusWarn : C.statusExpired;
   return (
     <svg width="68" height="68" viewBox="0 0 68 68" style={{ flexShrink: 0 }}>
       <defs>
@@ -66,7 +66,7 @@ function ProgressRing({ pct }: { pct: number }) {
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
-      <circle cx="34" cy="34" r={r} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="5" />
+      <circle cx="34" cy="34" r={r} fill="none" stroke={C.fill4} strokeWidth="5" />
       <circle
         cx="34" cy="34" r={r}
         fill="none" stroke={color} strokeWidth="5"
@@ -76,7 +76,7 @@ function ProgressRing({ pct }: { pct: number }) {
         filter="url(#ringGlowDash)"
         style={{ transition: 'stroke-dasharray 0.7s ease' }}
       />
-      <text x="34" y="38" textAnchor="middle" fill="white" fontSize="13" fontWeight="800">{pct}%</text>
+      <text x="34" y="38" textAnchor="middle" fill={C.onHero} fontSize="13" fontWeight="800">{pct}%</text>
     </svg>
   );
 }
@@ -89,19 +89,19 @@ function AccountCard({ user, vehicles, alerts, healthy, pct }: {
   healthy: number;
   pct: number;
 }) {
-  const statusColor = pct > 80 ? C.green : pct > 50 ? '#FBBF24' : '#F87171';
+  const statusColor = pct > 80 ? C.green : pct > 50 ? C.statusWarn : C.statusExpired;
   const statusLabel = pct > 80 ? 'وضعیت عالی' : pct > 50 ? 'نیاز به توجه' : 'هشدار فوری';
 
   return (
     <div className="account-card" style={{ padding: '22px 22px 20px', marginBottom: 20 }}>
       <div style={{
         position: 'absolute', top: -50, right: -50, width: 210, height: 210, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.green}2E 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${alpha(C.green, 18)} 0%, transparent 70%)`,
         filter: 'blur(26px)', animation: 'blobPulse 7s ease-in-out infinite',
       }} />
       <div style={{
         position: 'absolute', bottom: -40, left: -40, width: 170, height: 170, borderRadius: '50%',
-        background: `radial-gradient(circle, ${C.blue}1E 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${alpha(C.blue, 12)} 0%, transparent 70%)`,
         filter: 'blur(22px)', animation: 'blobPulse 9s ease-in-out infinite reverse',
       }} />
 
@@ -113,8 +113,8 @@ function AccountCard({ user, vehicles, alerts, healthy, pct }: {
             boxShadow: `0 3px 12px ${C.greenGlow}`,
           }} />
           <div style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
+            background: C.fill3,
+            border: `1px solid ${C.border}`,
             borderRadius: 10, padding: '5px 12px',
             display: 'flex', alignItems: 'center', gap: 6,
             backdropFilter: 'blur(8px)',
@@ -124,19 +124,19 @@ function AccountCard({ user, vehicles, alerts, healthy, pct }: {
               background: statusColor,
               boxShadow: `0 0 8px ${statusColor}`,
             }} />
-            <span style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11, fontWeight: 600 }}>{statusLabel}</span>
+            <span style={{ color: C.text2, fontSize: 11, fontWeight: 600 }}>{statusLabel}</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div style={{ flex: 1 }}>
-            <p style={{ color: 'rgba(255,255,255,0.40)', fontSize: 10, fontWeight: 600, margin: '0 0 5px', letterSpacing: '0.5px' }}>
+            <p style={{ color: C.subtle, fontSize: 10, fontWeight: 600, margin: '0 0 5px', letterSpacing: '0.5px' }}>
               مدیر ناوگان
             </p>
-            <p style={{ color: 'rgba(240,246,255,0.95)', fontSize: 18, fontWeight: 900, margin: 0 }}>
+            <p style={{ color: C.onHero, fontSize: 18, fontWeight: 900, margin: 0 }}>
               {user?.name || 'کاربر مهمان'}
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: 500, margin: '6px 0 0' }}>
+            <p style={{ color: C.text4, fontSize: 12, fontWeight: 500, margin: '6px 0 0' }}>
               {vehicles.length} خودرو · {healthy} سالم
             </p>
           </div>
@@ -145,20 +145,20 @@ function AccountCard({ user, vehicles, alerts, healthy, pct }: {
 
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10,
-          paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.08)',
+          paddingTop: 16, borderTop: `1px solid ${C.border}`,
         }}>
           {[
             { label: 'خودروها', value: String(vehicles.length), color: C.green },
-            { label: 'هشدارها', value: String(alerts.length), color: alerts.length > 0 ? '#F87171' : '#4ADE80' },
+            { label: 'هشدارها', value: String(alerts.length), color: alerts.length > 0 ? C.statusExpired : C.statusOk },
             { label: 'سلامت', value: `${pct}%`, color: statusColor },
           ].map(s => (
             <div key={s.label} style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: C.fill2,
+              border: `1px solid ${C.border}`,
               borderRadius: 14, padding: '11px 8px', textAlign: 'center',
             }}>
               <p style={{ color: s.color, fontWeight: 900, fontSize: 19, margin: 0, lineHeight: 1 }}>{s.value}</p>
-              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 10, fontWeight: 600, margin: '4px 0 0' }}>{s.label}</p>
+              <p style={{ color: C.subtle, fontSize: 10, fontWeight: 600, margin: '4px 0 0' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -172,7 +172,7 @@ function VehicleRow({ v, isLast }: { v: Vehicle; isLast: boolean }) {
   const insDays  = daysUntil(v.insuranceExpiry);
   const tecDays  = daysUntil(v.technicalExpiry);
   const hasAlert = expiryStatus(insDays) !== 'ok' || expiryStatus(tecDays) !== 'ok';
-  const color = hasAlert ? '#F87171' : C.green;
+  const color = hasAlert ? C.statusExpired : C.green;
 
   return (
     <Link href={`/vehicles/${v.id}`} style={{ textDecoration: 'none', display: 'block' }}>
@@ -184,8 +184,8 @@ function VehicleRow({ v, isLast }: { v: Vehicle; isLast: boolean }) {
       }}>
         <div style={{
           width: 46, height: 46, borderRadius: 15, flexShrink: 0,
-          background: `${color}1F`,
-          border: `1px solid ${color}40`,
+          background: `${alpha(color, 12)}`,
+          border: `1px solid ${alpha(color, 25)}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color,
         }}><CarIcon size={21} /></div>
@@ -203,7 +203,7 @@ function VehicleRow({ v, isLast }: { v: Vehicle; isLast: boolean }) {
           {v.plateNumber && (
             <span style={{
               display: 'block',
-              background: 'rgba(255,255,255,0.06)',
+              background: C.fill2,
               border: `1px solid ${C.border}`,
               color: C.muted, fontSize: 10,
               padding: '2px 8px', borderRadius: 7,
@@ -279,10 +279,10 @@ export default function Dashboard() {
 
         {alerts.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            <h2 style={{ color: 'rgba(240,246,255,0.80)', fontSize: 14, fontWeight: 700, margin: '0 0 10px' }}>هشدارها</h2>
+            <h2 style={{ color: C.text2, fontSize: 14, fontWeight: 700, margin: '0 0 10px' }}>هشدارها</h2>
             <div style={{
-              background: 'rgba(239,68,68,0.07)',
-              border: '1px solid rgba(239,68,68,0.17)',
+              background: alpha(C.statusExpired, 7),
+              border: `1px solid ${alpha(C.statusExpired, 17)}`,
               borderRadius: 20, overflow: 'hidden',
               backdropFilter: 'blur(14px)',
             }}>
@@ -297,26 +297,26 @@ export default function Dashboard() {
                 <Link key={i} href={`/vehicles/${a.v.id}?tab=documents`} style={{ textDecoration: 'none', display: 'block' }}>
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px',
-                    borderBottom: i < arr.length - 1 ? '1px solid rgba(239,68,68,0.10)' : 'none',
+                    borderBottom: i < arr.length - 1 ? `1px solid ${alpha(C.statusExpired, 10)}` : 'none',
                   }}>
                     <div style={{
                       width: 40, height: 40, borderRadius: 13,
-                      background: 'rgba(239,68,68,0.12)',
-                      border: '1px solid rgba(239,68,68,0.22)',
+                      background: alpha(C.statusExpired, 12),
+                      border: `1px solid ${alpha(C.statusExpired, 22)}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#F87171', flexShrink: 0,
+                      color: C.statusExpired, flexShrink: 0,
                     }}>{a.icon}</div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ color: 'rgba(240,246,255,0.90)', fontSize: 13, fontWeight: 700, margin: 0 }}>
+                      <p style={{ color: C.text, fontSize: 13, fontWeight: 700, margin: 0 }}>
                         {a.v.make} {a.v.model}
                       </p>
                       <p style={{ color: C.muted, fontSize: 12, margin: '2px 0 0' }}>{a.type}</p>
                     </div>
                     <span style={{
                       fontSize: 12, fontWeight: 700,
-                      color: a.days !== null && a.days < 0 ? '#F87171'
-                           : a.days !== null && a.days < 14 ? '#FB923C'
-                           : '#FCD34D',
+                      color: a.days !== null && a.days < 0 ? C.statusExpired
+                           : a.days !== null && a.days < 14 ? C.statusDanger
+                           : C.statusWarn,
                     }}>
                       {a.days !== null && a.days < 0 ? 'منقضی شده' : `${a.days} روز`}
                     </span>
@@ -329,7 +329,7 @@ export default function Dashboard() {
 
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h2 style={{ color: 'rgba(240,246,255,0.80)', fontSize: 14, fontWeight: 700, margin: 0 }}>خودروهای من</h2>
+            <h2 style={{ color: C.text2, fontSize: 14, fontWeight: 700, margin: 0 }}>خودروهای من</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {vehicles.length > 0 && (
               <Link href="/vehicles" style={{
@@ -341,8 +341,8 @@ export default function Dashboard() {
             <Link href="/vehicles/new" style={{
               display: 'flex', alignItems: 'center', gap: 4,
               color: C.green, fontSize: 13, fontWeight: 700, textDecoration: 'none',
-              background: 'rgba(34,197,94,0.10)',
-              border: `1px solid ${C.green}38`,
+              background: alpha(C.green, 10),
+              border: `1px solid ${alpha(C.green, 22)}`,
               borderRadius: 10, padding: '5px 13px',
             }}>
               <PlusIcon size={14} /> افزودن

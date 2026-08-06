@@ -78,7 +78,7 @@ export default function LeafletMapInner({
   const center: [number, number] = lat != null && lng != null ? [lat, lng] : DEFAULT_CENTER;
 
   return (
-    <MapContainer center={center} zoom={15} style={{ width: '100%', height, background: '#1a2332' }} scrollWheelZoom>
+    <MapContainer center={center} zoom={15} style={{ width: '100%', height, background: 'var(--bg-elevated)' }} scrollWheelZoom>
       {frame && <ImageOverlay url={frame.url} bounds={frame.bounds} />}
       <StaticImageLayer onFrame={(url, bounds) => setFrame({ url, bounds })} />
       <ClickHandler onPick={onPick} />

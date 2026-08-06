@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { api, Workshop, SERVICE_TYPES } from '@/lib/api';
-import { C, Card, Button, Input, EmptyState, Spinner } from '@/components/ui';
+import { C, Card, Button, Input, EmptyState, Spinner, alpha } from '@/components/ui';
 import { CompassIcon, StoreIcon, StarIcon, PinIcon } from '@/components/icons';
 
 const FILTERABLE_SERVICES = SERVICE_TYPES.filter(t => t !== 'سایر');
@@ -85,7 +85,7 @@ function WorkshopsPageInner() {
                   flexShrink: 0, padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
                   fontFamily: 'Vazirmatn, sans-serif', whiteSpace: 'nowrap',
                   border: `1.5px solid ${active ? C.green : C.border}`,
-                  background: active ? `${C.green}1F` : 'transparent',
+                  background: active ? `${alpha(C.green, 12)}` : 'transparent',
                   color: active ? C.green : C.muted,
                 }}
               >{t}</button>
@@ -103,14 +103,14 @@ function WorkshopsPageInner() {
               <Card key={w.id} padding="14px 16px" style={{ cursor: 'pointer' }}>
                 <div onClick={() => router.push(`/workshops/${w.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
-                    width: 46, height: 46, borderRadius: 14, background: `${C.green}1F`, border: `1px solid ${C.green}40`,
+                    width: 46, height: 46, borderRadius: 14, background: `${alpha(C.green, 12)}`, border: `1px solid ${alpha(C.green, 25)}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green, flexShrink: 0,
                   }}><StoreIcon size={21} /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: 0 }}>{w.workshopName || 'تعمیرگاه'}</p>
                     <p style={{ fontSize: 11, color: C.muted, margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       {w.reviewCount > 0 ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#FBBF24', fontWeight: 700 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: C.statusWarn, fontWeight: 700 }}>
                           <StarIcon size={12} /> {w.rating} <span style={{ color: C.subtle, fontWeight: 500 }}>({w.reviewCount})</span>
                         </span>
                       ) : (

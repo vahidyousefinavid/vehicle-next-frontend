@@ -9,8 +9,7 @@ import AddressLocationField, { type Coords } from '@/components/AddressLocationF
 import { svcMeta } from '@/components/serviceMeta';
 import { api, WorkshopDetail, MechanicReview, MechanicServiceOffering, Vehicle, ServiceMode, toJalali } from '@/lib/api';
 import {
-  C, Card, SectionCard, Button, FormField, Input, TextArea, Select, Sheet, EmptyState, Spinner,
-} from '@/components/ui';
+  C, Card, SectionCard, Button, FormField, Input, TextArea, Select, Sheet, EmptyState, Spinner, alpha } from '@/components/ui';
 import {
   ChevronRightIcon, StoreIcon, StarIcon, PinIcon, CalendarIcon, MessageIcon, WrenchIcon,
 } from '@/components/icons';
@@ -50,14 +49,14 @@ export default function WorkshopDetailPage() {
         <Card padding="18px" style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
             <div style={{
-              width: 56, height: 56, borderRadius: 17, background: `${C.green}1F`, border: `1px solid ${C.green}40`,
+              width: 56, height: 56, borderRadius: 17, background: `${alpha(C.green, 12)}`, border: `1px solid ${alpha(C.green, 25)}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green, flexShrink: 0,
             }}><StoreIcon size={26} /></div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1 style={{ fontSize: 18, fontWeight: 900, color: C.text, margin: 0 }}>{workshop.workshopName || 'تعمیرگاه'}</h1>
               <p style={{ fontSize: 12, color: C.muted, margin: '5px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {workshop.reviewCount > 0 ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#FBBF24', fontWeight: 700 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: C.statusWarn, fontWeight: 700 }}>
                     <StarIcon size={13} /> {workshop.rating} <span style={{ color: C.subtle, fontWeight: 500 }}>({workshop.reviewCount} نظر)</span>
                   </span>
                 ) : <span style={{ color: C.subtle }}>هنوز نظری ثبت نشده</span>}
@@ -81,7 +80,7 @@ export default function WorkshopDetailPage() {
                   <span key={s.id} style={{
                     display: 'flex', alignItems: 'center', gap: 5,
                     fontSize: 11, fontWeight: 700, color: meta.color,
-                    background: `${meta.color}1A`, border: `1px solid ${meta.color}35`,
+                    background: `${alpha(meta.color, 10)}`, border: `1px solid ${alpha(meta.color, 21)}`,
                     borderRadius: 20, padding: '4px 10px',
                   }}>
                     <Icon size={12} />
@@ -155,7 +154,7 @@ function StarRow({ rating }: { rating: number }) {
   return (
     <div style={{ display: 'flex', gap: 2, marginTop: 3 }}>
       {[1, 2, 3, 4, 5].map(n => (
-        <StarIcon key={n} size={13} color={n <= rating ? '#FBBF24' : C.border} />
+        <StarIcon key={n} size={13} color={n <= rating ? C.statusWarn : C.border} />
       ))}
     </div>
   );
@@ -186,7 +185,7 @@ function RateSheet({ mechanicId, existing, onClose, onSaved }: { mechanicId: str
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
           {[1, 2, 3, 4, 5].map(n => (
             <button key={n} type="button" onClick={() => setRating(n)} style={{ background: 'none', border: 'none', padding: 0 }}>
-              <StarIcon size={30} color={n <= rating ? '#FBBF24' : C.border} />
+              <StarIcon size={30} color={n <= rating ? C.statusWarn : C.border} />
             </button>
           ))}
         </div>
@@ -194,7 +193,7 @@ function RateSheet({ mechanicId, existing, onClose, onSaved }: { mechanicId: str
           <TextArea value={comment} onChange={e => setComment(e.target.value)} rows={3} placeholder="تجربه‌ات رو با دیگران به اشتراک بذار..." />
         </FormField>
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button onClick={submit} loading={loading} fullWidth size="lg">ثبت نظر</Button>
       </div>
@@ -323,7 +322,7 @@ function BookAppointmentSheet({ vehicle, mechanicId, services, onClose }: {
                   flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 700,
                   fontFamily: 'Vazirmatn, sans-serif',
                   border: `1.5px solid ${svcMode === m ? C.green : C.border}`,
-                  background: svcMode === m ? `${C.green}1F` : 'transparent',
+                  background: svcMode === m ? `${alpha(C.green, 12)}` : 'transparent',
                   color: svcMode === m ? C.green : C.muted,
                 }}>{m === 'in_shop' ? 'حضوری' : 'در محل'}</button>
               ))}
@@ -343,7 +342,7 @@ function BookAppointmentSheet({ vehicle, mechanicId, services, onClose }: {
         </div>
         <FormField label="توضیحات"><TextArea value={notes} onChange={e => setNotes(e.target.value)} rows={2} /></FormField>
         {error && (
-          <div style={{ fontSize: 12, color: '#F87171', background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">ارسال درخواست نوبت</Button>
       </form>

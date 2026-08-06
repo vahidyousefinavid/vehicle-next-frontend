@@ -1,5 +1,5 @@
 'use client';
-import { C } from './tokens';
+import { C, alpha } from './tokens';
 import { Button } from './Button';
 
 export function EmptyState({
@@ -20,8 +20,8 @@ export function EmptyState({
     }}>
       <div style={{
         width: 62, height: 62, borderRadius: '50%',
-        background: 'rgba(34,197,94,0.10)',
-        border: `1px solid ${C.green}30`,
+        background: alpha(C.green, 10),
+        border: `1px solid ${alpha(C.green, 19)}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: C.green,
         margin: '0 auto 16px',
@@ -41,7 +41,7 @@ export function Spinner({ size = 30 }: { size?: number }) {
     <div style={{ display: 'flex', justifyContent: 'center', padding: '52px 0' }}>
       <div style={{
         width: size, height: size, borderRadius: '50%',
-        border: `2.5px solid ${C.green}26`, borderTopColor: C.green,
+        border: `2.5px solid ${alpha(C.green, 15)}`, borderTopColor: C.green,
         animation: 'spin 0.8s linear infinite',
       }} />
     </div>
@@ -52,7 +52,7 @@ export function Skeleton({ height = 16, width = '100%', radius = 8, style }: { h
   return (
     <div style={{
       height, width, borderRadius: radius,
-      background: 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.10) 37%, rgba(255,255,255,0.05) 63%)',
+      background: 'linear-gradient(90deg, ${C.fill2} 25%, C.fill4 37%, C.fill2 63%)',
       backgroundSize: '400% 100%',
       animation: 'shimmer 1.6s ease infinite',
       ...style,
