@@ -3,9 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
+import CatalogImportSheet from '@/components/CatalogImportSheet';
 import { api, Product, productImageUrl } from '@/lib/api';
 import { C, Card, Button, IconButton, FormField, Input, TextArea, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
-import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon, ImageIcon } from '@/components/icons';
+import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon, ImageIcon, SparklesIcon } from '@/components/icons';
 
 export default function SellerProductsPage() {
   const router = useRouter();
@@ -14,6 +15,9 @@ export default function SellerProductsPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [ownedNames, setOwnedNames] = useState<string[]>([]);
+  const [notice, setNotice] = useState('');
 
   function load() {
     setLoading(true);
@@ -24,6 +28,17 @@ export default function SellerProductsPage() {
     const id = setTimeout(load, 250);
     return () => clearTimeout(id);
   }, [q]);
+
+  async function openCatalog() {
+    setShowCatalog(true);
+    try { setOwnedNames((await api.products.list()).map(p => p.name)); } catch { setOwnedNames([]); }
+  }
+
+  function afterImport(added: number, skipped: number) {
+    setShowCatalog(false);
+    setNotice(added ? `${added} کالا به فروشگاه اضافه شد${skipped ? ` · ${skipped} مورد تکراری بود` : ''}` : 'همه‌ی موارد انتخابی از قبل در فروشگاه بودند');
+    load();
+  }
 
   async function del(id: string) {
     if (!confirm('این محصول حذف شود؟')) return;
@@ -47,12 +62,33 @@ export default function SellerProductsPage() {
           <ChevronRightIcon size={16} /> بازگشت
         </button>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
             <Input value={q} onChange={e => setQ(e.target.value)} placeholder="جستجوی محصول..." />
           </div>
           <Button onClick={() => setShowAdd(true)} icon={<PlusIcon size={15} />}>افزودن</Button>
         </div>
+
+        <button
+          onClick={openCatalog}
+          style={{
+            width: '100%', marginBottom: 14, padding: '11px 14px', borderRadius: 14,
+            background: alpha(C.green, 8), border: `1px dashed ${alpha(C.green, 34)}`,
+            color: C.green, fontSize: 12.5, fontWeight: 800,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          }}
+        >
+          <SparklesIcon size={15} /> افزودن از لیست آماده کالاها
+        </button>
+
+        {notice && (
+          <div style={{
+            marginBottom: 12, padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700,
+            color: C.green, background: alpha(C.green, 10), border: `1px solid ${alpha(C.green, 22)}`,
+          }}>
+            {notice}
+          </div>
+        )}
 
         {loading ? (
           <Spinner />
@@ -60,7 +96,7 @@ export default function SellerProductsPage() {
           <EmptyState
             icon={<BoxIcon size={26} />}
             title="هنوز محصولی ثبت نکردی"
-            sub="محصولاتت رو با عکس، قیمت و موجودی ثبت کن تا فروشگاهت کامل بشه"
+            sub="محصولاتت رو با عکس، قیمت و موجودی ثبت کن — یا از لیست آماده‌ی بالا یکجا اضافه کن"
             onAdd={() => setShowAdd(true)}
             btnLabel="افزودن اولین محصول"
           />
@@ -122,6 +158,14 @@ export default function SellerProductsPage() {
           product={editing}
           onClose={() => { setShowAdd(false); setEditing(null); }}
           onSaved={() => { setShowAdd(false); setEditing(null); load(); }}
+        />
+      )}
+      {showCatalog && (
+        <CatalogImportSheet
+          kind="products"
+          existing={ownedNames}
+          onClose={() => setShowCatalog(false)}
+          onImported={afterImport}
         />
       )}
       <BottomNav />

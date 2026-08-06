@@ -33,6 +33,14 @@ async function reqForm<T>(method: string, path: string, form: FormData): Promise
   return res.json();
 }
 
+function catalogQuery(q?: string, category?: string) {
+  const qs = new URLSearchParams();
+  if (q) qs.set('q', q);
+  if (category) qs.set('category', category);
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
 function productForm(d: Partial<UpsertProductInput>) {
   const form = new FormData();
   if (d.name !== undefined) form.set('name', d.name);
@@ -144,6 +152,7 @@ export const api = {
   },
   mechanicServices: {
     list:   ()                              => req<MechanicServiceOffering[]>('GET', '/mechanic/services'),
+    importPresets: (items: ImportServiceItem[]) => req<ImportResult>('POST', '/mechanic/services/import', { items }),
     create: (d: UpsertMechanicServiceInput) => req<MechanicServiceOffering>('POST', '/mechanic/services', d),
     update: (id: string, d: Partial<UpsertMechanicServiceInput>) => req<MechanicServiceOffering>('PATCH', `/mechanic/services/${id}`, d),
     remove: (id: string)                    => req<void>('DELETE', `/mechanic/services/${id}`),
@@ -168,8 +177,14 @@ export const api = {
     subscribe:  (sub: PushSubscriptionJSON) => req<{ ok: boolean }>('POST', '/push/subscribe', sub),
     unsubscribe:(endpoint: string) => req<{ ok: boolean }>('DELETE', '/push/subscribe', { endpoint }),
   },
+  catalog: {
+    parts:    (q?: string, category?: string) => req<CatalogPage<PresetPart>>('GET', `/catalog/parts${catalogQuery(q, category)}`),
+    products: (q?: string, category?: string) => req<CatalogPage<PresetProduct>>('GET', `/catalog/products${catalogQuery(q, category)}`),
+    services: (q?: string, category?: string) => req<CatalogPage<PresetService>>('GET', `/catalog/services${catalogQuery(q, category)}`),
+  },
   parts: {
     list:   (q?: string) => req<Part[]>('GET', `/mechanic/parts${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+    importPresets: (items: ImportPartItem[]) => req<ImportResult>('POST', '/mechanic/parts/import', { items }),
     create: (d: Partial<Part>) => req<Part>('POST', '/mechanic/parts', d),
     update: (id: string, d: Partial<Part>) => req<Part>('PATCH', `/mechanic/parts/${id}`, d),
     remove: (id: string) => req<void>('DELETE', `/mechanic/parts/${id}`),
@@ -192,6 +207,7 @@ export const api = {
   },
   products: {
     list:      (q?: string) => req<Product[]>('GET', `/seller/products${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+    importPresets: (items: ImportProductItem[]) => req<ImportResult>('POST', '/seller/products/import', { items }),
     create:    (d: UpsertProductInput) => reqForm<Product>('POST', '/seller/products', productForm(d)),
     update:    (id: string, d: Partial<UpsertProductInput>) => reqForm<Product>('PATCH', `/seller/products/${id}`, productForm(d)),
     setActive: (id: string, active: boolean) => req<Product>('PATCH', `/seller/products/${id}/active`, { active }),
@@ -368,6 +384,23 @@ export interface Conversation {
 export interface PushSubscriptionJSON { endpoint: string; keys: { p256dh: string; auth: string } }
 
 export interface Part { id: string; name: string; category?: string; sku?: string; unit: string; unitPrice: number; quantity: number; inStock: boolean; createdAt: string }
+
+/* ── کاتالوگ آماده (لیست‌های مرجع قطعات / خدمات / کالاها) ────────── */
+export interface CatalogPage<T> { categories: string[]; items: T[] }
+export interface PresetPart {
+  key: string; name: string; category: string; unit: string; suggestedPrice: number;
+}
+export interface PresetProduct {
+  key: string; name: string; category: string; unit: string; suggestedPrice: number; description?: string;
+}
+export interface PresetService {
+  key: string; serviceType: string; customName?: string; category: string;
+  suggestedPrice: number; supportsInShop: boolean; supportsOnSite: boolean;
+}
+export interface ImportPartItem    { key: string; unitPrice?: number; quantity?: number }
+export interface ImportProductItem { key: string; price?: number; stock?: number }
+export interface ImportServiceItem { key: string; price?: number; supportsInShop?: boolean; supportsOnSite?: boolean }
+export interface ImportResult { added: number; skipped: number }
 
 export interface OrganizationSummary { id: string; name: string; role: 'admin' | 'driver'; createdAt: string }
 export interface OrgMember { id: string; userId: string; name: string; phone: string; role: 'admin' | 'driver' }

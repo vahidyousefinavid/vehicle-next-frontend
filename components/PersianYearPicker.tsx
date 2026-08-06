@@ -1,9 +1,10 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import * as jalaali from 'jalaali-js';
 import { CalendarIcon } from './icons';
 import { C, alpha } from './ui/tokens';
+import { useAnchoredPopover, popoverBackdropStyle } from './ui/useAnchoredPopover';
 
 function toFa(n: number) {
   return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[+d]);
@@ -36,9 +37,10 @@ export default function PersianYearPicker({
 
   const [open, setOpen]         = useState(false);
   const [yearPage, setYearPage] = useState(Math.floor((value || todayY) / 12) * 12);
-  const [popupPos, setPopupPos] = useState<React.CSSProperties>({});
   const [mounted, setMounted]   = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const close = useCallback(() => setOpen(false), []);
+  const { anchorRef, popRef, popoverStyle, mobile } = useAnchoredPopover(open, close);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -53,19 +55,6 @@ export default function PersianYearPicker({
   }, [open]);
 
   function openPicker() {
-    if (triggerRef.current) {
-      const r = triggerRef.current.getBoundingClientRect();
-      const popH = 220;
-      const spaceBelow = window.innerHeight - r.bottom - 8;
-      const top = spaceBelow >= popH ? r.bottom + 6 : r.top - popH - 6;
-      setPopupPos({
-        position: 'fixed',
-        top: Math.max(8, top),
-        left: r.left,
-        width: Math.max(r.width, 272),
-        maxWidth: 310,
-      });
-    }
     setYearPage(Math.floor((value || todayY) / 12) * 12);
     setOpen(true);
   }
@@ -80,9 +69,11 @@ export default function PersianYearPicker({
   const popup = (
     <div
       id="__pyp__"
+      ref={popRef}
       style={{
-        ...popupPos,
+        ...popoverStyle,
         zIndex: 99999,
+        boxSizing: 'border-box',
         background: C.surfaceSolid,
         border: `1px solid ${C.borderStrong}`,
         borderRadius: 18,
@@ -132,7 +123,7 @@ export default function PersianYearPicker({
   return (
     <>
       <button
-        ref={triggerRef}
+        ref={anchorRef}
         type="button"
         onClick={openPicker}
         style={{
@@ -154,7 +145,12 @@ export default function PersianYearPicker({
         <span style={{ opacity: 0.65, display: 'flex' }}><CalendarIcon size={15} /></span>
       </button>
 
-      {open && mounted && createPortal(popup, document.body)}
+      {open && mounted && createPortal(
+        mobile
+          ? <div style={popoverBackdropStyle} onMouseDown={e => { if (e.target === e.currentTarget) setOpen(false); }}>{popup}</div>
+          : popup,
+        document.body,
+      )}
     </>
   );
 }

@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import VoiceAgentWidget from '@/components/VoiceAgentWidget';
+import CatalogImportSheet from '@/components/CatalogImportSheet';
 import { api, Part } from '@/lib/api';
 import { C, Card, Button, IconButton, FormField, Input, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
-import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon } from '@/components/icons';
+import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon, SparklesIcon } from '@/components/icons';
 
 export default function PartsCatalogPage() {
   const router = useRouter();
@@ -15,6 +16,9 @@ export default function PartsCatalogPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<Part | null>(null);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [ownedNames, setOwnedNames] = useState<string[]>([]);
+  const [notice, setNotice] = useState('');
 
   function load() {
     setLoading(true);
@@ -25,6 +29,17 @@ export default function PartsCatalogPage() {
     const id = setTimeout(load, 250);
     return () => clearTimeout(id);
   }, [q]);
+
+  async function openCatalog() {
+    setShowCatalog(true);
+    try { setOwnedNames((await api.parts.list()).map(p => p.name)); } catch { setOwnedNames([]); }
+  }
+
+  function afterImport(added: number, skipped: number) {
+    setShowCatalog(false);
+    setNotice(added ? `${added} قطعه به کاتالوگ اضافه شد${skipped ? ` · ${skipped} مورد تکراری بود` : ''}` : 'همه‌ی موارد انتخابی از قبل در کاتالوگ بودند');
+    load();
+  }
 
   async function del(id: string) {
     if (!confirm('این قطعه از کاتالوگ حذف شود؟')) return;
@@ -43,12 +58,33 @@ export default function PartsCatalogPage() {
           <ChevronRightIcon size={16} /> بازگشت
         </button>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
             <Input value={q} onChange={e => setQ(e.target.value)} placeholder="جستجوی قطعه..." />
           </div>
           <Button onClick={() => setShowAdd(true)} icon={<PlusIcon size={15} />}>افزودن</Button>
         </div>
+
+        <button
+          onClick={openCatalog}
+          style={{
+            width: '100%', marginBottom: 14, padding: '11px 14px', borderRadius: 14,
+            background: alpha(C.green, 8), border: `1px dashed ${alpha(C.green, 34)}`,
+            color: C.green, fontSize: 12.5, fontWeight: 800,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          }}
+        >
+          <SparklesIcon size={15} /> افزودن از لیست آماده قطعات
+        </button>
+
+        {notice && (
+          <div style={{
+            marginBottom: 12, padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700,
+            color: C.green, background: alpha(C.green, 10), border: `1px solid ${alpha(C.green, 22)}`,
+          }}>
+            {notice}
+          </div>
+        )}
 
         {loading ? (
           <Spinner />
@@ -90,6 +126,14 @@ export default function PartsCatalogPage() {
           part={editing}
           onClose={() => { setShowAdd(false); setEditing(null); }}
           onSaved={() => { setShowAdd(false); setEditing(null); load(); }}
+        />
+      )}
+      {showCatalog && (
+        <CatalogImportSheet
+          kind="parts"
+          existing={ownedNames}
+          onClose={() => setShowCatalog(false)}
+          onImported={afterImport}
         />
       )}
       <VoiceAgentWidget tenantId="vehicle-parts" onExecuted={load} />

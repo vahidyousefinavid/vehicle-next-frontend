@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { svcMeta } from '@/components/serviceMeta';
+import CatalogImportSheet, { serviceIdentity } from '@/components/CatalogImportSheet';
 import { api, MechanicServiceOffering, SERVICE_TYPES } from '@/lib/api';
 import { C, Card, IconBadge, Button, IconButton, FormField, Input, ChipGroup, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
-import { ChevronRightIcon, WrenchIcon, PlusIcon, TrashIcon, StoreIcon, NavigationIcon } from '@/components/icons';
+import { ChevronRightIcon, WrenchIcon, PlusIcon, TrashIcon, StoreIcon, NavigationIcon, SparklesIcon } from '@/components/icons';
 
 export default function MechanicServicesPage() {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function MechanicServicesPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<MechanicServiceOffering | null>(null);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [notice, setNotice] = useState('');
 
   function load() {
     api.mechanicServices.list().then(setServices).finally(() => setLoading(false));
@@ -22,6 +25,12 @@ export default function MechanicServicesPage() {
     if (!localStorage.getItem('vtoken')) { router.replace('/'); return; }
     load();
   }, []);
+
+  function afterImport(added: number, skipped: number) {
+    setShowCatalog(false);
+    setNotice(added ? `${added} خدمت اضافه شد${skipped ? ` · ${skipped} مورد از قبل ثبت شده بود` : ''}` : 'همه‌ی موارد انتخابی از قبل ثبت شده بودند');
+    load();
+  }
 
   async function del(id: string) {
     if (!confirm('این خدمت از فهرست خدمات شما حذف شود؟')) return;
@@ -37,9 +46,30 @@ export default function MechanicServicesPage() {
           <ChevronRightIcon size={16} /> بازگشت
         </button>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
           <Button size="sm" onClick={() => setShowAdd(true)} icon={<PlusIcon size={14} />}>افزودن خدمت</Button>
         </div>
+
+        <button
+          onClick={() => setShowCatalog(true)}
+          style={{
+            width: '100%', marginBottom: 14, padding: '11px 14px', borderRadius: 14,
+            background: alpha(C.green, 8), border: `1px dashed ${alpha(C.green, 34)}`,
+            color: C.green, fontSize: 12.5, fontWeight: 800,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          }}
+        >
+          <SparklesIcon size={15} /> افزودن از لیست آماده خدمات
+        </button>
+
+        {notice && (
+          <div style={{
+            marginBottom: 12, padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700,
+            color: C.green, background: alpha(C.green, 10), border: `1px solid ${alpha(C.green, 22)}`,
+          }}>
+            {notice}
+          </div>
+        )}
 
         {loading ? (
           <Spinner />
@@ -47,7 +77,7 @@ export default function MechanicServicesPage() {
           <EmptyState
             icon={<WrenchIcon size={26} />}
             title="هنوز خدمتی ثبت نکردی"
-            sub="خدماتی که ارائه می‌دی رو ثبت کن تا مشتری‌ها توی جستجو پیدات کنن و بتونن مستقیم نوبت بگیرن"
+            sub="خدماتی که ارائه می‌دی رو ثبت کن تا مشتری‌ها توی جستجو پیدات کنن — یا از لیست آماده‌ی بالا یکجا اضافه کن"
             onAdd={() => setShowAdd(true)}
             btnLabel="افزودن اولین خدمت"
           />
@@ -95,6 +125,14 @@ export default function MechanicServicesPage() {
           takenTypes={services.filter(s => s.id !== editing?.id).map(s => s.serviceType)}
           onClose={() => { setShowAdd(false); setEditing(null); }}
           onSaved={() => { setShowAdd(false); setEditing(null); load(); }}
+        />
+      )}
+      {showCatalog && (
+        <CatalogImportSheet
+          kind="services"
+          existing={services.map(s => serviceIdentity(s.serviceType, s.customName))}
+          onClose={() => setShowCatalog(false)}
+          onImported={afterImport}
         />
       )}
       <BottomNav />

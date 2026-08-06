@@ -8,3 +8,4 @@ export * from './StatusChip';
 export * from './EmptyState';
 export * from './Sheet';
 export * from './Money';
+export * from './useAnchoredPopover';
