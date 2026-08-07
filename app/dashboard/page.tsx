@@ -8,7 +8,7 @@ import RequestServiceModal from '@/components/RequestServiceModal';
 import NetworkGrowingNotice from '@/components/NetworkGrowingNotice';
 import QuickEntry from '@/components/QuickEntry';
 import AgendaPreview from '@/components/AgendaPreview';
-import { svcMeta } from '@/components/serviceMeta';
+import ServiceOrbit from '@/components/ServiceOrbit';
 import { api, Vehicle, daysUntil, expiryStatus, SERVICE_TYPES } from '@/lib/api';
 import { C, EmptyState, SkeletonRow, SkeletonHero, alpha } from '@/components/ui';
 import {
@@ -21,7 +21,7 @@ const QUICK_SERVICES = SERVICE_TYPES.filter(t => t !== 'سایر');
 function QuickServices({ onPick }: { onPick: (type: string) => void }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
         <h2 style={{ color: C.text2, fontSize: 14, fontWeight: 700, margin: 0 }}>درخواست سریع خدمت</h2>
         <Link href="/workshops" style={{
           display: 'flex', alignItems: 'center', gap: 4, color: C.muted, fontSize: 12, fontWeight: 600, textDecoration: 'none',
@@ -29,30 +29,10 @@ function QuickServices({ onPick }: { onPick: (type: string) => void }) {
           <StoreIcon size={13} /> همه تعمیرگاه‌ها
         </Link>
       </div>
-      <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
-        {QUICK_SERVICES.map(type => {
-          const meta = svcMeta(type);
-          const Icon = meta.icon;
-          return (
-            <button
-              key={type}
-              onClick={() => onPick(type)}
-              style={{
-                flexShrink: 0, width: 92, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                padding: '14px 8px', borderRadius: 18,
-                background: C.surface, border: `1px solid ${C.border}`,
-                fontFamily: 'Vazirmatn, sans-serif',
-              }}
-            >
-              <div style={{
-                width: 40, height: 40, borderRadius: 13, background: `${alpha(meta.color, 12)}`, border: `1px solid ${alpha(meta.color, 25)}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: meta.color,
-              }}><Icon size={19} /></div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: C.text, textAlign: 'center', lineHeight: 1.4 }}>{type}</span>
-            </button>
-          );
-        })}
-      </div>
+      <p style={{ color: C.subtle, fontSize: 11, margin: '0 0 2px' }}>
+        روی هر خدمت بزن تا درخواستش رو بفرستی — برای چرخاندن، بکش
+      </p>
+      <ServiceOrbit services={QUICK_SERVICES} onPick={onPick} />
     </div>
   );
 }

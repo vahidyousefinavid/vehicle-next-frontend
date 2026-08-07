@@ -85,11 +85,12 @@ export default function MechanicDashboard() {
         </div>
 
         {/* The screens the tab bar can't fit, one tap from the panel. */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9, marginBottom: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 9, marginBottom: 18 }}>
           {[
             { label: 'خدمات من', hint: 'قیمت و نوع', icon: <SettingsIcon size={18} />, href: '/mechanic/services', color: C.green },
             { label: 'قطعات', hint: 'کاتالوگ', icon: <BoxIcon size={18} />, href: '/mechanic/parts', color: C.statusInfo },
             { label: 'گفتگوها', hint: 'با مشتری', icon: <MessageIcon size={18} />, href: '/messages', color: C.statusMint },
+            { label: 'هزینه‌ها', hint: 'اجاره، حقوق', icon: <WalletIcon size={18} />, href: '/mechanic/expenses', color: C.statusExpired },
           ].map(a => (
             <button key={a.href} onClick={() => router.push(a.href)} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,

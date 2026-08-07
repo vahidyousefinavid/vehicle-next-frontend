@@ -1,16 +1,30 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { api, AppNotification, toJalali } from '@/lib/api';
 import { C, Button, EmptyState, Spinner } from './ui';
 import { BellIcon, CheckIcon, XIcon } from './icons';
 
 export default function NotificationsBell() {
+  const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(false);
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
+
+  /**
+   * Where a notification should take you. Notifications carried a vehicle (and now an
+   * invoice) all along but nothing was clickable, so "صورتحساب در انتظار تأیید شماست"
+   * was a dead end — the customer had no way to reach the bill it was about.
+   */
+  function destinationOf(n: AppNotification): string | null {
+    const data: any = n.data ?? {};
+    if (data.vehicleId) return `/vehicles/${data.vehicleId}?tab=records`;
+    if (data.appointmentId) return '/appointments';
+    return null;
+  }
 
   const refreshCount = useCallback(() => {
     if (!localStorage.getItem('vtoken')) return;
@@ -100,11 +114,21 @@ export default function NotificationsBell() {
               <EmptyState icon={<BellIcon size={24} />} title="اعلانی نداری" sub="هر خبری بیاد اینجا نشونت می‌دیم" />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {items.map(n => (
-                  <div key={n.id} style={{
-                    background: C.fill1, border: `1px solid ${C.border}`,
-                    borderRadius: 16, padding: '13px 14px',
-                  }}>
+                {items.map(n => {
+                  const href = destinationOf(n);
+                  return (
+                  <div
+                    key={n.id}
+                    onClick={href ? () => { setOpen(false); router.push(href); } : undefined}
+                    role={href ? 'link' : undefined}
+                    tabIndex={href ? 0 : undefined}
+                    onKeyDown={href ? (e) => { if (e.key === 'Enter') { setOpen(false); router.push(href); } } : undefined}
+                    style={{
+                      background: C.fill1, border: `1px solid ${C.border}`,
+                      borderRadius: 16, padding: '13px 14px',
+                      cursor: href ? 'pointer' : 'default',
+                    }}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                       <p style={{ fontSize: 13.5, fontWeight: 800, color: C.text, margin: 0 }}>{n.title}</p>
                       <span style={{ fontSize: 10, color: C.subtle, whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -136,7 +160,8 @@ export default function NotificationsBell() {
                       </p>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

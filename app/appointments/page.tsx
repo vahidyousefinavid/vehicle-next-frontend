@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import { api, Appointment, Role, toJalali } from '@/lib/api';
 import { C, Card, Button, EmptyState, Spinner, alpha } from '@/components/ui';
-import { ChevronRightIcon, CalendarIcon, CheckIcon, XIcon, CarIcon, WrenchIcon, PinIcon, PhoneIcon, StoreIcon, NavigationIcon } from '@/components/icons';
+import { ChevronRightIcon, CalendarIcon, CheckIcon, XIcon, CarIcon, WrenchIcon, PinIcon, PhoneIcon, StoreIcon, NavigationIcon, WalletIcon } from '@/components/icons';
 import { getToken, getRole } from '@/lib/session';
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -142,6 +142,21 @@ export default function AppointmentsPage() {
                   )}
                   {role === 'mechanic' && a.status === 'confirmed' && (
                     <Button size="sm" fullWidth loading={actingId === a.id} onClick={() => act(a.id, 'complete')} style={{ marginTop: 12 }} icon={<CheckIcon size={13} />}>ثبت به‌عنوان انجام‌شده</Button>
+                  )}
+                  {/* Completing a job used to be the end of the trail here: the service record
+                      and its bill were created, but nothing on this screen led to them, so the
+                      mechanic had no way to price the work they had just finished. */}
+                  {role === 'mechanic' && a.status === 'completed' && a.serviceRecordId && (
+                    <Button
+                      size="sm"
+                      fullWidth
+                      variant="secondary"
+                      onClick={() => router.push(`/mechanic/vehicles/${a.vehicleId}?record=${a.serviceRecordId}`)}
+                      style={{ marginTop: 12 }}
+                      icon={<WalletIcon size={13} />}
+                    >
+                      صدور و ویرایش فاکتور
+                    </Button>
                   )}
                   {role === 'owner' && ['pending', 'confirmed'].includes(a.status) && (
                     <Button size="sm" fullWidth variant="danger" disabled={actingId === a.id} onClick={() => act(a.id, 'cancel')} style={{ marginTop: 12 }} icon={<XIcon size={13} />}>لغو نوبت</Button>

@@ -2,17 +2,26 @@
 import { C, alpha } from './tokens';
 
 export function Card({
-  children, style, accentColor, padding = '16px 18px', className,
+  children, style, accentColor, padding = '16px 18px', className, onClick, ariaLabel,
 }: {
   children: React.ReactNode;
   style?: React.CSSProperties;
   accentColor?: string;
   padding?: string;
   className?: string;
+  /** Makes the whole card actionable. Keyboard support comes with it — a card you can
+   *  click but not tab to is a control only some people can reach. */
+  onClick?: () => void;
+  ariaLabel?: string;
 }) {
   return (
     <div
       className={className}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? ariaLabel : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       style={{
         background: C.surface,
         border: `1px solid ${C.border}`,

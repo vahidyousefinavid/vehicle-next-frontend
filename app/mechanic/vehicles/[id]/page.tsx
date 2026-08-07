@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import PersianDatePicker from '@/components/PersianDatePicker';
@@ -8,6 +8,7 @@ import PartsCatalogPicker from '@/components/PartsCatalogPicker';
 import Chat from '@/components/Chat';
 import {
   api, MechanicVehicleDetail, ServiceRecord, SERVICE_TYPES, InvoiceItem, Part, toJalali,
+  Invoice, PaymentMethod,
 } from '@/lib/api';
 import {
   C, Card, IconBadge, Button, IconButton, FormField, Input, Select, ChipGroup, Sheet,
@@ -22,16 +23,31 @@ function today() { return new Date().toISOString().slice(0, 10); }
 export default function MechanicVehiclePage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  /** Set when arriving from a completed appointment — opens that record's bill straight away. */
+  const focusRecordId = searchParams.get('record');
   const [vehicle, setVehicle] = useState<MechanicVehicleDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<ServiceRecord | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [selfId, setSelfId] = useState('');
+  /** Guards the deep-link so closing the sheet doesn't immediately reopen it. */
+  const [focusHandled, setFocusHandled] = useState(false);
 
   function load() {
     api.mechanic.getVehicle(id).then(setVehicle).finally(() => setLoading(false));
   }
+
+  // Open the requested record's sheet as soon as the data it needs is present. Runs once:
+  // the guard matters because the sheet's own close handler must not be undone by a
+  // re-render while the ?record= parameter is still in the URL.
+  useEffect(() => {
+    if (focusHandled || !focusRecordId || !vehicle) return;
+    const target = vehicle.serviceRecords?.find((r) => r.id === focusRecordId);
+    setFocusHandled(true);
+    if (target) setEditing(target);
+  }, [focusHandled, focusRecordId, vehicle]);
 
   useEffect(() => {
     if (!localStorage.getItem('vtoken')) { router.replace('/'); return; }
@@ -154,6 +170,7 @@ export default function MechanicVehiclePage() {
                   )}
                   <IconButton label="ویرایش سرویس" onClick={() => setEditing(r)} size={30}><SettingsIcon size={14} /></IconButton>
                 </div>
+                {r.invoice && <MechanicInvoicePanel vehicleId={vehicle.id} record={r} onChanged={load} />}
               </Card>
             ))}
           </div>
@@ -346,5 +363,202 @@ function AddServiceWithInvoiceSheet({ vehicleId, record, onClose, onSaved }: { v
         </Button>
       </form>
     </Sheet>
+  );
+}
+
+/**
+ * The bill, as the workshop needs to see it.
+ *
+ * The owner's app has shown an itemised invoice for a long time; the mechanic who *issued*
+ * it could only see a rounded total on a badge. Everything here is read from the API's own
+ * breakdown rather than recomputed, so this view can never disagree with the receipt or the
+ * accounting page.
+ */
+function MechanicInvoicePanel({
+  vehicleId, record, onChanged,
+}: { vehicleId: string; record: ServiceRecord; onChanged: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState<PaymentMethod>('cash');
+  const [reference, setReference] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open || invoice) return;
+    setLoading(true);
+    api.invoices.get(vehicleId, record.id).then(setInvoice).catch(() => {}).finally(() => setLoading(false));
+  }, [open, invoice, vehicleId, record.id]);
+
+  const money = (n: number) => Math.round(n).toLocaleString('fa-IR');
+
+  const STATUS: Record<string, { label: string; color: string }> = {
+    pending:  { label: 'در انتظار تأیید مشتری', color: C.statusWarn },
+    approved: { label: 'تأییدشده توسط مشتری',   color: C.statusMint },
+    rejected: { label: 'ردشده توسط مشتری',      color: C.statusExpired },
+  };
+  const METHOD: Record<string, string> = { cash: 'نقدی', card: 'کارتخوان', transfer: 'انتقال', cheque: 'چک' };
+
+  async function submitPayment(e: React.FormEvent) {
+    e.preventDefault();
+    const value = Number(amount);
+    if (!value || value <= 0) { setError('مبلغ را وارد کنید'); return; }
+    setSaving(true); setError('');
+    try {
+      const updated = await api.invoices.addPayment(vehicleId, record.id, {
+        amount: value, method, reference: reference.trim() || undefined,
+      });
+      setInvoice(updated);
+      setAmount(''); setReference(''); setPayOpen(false);
+      onChanged();
+    } catch (err: any) {
+      setError(err?.message || 'ثبت دریافت انجام نشد');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{
+          marginTop: 10, width: '100%', background: 'transparent', border: `1px dashed ${alpha(C.text2, 30)}`,
+          borderRadius: 9, padding: '7px 10px', cursor: 'pointer',
+          fontSize: 11.5, fontWeight: 700, color: C.text2, fontFamily: 'inherit',
+        }}
+      >
+        مشاهده جزئیات صورتحساب
+      </button>
+    );
+  }
+
+  const st = invoice?.status ? STATUS[invoice.status] : null;
+
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${alpha(C.text2, 14)}` }}>
+      {loading && <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>در حال بارگذاری…</p>}
+
+      {invoice && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: C.text }}>
+              فاکتور {invoice.number ? `شماره ${invoice.number}` : ''}
+            </span>
+            {st && (
+              <span style={{
+                fontSize: 10.5, fontWeight: 800, color: st.color,
+                background: alpha(st.color, 14), padding: '3px 9px', borderRadius: 8, whiteSpace: 'nowrap',
+              }}>{st.label}</span>
+            )}
+          </div>
+
+          {invoice.status === 'rejected' && invoice.rejectionReason && (
+            <p style={{
+              fontSize: 11.5, color: C.statusExpired, background: alpha(C.statusExpired, 10),
+              padding: '7px 10px', borderRadius: 8, margin: '0 0 10px', lineHeight: 1.7,
+            }}>
+              دلیل مشتری: {invoice.rejectionReason}
+            </p>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, fontSize: 12, color: C.text2 }}>
+            {invoice.items.map((it, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                <span>
+                  <span style={{ color: C.subtle, fontSize: 10.5 }}>{it.type === 'labor' ? 'اجرت' : 'قطعه'}</span>{' '}
+                  {it.name}{it.quantity > 1 ? ` × ${it.quantity}` : ''}
+                </span>
+                <span style={{ whiteSpace: 'nowrap' }}>{money(it.quantity * it.unitPrice)}</span>
+              </div>
+            ))}
+
+            <div style={{ height: 1, background: alpha(C.text2, 12), margin: '5px 0' }} />
+
+            <Row label="جمع اقلام" value={money(invoice.subtotal)} />
+            {invoice.discount > 0 && <Row label="تخفیف" value={`${money(invoice.discount)}−`} color={C.statusMint} />}
+            {!!invoice.tax && invoice.tax > 0 && (
+              <Row label={`ارزش افزوده ${invoice.taxPercent ?? 0}٪`} value={money(invoice.tax)} />
+            )}
+            <Row label="قابل پرداخت" value={money(invoice.total)} bold />
+            <Row label="دریافت‌شده" value={money(invoice.paidAmount)} color={C.statusMint} />
+            <Row
+              label="مانده"
+              value={money(invoice.remaining ?? Math.max(0, invoice.total - invoice.paidAmount))}
+              color={(invoice.remaining ?? 0) > 0 ? C.statusWarn : C.muted}
+              bold
+            />
+          </div>
+
+          {!!invoice.payments?.length && (
+            <div style={{ marginTop: 11 }}>
+              <p style={{ fontSize: 11, fontWeight: 800, color: C.text2, margin: '0 0 6px' }}>دریافت‌ها</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {invoice.payments.map(p => (
+                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 11.5, color: C.muted }}>
+                    <span>{METHOD[p.method] ?? p.method}{p.reference ? ` · ${p.reference}` : ''}</span>
+                    <span style={{ whiteSpace: 'nowrap' }}>{money(p.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(invoice.remaining ?? 0) > 0 && !payOpen && (
+            <Button size="sm" fullWidth variant="secondary" onClick={() => setPayOpen(true)} style={{ marginTop: 11 }}>
+              ثبت دریافت وجه
+            </Button>
+          )}
+
+          {payOpen && (
+            <form onSubmit={submitPayment} style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <Input
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                type="number"
+                placeholder={`مبلغ دریافتی (مانده ${money(invoice.remaining ?? 0)})`}
+              />
+              <div style={{ display: 'flex', gap: 6 }}>
+                {(['cash', 'card', 'transfer', 'cheque'] as PaymentMethod[]).map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMethod(m)}
+                    style={{
+                      flex: 1, padding: '6px 4px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: 11, fontWeight: 700,
+                      border: `1px solid ${method === m ? C.green : alpha(C.text2, 22)}`,
+                      background: method === m ? alpha(C.green, 12) : 'transparent',
+                      color: method === m ? C.green : C.muted,
+                    }}
+                  >{METHOD[m]}</button>
+                ))}
+              </div>
+              {(method === 'cheque' || method === 'transfer' || method === 'card') && (
+                <Input value={reference} onChange={e => setReference(e.target.value)} placeholder={method === 'cheque' ? 'شماره چک' : 'شماره پیگیری'} />
+              )}
+              {error && <p style={{ fontSize: 11.5, color: C.statusExpired, margin: 0 }}>{error}</p>}
+              <div style={{ display: 'flex', gap: 7 }}>
+                <Button size="sm" fullWidth type="submit" loading={saving}>ثبت</Button>
+                <Button size="sm" fullWidth type="button" variant="secondary" onClick={() => { setPayOpen(false); setError(''); }}>انصراف</Button>
+              </div>
+            </form>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function Row({ label, value, bold, color }: { label: string; value: string; bold?: boolean; color?: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontWeight: bold ? 800 : 500, color: color ?? undefined }}>
+      <span>{label}</span>
+      <span style={{ whiteSpace: 'nowrap' }}>{value}</span>
+    </div>
   );
 }

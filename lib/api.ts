@@ -41,6 +41,19 @@ function catalogQuery(q?: string, category?: string) {
   return s ? `?${s}` : '';
 }
 
+function invoiceQuery(f: InvoiceListFilter) {
+  const qs = new URLSearchParams();
+  if (f.q) qs.set('q', f.q);
+  if (f.status && f.status !== 'all') qs.set('status', f.status);
+  if (f.payment && f.payment !== 'all') qs.set('payment', f.payment);
+  if (f.from) qs.set('from', f.from);
+  if (f.to) qs.set('to', f.to);
+  if (f.limit != null) qs.set('limit', String(f.limit));
+  if (f.offset) qs.set('offset', String(f.offset));
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
 function productForm(d: Partial<UpsertProductInput>) {
   const form = new FormData();
   if (d.name !== undefined) form.set('name', d.name);
@@ -115,11 +128,32 @@ export const api = {
       req<Invoice>('POST', `/vehicles/${vid}/records/${recordId}/invoice`, d),
     get:    (vid: string, recordId: string) => req<Invoice>('GET', `/vehicles/${vid}/records/${recordId}/invoice`),
     remove: (vid: string, recordId: string) => req<void>('DELETE', `/vehicles/${vid}/records/${recordId}/invoice`),
+    approve: (vid: string, recordId: string) =>
+      req<Invoice>('POST', `/vehicles/${vid}/records/${recordId}/invoice/approve`, {}),
+    reject: (vid: string, recordId: string, reason: string) =>
+      req<Invoice>('POST', `/vehicles/${vid}/records/${recordId}/invoice/reject`, { reason }),
+    addPayment: (vid: string, recordId: string, d: AddPaymentInput) =>
+      req<Invoice>('POST', `/vehicles/${vid}/records/${recordId}/invoice/payments`, d),
+    payments: (vid: string, recordId: string) =>
+      req<InvoicePayment[]>('GET', `/vehicles/${vid}/records/${recordId}/invoice/payments`),
+    removePayment: (vid: string, recordId: string, paymentId: string) =>
+      req<Invoice>('DELETE', `/vehicles/${vid}/records/${recordId}/invoice/payments/${paymentId}`),
   },
   mechanic: {
     stats:        ()                              => req<MechanicStats>('GET', '/mechanic/stats'),
     customers:    ()                              => req<MechanicCustomer[]>('GET', '/mechanic/customers'),
+    expenses:           (from?: string, to?: string) =>
+      req<WorkshopExpense[]>('GET', `/mechanic/expenses${from && to ? `?from=${from}&to=${to}` : ''}`),
+    expenseCategories:  () => req<{ key: ExpenseCategory; label: string }[]>('GET', '/mechanic/expenses/categories'),
+    addExpense:         (d: WorkshopExpenseInput) => req<WorkshopExpense>('POST', '/mechanic/expenses', d),
+    updateExpense:      (id: string, d: WorkshopExpenseInput) => req<WorkshopExpense>('PATCH', `/mechanic/expenses/${id}`, d),
+    removeExpense:      (id: string) => req<void>('DELETE', `/mechanic/expenses/${id}`),
     accounting:   (months = 6)                    => req<MechanicAccounting>('GET', `/mechanic/accounting?months=${months}`),
+    invoices:       (f: InvoiceListFilter = {})     => req<MechanicInvoiceList>('GET', `/mechanic/invoices${invoiceQuery(f)}`),
+    invoice:        (id: string)                    => req<MechanicInvoiceDetail>('GET', `/mechanic/invoices/${id}`),
+    createInvoice:  (d: MechanicInvoiceInput)       => req<MechanicInvoiceDetail>('POST', '/mechanic/invoices', d),
+    updateInvoice:  (id: string, d: MechanicInvoiceInput) => req<MechanicInvoiceDetail>('PATCH', `/mechanic/invoices/${id}`, d),
+    removeInvoice:  (id: string)                    => req<void>('DELETE', `/mechanic/invoices/${id}`),
     listVehicles: ()                              => req<MechanicVehicle[]>('GET', '/mechanic/vehicles'),
     getVehicle:   (id: string)                    => req<MechanicVehicleDetail>('GET', `/mechanic/vehicles/${id}`),
     createVehicle: (d: CreateMechanicVehicleInput) => req<MechanicVehicleDetail>('POST', '/mechanic/vehicles', d),
@@ -248,11 +282,39 @@ export interface MechanicCustomer {
   serviceCount: number; lastServiceDate: string | null;
   totalInvoiced: number; outstanding: number;
 }
+export type ExpenseCategory =
+  | 'rent' | 'payroll' | 'utilities' | 'parts' | 'tools' | 'maintenance'
+  | 'transport' | 'marketing' | 'tax' | 'insurance' | 'other';
+
+export interface WorkshopExpense {
+  id: string; category: ExpenseCategory; amount: number; spentAt: string;
+  description?: string | null; recurring: boolean; reference?: string | null; createdAt: string;
+}
+export interface WorkshopExpenseInput {
+  amount: number; category?: ExpenseCategory; spentAt?: string;
+  description?: string; recurring?: boolean; reference?: string;
+}
+
 export interface MechanicAccounting {
-  monthly: { month: string; invoiced: number; collected: number }[];
+  monthly: {
+    month: string; invoiced: number; collected: number;
+    labor: number; parts: number; discount: number; tax: number;
+    awaiting: number; awaitingCount: number;
+    expenses: number; profit: number;
+  }[];
+  /** Workshop costs — what turns revenue into profit. */
+  expenses: { lifetime: number; byCategory: { key: ExpenseCategory; label: string; amount: number }[] };
+  /** Approved revenue − workshop costs. Negative means a loss. */
+  profit: number;
   lifetimeInvoiced: number; lifetimeCollected: number; outstanding: number; unpaidCount: number;
+  /** Lifetime split of approved revenue. */
+  breakdown: { labor: number; parts: number; discount: number; tax: number };
+  /** Billed but not yet accepted by the customer — not counted as revenue. */
+  awaitingApproval: { amount: number; count: number };
+  rejected: { amount: number; count: number };
   unpaidInvoices: {
-    invoiceId: string; serviceType: string; serviceDate: string;
+    invoiceId: string; vehicleId: string; recordId: string; invoiceNumber: string | null;
+    serviceType: string; serviceDate: string;
     vehicle: string; plateNumber: string | null;
     customerName: string; customerPhone: string | null;
     total: number; paid: number; remaining: number;
@@ -362,6 +424,8 @@ export interface Appointment {
   vehicle?: { make: string; model: string; year: number; plateNumber?: string };
   mechanic?: { name: string; workshopName?: string; phone: string };
   owner?: { name: string; phone: string };
+  /** Set once completed — the service record this booking produced, so the UI can jump to its bill. */
+  serviceRecordId?: string | null;
 }
 export interface CreateAppointmentInput {
   vehicleId: string; mechanicId: string; requestedAt: string; serviceType?: string; notes?: string;
@@ -416,9 +480,24 @@ export interface Vehicle {
   linkStatus?: LinkStatus; customerName?: string;
 }
 
+export type InvoiceStatus = 'pending' | 'approved' | 'rejected';
+export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'cheque';
+
+export interface InvoicePayment {
+  id: string; amount: number; method: PaymentMethod;
+  reference?: string | null; note?: string | null; dueDate?: string | null; createdAt: string;
+}
+export interface AddPaymentInput {
+  amount: number; method?: PaymentMethod; reference?: string; note?: string; dueDate?: string;
+}
+
 export interface InvoiceSummary {
-  subtotal: number; total: number; paidAmount: number;
+  subtotal: number; discount: number; tax: number; total: number;
+  paidAmount: number; remaining: number;
   paymentStatus: 'unpaid' | 'partial' | 'paid'; itemCount: number;
+  /** Where the bill stands with the customer — drives whether the UI warns before editing. */
+  status: InvoiceStatus;
+  rejectionReason?: string | null;
 }
 
 export interface ServiceRecord {
@@ -430,11 +509,61 @@ export interface ServiceRecord {
 }
 
 export interface InvoiceItem { id?: string; type: 'part' | 'labor'; name: string; quantity: number; unitPrice: number }
-export interface UpsertInvoiceInput { discount?: number; paidAmount?: number; notes?: string; items: InvoiceItem[] }
+export interface UpsertInvoiceInput { discount?: number; taxPercent?: number; paidAmount?: number; notes?: string; items: InvoiceItem[] }
 export interface Invoice {
   id: string; serviceRecordId: string; createdByUserId?: string; discount: number; paidAmount: number;
   notes?: string; createdAt: string; items: InvoiceItem[]; subtotal: number; total: number;
+  taxPercent?: number; tax?: number; laborTotal?: number; partsTotal?: number; remaining?: number;
+  status?: InvoiceStatus; approvedAt?: string | null; rejectedAt?: string | null; rejectionReason?: string | null;
+  number?: string | null; payments?: InvoicePayment[];
   paymentStatus: 'unpaid' | 'partial' | 'paid';
+}
+
+/* ── دفتر فاکتورهای تعمیرگاه (بخش حسابداری) ─────────────────────── */
+export type InvoiceStatusFilter = 'all' | InvoiceStatus;
+export type PaymentFilter = 'all' | 'unpaid' | 'partial' | 'paid';
+
+export interface InvoiceListFilter {
+  q?: string; status?: InvoiceStatusFilter; payment?: PaymentFilter;
+  from?: string; to?: string; limit?: number; offset?: number;
+}
+
+export interface MechanicInvoiceRow {
+  id: string; number: string | null;
+  vehicleId: string; recordId: string;
+  serviceType: string; serviceDate: string;
+  vehicle: string; plateNumber: string | null;
+  customerName: string; customerPhone: string | null;
+  subtotal: number; discount: number; taxPercent: number; tax: number;
+  labor: number; parts: number;
+  total: number; paid: number; remaining: number;
+  status: InvoiceStatus;
+  paymentStatus: 'unpaid' | 'partial' | 'paid';
+  itemCount: number; notes: string | null; createdAt: string;
+}
+
+export interface MechanicInvoiceList {
+  rows: MechanicInvoiceRow[];
+  count: number;
+  hasMore: boolean;
+  /** Totals over everything matching the filter, not just the loaded page. */
+  summary: { count: number; total: number; paid: number; remaining: number };
+}
+
+/** The bill plus the service and customer it belongs to. */
+export interface MechanicInvoiceDetail extends Invoice {
+  vehicleId: string; recordId: string;
+  serviceType: string; serviceDate: string; mileage: number; description: string | null;
+  vehicle: string; plateNumber: string | null;
+  customerName: string; customerPhone: string | null;
+}
+
+export interface MechanicInvoiceInput {
+  /** Only when creating — an existing bill stays on its own service record. */
+  vehicleId?: string;
+  serviceType?: string; serviceDate?: string; mileage?: number; description?: string;
+  discount?: number; taxPercent?: number; notes?: string;
+  items: InvoiceItem[];
 }
 
 export interface Invite { id: string; code: string; expiresAt: string; vehicleId: string }

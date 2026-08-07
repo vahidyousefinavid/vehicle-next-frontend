@@ -888,7 +888,7 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
                             </div>
                           </div>
                         )}
-                        {r.invoice && <InvoiceDetails vehicleId={vehicle.id} recordId={r.id} />}
+                        {r.invoice && <InvoiceDetails vehicleId={vehicle.id} recordId={r.id} onDecided={refreshAll} />}
                         <div style={{ display: 'flex', gap: 8 }}>
                           {r.createdByRole !== 'mechanic' && (
                             <Button variant="secondary" size="sm" onClick={() => setEditing(r)} icon={<SettingsIcon size={14} />}>
@@ -922,11 +922,23 @@ function RecordsTab({ vehicle, onRefresh }: { vehicle: Vehicle; onRefresh: () =>
   );
 }
 
-function InvoiceDetails({ vehicleId, recordId }: { vehicleId: string; recordId: string }) {
+/**
+ * The bill, from the customer's side — and the place they accept or dispute it.
+ *
+ * The workshop issues a bill; until the person paying agrees with it, it is a claim rather
+ * than revenue (the API keeps it out of the workshop's income until approved). This is the
+ * only screen where that decision can be made, so it has to state the amount plainly and
+ * make disagreeing as easy as agreeing.
+ */
+function InvoiceDetails({ vehicleId, recordId, onDecided }: { vehicleId: string; recordId: string; onDecided?: () => void }) {
   const [invoice, setInvoice] = useState<import('@/lib/api').Invoice | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState('');
+  const [deciding, setDeciding] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [decideError, setDecideError] = useState('');
 
   useEffect(() => {
     api.invoices.get(vehicleId, recordId).then(setInvoice).catch(() => {});
@@ -953,42 +965,155 @@ function InvoiceDetails({ vehicleId, recordId }: { vehicleId: string; recordId: 
     }
   }
 
+  async function approve() {
+    setDeciding(true);
+    setDecideError('');
+    try {
+      setInvoice(await api.invoices.approve(vehicleId, recordId));
+      onDecided?.();
+    } catch (err: any) {
+      setDecideError(err?.message || 'تأیید انجام نشد');
+    } finally {
+      setDeciding(false);
+    }
+  }
+
+  async function reject(e: React.FormEvent) {
+    e.preventDefault();
+    if (!reason.trim()) { setDecideError('لطفاً بنویسید به چه چیزی اعتراض دارید'); return; }
+    setDeciding(true);
+    setDecideError('');
+    try {
+      setInvoice(await api.invoices.reject(vehicleId, recordId, reason.trim()));
+      setRejectOpen(false);
+      setReason('');
+      onDecided?.();
+    } catch (err: any) {
+      setDecideError(err?.message || 'ثبت اعتراض انجام نشد');
+    } finally {
+      setDeciding(false);
+    }
+  }
+
   if (!invoice) return null;
 
-  const statusColor = invoice.paymentStatus === 'paid' ? C.statusMint : invoice.paymentStatus === 'partial' ? C.statusWarn : C.statusExpired;
-  const statusLabel = invoice.paymentStatus === 'paid' ? 'پرداخت‌شده' : invoice.paymentStatus === 'partial' ? 'پرداخت جزئی' : 'پرداخت‌نشده';
+  const money = (n: number) => Math.round(n).toLocaleString('fa-IR');
+  const remaining = invoice.remaining ?? Math.max(0, invoice.total - invoice.paidAmount);
+  const pending = invoice.status === 'pending';
+  const rejected = invoice.status === 'rejected';
+
+  const REVIEW: Record<string, { label: string; color: string }> = {
+    pending:  { label: 'در انتظار تأیید شما', color: C.statusWarn },
+    approved: { label: 'تأیید شده',            color: C.statusMint },
+    rejected: { label: 'اعتراض ثبت شده',       color: C.statusExpired },
+  };
+  const review = invoice.status ? REVIEW[invoice.status] : null;
+
+  const payColor = invoice.paymentStatus === 'paid' ? C.statusMint : invoice.paymentStatus === 'partial' ? C.statusWarn : C.statusExpired;
+  const payLabel = invoice.paymentStatus === 'paid' ? 'پرداخت‌شده' : invoice.paymentStatus === 'partial' ? 'پرداخت جزئی' : 'پرداخت‌نشده';
 
   return (
     <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 14, padding: '12px 14px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 12, fontWeight: 800, color: C.text, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <WalletIcon size={14} /> فاکتور
+          <WalletIcon size={14} /> فاکتور {invoice.number ? invoice.number : ''}
         </span>
-        <span style={{ fontSize: 10, fontWeight: 800, color: statusColor, background: `${alpha(statusColor, 13)}`, padding: '2px 9px', borderRadius: 7 }}>
-          {statusLabel}
-        </span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {review && (
+            <span style={{ fontSize: 10, fontWeight: 800, color: review.color, background: alpha(review.color, 13), padding: '2px 9px', borderRadius: 7, whiteSpace: 'nowrap' }}>
+              {review.label}
+            </span>
+          )}
+          <span style={{ fontSize: 10, fontWeight: 800, color: payColor, background: alpha(payColor, 13), padding: '2px 9px', borderRadius: 7, whiteSpace: 'nowrap' }}>
+            {payLabel}
+          </span>
+        </div>
       </div>
+
+      {rejected && invoice.rejectionReason && (
+        <p style={{ fontSize: 11, color: C.statusExpired, background: alpha(C.statusExpired, 10), borderRadius: 9, padding: '8px 11px', margin: '0 0 10px', lineHeight: 1.75 }}>
+          اعتراض شما: {invoice.rejectionReason}
+          <br />
+          <span style={{ color: C.muted }}>تعمیرگاه پس از اصلاح، فاکتور را دوباره برای شما می‌فرستد.</span>
+        </p>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         {invoice.items.map((it, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: C.muted }}>
-            <span>{it.name} <span style={{ color: C.subtle }}>× {it.quantity}</span></span>
-            <span style={{ color: C.text, fontWeight: 600 }}>{(it.quantity * it.unitPrice).toLocaleString()} ت</span>
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 11.5, color: C.muted }}>
+            <span>
+              <span style={{ color: C.subtle, fontSize: 10 }}>{it.type === 'labor' ? 'اجرت' : 'قطعه'}</span>{' '}
+              {it.name}{it.quantity > 1 ? <span style={{ color: C.subtle }}> × {it.quantity}</span> : null}
+            </span>
+            <span style={{ color: C.text, fontWeight: 600, whiteSpace: 'nowrap' }}>{money(it.quantity * it.unitPrice)} ت</span>
           </div>
         ))}
       </div>
+
       <div style={{ borderTop: `1px dashed ${C.border}`, marginTop: 9, paddingTop: 9, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: C.muted }}>
+          <span>جمع اقلام</span><span>{money(invoice.subtotal)} ت</span>
+        </div>
         {invoice.discount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: C.statusMint }}>
+            <span>تخفیف</span><span>{money(invoice.discount)}− ت</span>
+          </div>
+        )}
+        {!!invoice.tax && invoice.tax > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: C.muted }}>
-            <span>تخفیف</span><span>-{invoice.discount.toLocaleString()} ت</span>
+            <span>ارزش افزوده {invoice.taxPercent ?? 0}٪</span><span>{money(invoice.tax)} ت</span>
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 800, color: C.text }}>
-          <span>مبلغ نهایی</span><span>{invoice.total.toLocaleString()} ت</span>
+          <span>مبلغ نهایی</span><span>{money(invoice.total)} ت</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: C.muted }}>
-          <span>پرداخت‌شده</span><span>{invoice.paidAmount.toLocaleString()} ت</span>
+          <span>پرداخت‌شده</span><span>{money(invoice.paidAmount)} ت</span>
         </div>
+        {remaining > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 700, color: C.statusWarn }}>
+            <span>مانده</span><span>{money(remaining)} ت</span>
+          </div>
+        )}
       </div>
+
+      {pending && !rejectOpen && (
+        <div style={{ marginTop: 11, paddingTop: 11, borderTop: `1px solid ${C.border}` }}>
+          <p style={{ fontSize: 11, color: C.muted, margin: '0 0 8px', lineHeight: 1.75 }}>
+            اگر با مبلغ و اقلام این فاکتور موافقید تأیید کنید. در صورت اعتراض، دلیلش را بنویسید تا تعمیرگاه اصلاح کند.
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button size="sm" fullWidth loading={deciding} onClick={approve} icon={<CheckIcon size={13} />}>
+              تأیید فاکتور
+            </Button>
+            <Button size="sm" fullWidth variant="danger" disabled={deciding} onClick={() => { setRejectOpen(true); setDecideError(''); }} icon={<XIcon size={13} />}>
+              اعتراض
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {rejectOpen && (
+        <form onSubmit={reject} style={{ marginTop: 11, paddingTop: 11, borderTop: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Input
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder="به چه چیزی اعتراض دارید؟ مثلاً «اجرت بیش از توافق است»"
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button size="sm" fullWidth variant="danger" type="submit" loading={deciding}>ثبت اعتراض</Button>
+            <Button size="sm" fullWidth variant="secondary" type="button" onClick={() => { setRejectOpen(false); setReason(''); setDecideError(''); }}>
+              انصراف
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {decideError && (
+        <div style={{ fontSize: 11, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 9, padding: '8px 12px', marginTop: 9 }}>
+          {decideError}
+        </div>
+      )}
 
       {payError && (
         <div style={{ fontSize: 11, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 9, padding: '8px 12px', marginTop: 9 }}>
@@ -1000,7 +1125,9 @@ function InvoiceDetails({ vehicleId, recordId }: { vehicleId: string; recordId: 
         <Button size="sm" variant="secondary" fullWidth loading={downloading} onClick={download} icon={<DownloadIcon size={13} />}>
           دانلود PDF
         </Button>
-        {invoice.paymentStatus !== 'paid' && (
+        {/* Paying a bill you have not accepted makes the approval step meaningless, so the
+            pay button only appears once it is approved. */}
+        {invoice.status === 'approved' && invoice.paymentStatus !== 'paid' && (
           <Button size="sm" fullWidth loading={paying} onClick={pay} icon={<CreditCardIcon size={13} />}>
             پرداخت آنلاین
           </Button>
