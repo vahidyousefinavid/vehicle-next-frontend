@@ -66,7 +66,94 @@ function productForm(d: Partial<UpsertProductInput>) {
   return form;
 }
 
+// --- tracking ---------------------------------------------------------------
+
+export interface TrackerProtocolInfo {
+  key: string;
+  label: string;
+  transport: 'tcp' | 'udp' | 'http';
+  port: number;
+  brands: string[];
+  implemented: boolean;
+  supportsCommands: boolean;
+}
+
+export interface TrackerDevice {
+  id: string;
+  uniqueId: string;
+  name: string | null;
+  protocol: string;
+  model: string | null;
+  simNumber: string | null;
+  vehicleId: string | null;
+  active: boolean;
+  lastLat: number | null;
+  lastLng: number | null;
+  lastSpeed: number | null;
+  lastCourse: number | null;
+  lastFixAt: string | null;
+  lastSeenAt: string | null;
+  lastAddress: string | null;
+  attributes: Record<string, any> | null;
+}
+
+/** A device plus the online/offline judgement, as the fleet view needs it. */
+export interface LiveDevice {
+  id: string;
+  uniqueId: string;
+  name: string | null;
+  protocol: string;
+  vehicleId: string | null;
+  lat: number | null;
+  lng: number | null;
+  speed: number | null;
+  course: number | null;
+  fixAt: string | null;
+  lastSeenAt: string | null;
+  address: string | null;
+  attributes: Record<string, any> | null;
+  status: 'online' | 'offline' | 'unknown';
+}
+
+export interface TrackerPosition {
+  id: string;
+  lat: number;
+  lng: number;
+  speed: number;
+  course: number;
+  satellites: number | null;
+  valid: boolean;
+  ignition: boolean | null;
+  protocol: string;
+  attributes: Record<string, any> | null;
+  fixAt: string;
+}
+
+export interface TripSummary {
+  points: number;
+  distanceKm: number;
+  movingMinutes: number;
+  maxSpeed: number;
+  from: string | null;
+  to: string | null;
+}
+
 export const api = {
+  tracking: {
+    protocols: ()                          => req<TrackerProtocolInfo[]>('GET', '/tracking/protocols'),
+    devices:   ()                          => req<TrackerDevice[]>('GET', '/tracking/devices'),
+    live:      ()                          => req<LiveDevice[]>('GET', '/tracking/live'),
+    claim:     (d: { uniqueId: string; name?: string; protocol?: string; vehicleId?: string; simNumber?: string; model?: string }) =>
+                                              req<TrackerDevice>('POST', '/tracking/devices', d),
+    update:    (id: string, d: Partial<TrackerDevice>) => req<TrackerDevice>('PATCH', `/tracking/devices/${id}`, d),
+    remove:    (id: string)                => req<void>('DELETE', `/tracking/devices/${id}`),
+    history:   (id: string, from: string, to: string) =>
+                                              req<TrackerPosition[]>('GET', `/tracking/devices/${id}/positions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+    summary:   (id: string, from: string, to: string) =>
+                                              req<TripSummary>('GET', `/tracking/devices/${id}/summary?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+    /** EventSource cannot send an Authorization header, so the token rides in the query. */
+    streamUrl: ()                          => `/api/tracking/stream?token=${encodeURIComponent(token())}`,
+  },
   auth: {
     requestOtp: (phone: string)              => req<{ sent: boolean }>('POST', '/auth/otp/request', { phone }),
     register:   (d: RegisterInput)           => req<AuthRes>('POST', '/auth/register', d),
