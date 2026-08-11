@@ -266,7 +266,7 @@ function RecordSaleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (
                     onChange={e => pickProduct(i, e.target.value)}
                     style={{
                       flex: 1, background: C.fill2, border: `1px solid ${C.border}`, borderRadius: 11,
-                      padding: '9px 11px', fontSize: 12, color: C.text, fontFamily: 'Vazirmatn, sans-serif',
+                      padding: '9px 11px', fontSize: 12, color: C.text, fontFamily: 'var(--font-sans)',
                     }}
                   >
                     <option value="">کالای خارج از فهرست…</option>

@@ -12,7 +12,7 @@ const config: Config = {
         'accent-light': '#17A88D',
       },
       fontFamily: {
-        sans: ['Vazirmatn', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)'],
       },
     },
   },

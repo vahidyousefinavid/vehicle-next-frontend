@@ -41,7 +41,7 @@ export default function QuickEntry({ vehicleId }: { vehicleId?: string }) {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
                 background: C.surface, border: `1px solid ${C.border}`,
                 borderRadius: 18, padding: '13px 5px',
-                fontFamily: 'Vazirmatn, sans-serif',
+                fontFamily: 'var(--font-sans)',
               }}
             >
               <span style={{

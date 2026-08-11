@@ -119,7 +119,7 @@ export default function VehiclePage() {
               borderRadius: 11, padding: '7px 13px',
               color: C.muted, fontSize: 12.5, fontWeight: 700,
               display: 'flex', alignItems: 'center', gap: 6,
-              fontFamily: 'Vazirmatn, sans-serif',
+              fontFamily: 'var(--font-sans)',
             }}
           >
             <SettingsIcon size={13} /> ویرایش مشخصات
@@ -315,7 +315,7 @@ export default function VehiclePage() {
                   padding: active ? '9px 18px' : '9px 13px',
                   borderRadius: 26, fontSize: 12.5,
                   fontWeight: active ? 800 : 500,
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                   whiteSpace: 'nowrap', flexShrink: 0,
                   border: 'none',
                   background: active
@@ -1553,7 +1553,7 @@ function AiTab({ vehicleId }: { vehicleId: string }) {
                   textAlign: 'right',
                   fontSize: 12.5, fontWeight: 500,
                   color: C.muted,
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                 }}>
                   {s}
                 </button>
@@ -1674,7 +1674,7 @@ function AddServiceModal({ vehicleId, record, onClose, onSaved }: { vehicleId: s
                     fontSize: 10, textAlign: 'center', lineHeight: 1.4,
                     fontWeight: selected ? 800 : 500,
                     color: selected ? meta.color : C.muted,
-                    fontFamily: 'Vazirmatn, sans-serif',
+                    fontFamily: 'var(--font-sans)',
                   }}>{type}</span>
                 </button>
               );
@@ -1804,7 +1804,7 @@ function AddDocModal({ vehicleId, onClose, onSaved }: { vehicleId: string; onClo
                   background: selected ? `${alpha(C.green, 12)}` : C.fill1,
                   color: selected ? C.text : C.muted,
                   fontSize: 12.5, fontWeight: selected ? 700 : 500,
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                 }}>
                   <DocIcon size={17} /> {t.label}
                 </button>
@@ -1882,7 +1882,7 @@ function AddReminderModal({ vehicleId, onClose, onSaved }: { vehicleId: string; 
                 <span style={{
                   fontSize: 11, fontWeight: f.priority === p.v ? 800 : 500,
                   color: f.priority === p.v ? p.color : C.muted,
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                 }}>{p.l}</span>
               </button>
             ))}

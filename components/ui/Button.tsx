@@ -59,7 +59,7 @@ export function Button({
         borderRadius: 14,
         fontSize: FONT[size],
         fontWeight: 700,
-        fontFamily: 'Vazirmatn, sans-serif',
+        fontFamily: 'var(--font-sans)',
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         transition: 'all 0.18s ease',
         width: fullWidth ? '100%' : undefined,

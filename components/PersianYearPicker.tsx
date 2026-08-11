@@ -85,7 +85,7 @@ export default function PersianYearPicker({
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 6 }}>
         <button type="button" onClick={() => setYearPage(p => p + 12)} style={navBtn}>›</button>
-        <span style={{ color: C.text, fontWeight: 800, fontSize: 13, fontFamily: 'Vazirmatn, sans-serif', flex: 1, textAlign: 'center' }}>
+        <span style={{ color: C.text, fontWeight: 800, fontSize: 13, fontFamily: 'var(--font-sans)', flex: 1, textAlign: 'center' }}>
           {toFa(yearPage)} – {toFa(yearPage + 11)}
         </span>
         <button type="button" onClick={() => setYearPage(p => p - 12)} style={navBtn}>‹</button>
@@ -106,7 +106,7 @@ export default function PersianYearPicker({
                 background: isSel ? C.green : C.fill2,
                 color: isSel ? C.onAccent : isToday ? C.green : C.text,
                 fontSize: 12, fontWeight: isSel || isToday ? 800 : 500,
-                cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif',
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
                 textAlign: 'center', transition: 'background 0.10s',
               }}
               onMouseEnter={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,206,180,0.15)'; }}
@@ -133,7 +133,7 @@ export default function PersianYearPicker({
           borderRadius: 14, padding: '11px 14px',
           fontSize: 13, fontWeight: value ? 600 : 400,
           color: value ? C.text : C.muted,
-          fontFamily: 'Vazirmatn, sans-serif',
+          fontFamily: 'var(--font-sans)',
           cursor: 'pointer', textAlign: 'right',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           transition: 'border-color 0.15s',

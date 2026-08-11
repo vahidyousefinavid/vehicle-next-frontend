@@ -85,7 +85,7 @@ function WorkshopsPageInner() {
                 onClick={() => toggleService(t)}
                 style={{
                   flexShrink: 0, padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-                  fontFamily: 'Vazirmatn, sans-serif', whiteSpace: 'nowrap',
+                  fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
                   border: `1.5px solid ${active ? C.green : C.border}`,
                   background: active ? `${alpha(C.green, 12)}` : 'transparent',
                   color: active ? C.green : C.muted,

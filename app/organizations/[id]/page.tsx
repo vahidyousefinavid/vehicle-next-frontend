@@ -161,7 +161,7 @@ function AddMemberSheet({ orgId, onClose, onAdded }: { orgId: string; onClose: (
                 key={r} type="button" onClick={() => setMemberRole(r)}
                 style={{
                   flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 13, fontWeight: 700,
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                   border: `1.5px solid ${memberRole === r ? C.green : C.border}`,
                   background: memberRole === r ? `${alpha(C.green, 12)}` : 'transparent',
                   color: memberRole === r ? C.green : C.muted,

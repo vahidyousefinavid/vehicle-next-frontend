@@ -179,7 +179,7 @@ export default function RequestServiceModal({ serviceType, onClose }: { serviceT
               onChange={e => setVehicleId(e.target.value)}
               style={{
                 width: '100%', background: C.fill2, border: `1px solid ${C.border}`, borderRadius: 14,
-                padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'Vazirmatn, sans-serif',
+                padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'var(--font-sans)',
               }}
             >
               <option value="" disabled>انتخاب کن...</option>
@@ -195,7 +195,7 @@ export default function RequestServiceModal({ serviceType, onClose }: { serviceT
             {(['in_shop', 'on_site'] as ServiceMode[]).map(m => (
               <button key={m} type="button" onClick={() => setSvcMode(m)} style={{
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                padding: '12px 0', borderRadius: 14, fontFamily: 'Vazirmatn, sans-serif',
+                padding: '12px 0', borderRadius: 14, fontFamily: 'var(--font-sans)',
                 border: `1.5px solid ${svcMode === m ? C.green : C.border}`,
                 background: svcMode === m ? `${alpha(C.green, 12)}` : 'transparent',
                 color: svcMode === m ? C.green : C.muted,

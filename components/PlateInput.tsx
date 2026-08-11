@@ -212,7 +212,7 @@ export default function PlateInput({
           >
             <span style={{
               fontSize: 18, fontWeight: 900, color: '#1a1a1a',
-              fontFamily: 'Vazirmatn, sans-serif',
+              fontFamily: 'var(--font-sans)',
               direction: 'rtl',
             }}>
               {letter || <span style={{ color: '#aaa', fontSize: 13 }}>حرف</span>}
@@ -265,7 +265,7 @@ export default function PlateInput({
           <span style={{
             color: provName ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.35)',
             fontSize: provName ? 8 : 8, fontWeight: 700,
-            fontFamily: 'Vazirmatn, sans-serif',
+            fontFamily: 'var(--font-sans)',
             textAlign: 'center', lineHeight: 1.2,
             maxWidth: 52, overflow: 'hidden',
           }}>
@@ -276,13 +276,13 @@ export default function PlateInput({
 
       {/* ── Helper labels below ───────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', marginTop: 8, direction: 'ltr', gap: 0 }}>
-        <span style={{ width: 52, textAlign: 'center', fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>ایران</span>
+        <span style={{ width: 52, textAlign: 'center', fontSize: 10, color: C.subtle, fontFamily: 'var(--font-sans)' }}>ایران</span>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'space-around' }}>
-          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>۲ رقم</span>
-          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>حرف</span>
-          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>۳ رقم</span>
+          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'var(--font-sans)' }}>۲ رقم</span>
+          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'var(--font-sans)' }}>حرف</span>
+          <span style={{ fontSize: 10, color: C.subtle, fontFamily: 'var(--font-sans)' }}>۳ رقم</span>
         </div>
-        <span style={{ width: 58, textAlign: 'center', fontSize: 10, color: C.subtle, fontFamily: 'Vazirmatn, sans-serif' }}>استان</span>
+        <span style={{ width: 58, textAlign: 'center', fontSize: 10, color: C.subtle, fontFamily: 'var(--font-sans)' }}>استان</span>
       </div>
 
       {/* ── Letter picker popup (via portal) ─────────────────────── */}
@@ -300,7 +300,7 @@ export default function PlateInput({
         >
           <p style={{
             color: C.muted, fontSize: 11, fontWeight: 700,
-            margin: '0 0 10px', fontFamily: 'Vazirmatn, sans-serif', textAlign: 'center',
+            margin: '0 0 10px', fontFamily: 'var(--font-sans)', textAlign: 'center',
           }}>
             انتخاب حرف پلاک
           </p>
@@ -318,7 +318,7 @@ export default function PlateInput({
                     background: active ? alpha(C.green, 18) : C.fill2,
                     color: active ? C.green : C.text,
                     fontSize: 13, fontWeight: active ? 800 : 500,
-                    cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
                     textAlign: 'center', transition: 'all 0.10s',
                   }}
                   onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = alpha(C.green, 12); }}

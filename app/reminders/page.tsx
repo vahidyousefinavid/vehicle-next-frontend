@@ -219,7 +219,7 @@ function AddReminderSheet({ onClose, onSaved }: { onClose: () => void; onSaved: 
               onChange={e => setVehicleId(e.target.value)}
               style={{
                 width: '100%', background: C.fill2, border: `1px solid ${C.border}`, borderRadius: 14,
-                padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'Vazirmatn, sans-serif',
+                padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'var(--font-sans)',
               }}
             >
               {vehicles.map(v => (

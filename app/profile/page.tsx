@@ -143,7 +143,7 @@ export default function ProfilePage() {
             background: alpha(C.statusExpired, 10), color: C.statusExpired,
             border: `1px solid ${alpha(C.statusExpired, 22)}`,
             borderRadius: 16, padding: '13px', fontSize: 14, fontWeight: 700,
-            fontFamily: 'Vazirmatn, sans-serif',
+            fontFamily: 'var(--font-sans)',
           }}
         >
           <LogOutIcon size={17} />
@@ -231,7 +231,7 @@ function MenuRow({ icon, label, onClick }: { icon: React.ReactNode; label: strin
         width: '100%', display: 'flex', alignItems: 'center', gap: 12,
         padding: '13px 14px', background: 'transparent', border: 'none',
         color: C.text, fontSize: 13.5, fontWeight: 600,
-        fontFamily: 'Vazirmatn, sans-serif',
+        fontFamily: 'var(--font-sans)',
         opacity: onClick ? 1 : 0.55,
         cursor: onClick ? 'pointer' : 'default',
       }}

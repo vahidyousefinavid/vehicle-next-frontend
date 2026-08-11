@@ -129,7 +129,7 @@ export default function Chat({
               border: `1px solid ${inputFocused ? C.green : C.border}`,
               boxShadow: inputFocused ? `0 0 0 3px ${alpha(C.green, 10)}` : 'none',
               borderRadius: 14,
-              padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'Vazirmatn, sans-serif', outline: 'none',
+              padding: '11px 14px', fontSize: 13, color: C.text, fontFamily: 'var(--font-sans)', outline: 'none',
               transition: 'border-color 0.15s, box-shadow 0.15s',
             }}
           />

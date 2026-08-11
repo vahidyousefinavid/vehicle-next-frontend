@@ -2,7 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
+/*
+ * IRANSans, served from this origin.
+ *
+ * It used to come from Google Fonts, and twice over: a <link> in the layout
+ * and an @import here. The @import was the expensive one — the browser cannot
+ * even discover it until this stylesheet has downloaded and parsed, so it
+ * serialised a DNS lookup, a TLS handshake and a font fetch to two third-party
+ * origins in front of first paint.
+ *
+ * IRANSans ships four static weights, while the app asks for seven. Rather
+ * than let the browser round each request to the nearest face — which would
+ * pull 600 up to Bold and 800 up to Black, making labels and headings heavier
+ * than they were designed to be — each face claims the range it should cover:
+ *
+ *   ≤400  regular   body text
+ *   500–600 medium  labels and secondary emphasis
+ *   700–800 bold    titles, the app's most-used weight
+ *   900   black     the few places that shout
+ */
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/fonts/iransans/IRANSansWeb.woff2') format('woff2');
+  font-weight: 100 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/fonts/iransans/IRANSansWeb_Medium.woff2') format('woff2');
+  font-weight: 500 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/fonts/iransans/IRANSansWeb_Bold.woff2') format('woff2');
+  font-weight: 700 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IRANSans';
+  src: url('/fonts/iransans/IRANSansWeb_Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    THEMES
@@ -18,6 +64,9 @@
 
 :root {
   color-scheme: dark;
+
+  /* ── Type ── */
+  --font-sans: 'IRANSans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* ── Brand (navy + green fintech) ── */
   --green:        #22C55E;
@@ -271,7 +320,7 @@ body {
   background: var(--bg-gradient);
   background-attachment: fixed;
   color: var(--text);
-  font-family: 'Vazirmatn', system-ui, sans-serif;
+  font-family: var(--font-sans);
   direction: rtl;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -23,7 +23,7 @@ const baseInputStyle: React.CSSProperties = {
   background: C.fill2,
   borderRadius: 14, padding: '11px 14px', fontSize: 13,
   fontWeight: 500, outline: 'none',
-  color: C.text, fontFamily: 'Vazirmatn, sans-serif',
+  color: C.text, fontFamily: 'var(--font-sans)',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s, box-shadow 0.15s',
 };
@@ -112,7 +112,7 @@ export function ChipGroup<T extends string>({
             style={{
               padding: '7px 14px', borderRadius: 11,
               fontSize: 12.5, fontWeight: selected ? 700 : 500,
-              fontFamily: 'Vazirmatn, sans-serif',
+              fontFamily: 'var(--font-sans)',
               background: selected ? alpha(C.green, 14) : C.fill1,
               border: `1px solid ${selected ? C.green + '55' : C.border}`,
               color: selected ? C.green : C.muted,

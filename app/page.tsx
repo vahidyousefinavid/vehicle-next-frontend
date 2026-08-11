@@ -299,7 +299,7 @@ export default function LoginPage() {
                 onClick={() => { setMode(m); editPhone(); }}
                 style={{
                   flex: 1, padding: '10px 0', fontSize: 13, fontWeight: 700,
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                   border: 'none', transition: 'all 0.22s',
                   background: mode === m
                     ? `linear-gradient(135deg, ${C.green}, ${C.greenDark})`
@@ -338,7 +338,7 @@ export default function LoginPage() {
                           background: role === opt.v ? `${alpha(C.green, 12)}` : C.fill1,
                           color: role === opt.v ? C.green : C.muted,
                           fontSize: 13, fontWeight: role === opt.v ? 800 : 500,
-                          fontFamily: 'Vazirmatn, sans-serif',
+                          fontFamily: 'var(--font-sans)',
                         }}
                       >
                         {opt.icon} {opt.label}
@@ -384,7 +384,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={editPhone}
-                    style={{ background: 'none', border: 'none', color: C.green, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif' }}
+                    style={{ background: 'none', border: 'none', color: C.green, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
                   >
                     ویرایش شماره
                   </button>
@@ -414,7 +414,7 @@ export default function LoginPage() {
                     disabled={cooldown > 0 || otpLoading}
                     style={{
                       background: 'none', border: 'none', fontSize: 11, fontWeight: 700,
-                      fontFamily: 'Vazirmatn, sans-serif',
+                      fontFamily: 'var(--font-sans)',
                       color: cooldown > 0 ? C.muted : C.green,
                       cursor: cooldown > 0 ? 'default' : 'pointer',
                     }}

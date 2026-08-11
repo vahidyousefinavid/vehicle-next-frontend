@@ -32,7 +32,7 @@ export default function Navbar({ title }: { title?: string }) {
           display: 'flex', alignItems: 'center', gap: 10,
           textDecoration: 'none', color: C.text,
           fontWeight: 900, fontSize: 15,
-          fontFamily: 'Vazirmatn, sans-serif',
+          fontFamily: 'var(--font-sans)',
         }}>
           <div style={{
             width: 34, height: 34, borderRadius: 11,

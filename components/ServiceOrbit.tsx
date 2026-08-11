@@ -413,7 +413,7 @@ export default function ServiceOrbit({ services, onPick }: {
                 position: 'absolute', top: 0, left: 0, width: 46, height: 46,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                borderRadius: 15, fontFamily: 'Vazirmatn, sans-serif', willChange: 'transform',
+                borderRadius: 15, fontFamily: 'var(--font-sans)', willChange: 'transform',
               }}
             >
               <span

@@ -247,7 +247,7 @@ export default function CatalogImportSheet({
                           flex: 1, minWidth: 0, boxSizing: 'border-box',
                           background: C.fill2, border: `1px solid ${C.border}`, borderRadius: 10,
                           padding: '7px 11px', fontSize: 12.5, color: C.text,
-                          fontFamily: 'Vazirmatn, sans-serif', direction: 'ltr', textAlign: 'right',
+                          fontFamily: 'var(--font-sans)', direction: 'ltr', textAlign: 'right',
                         }}
                       />
                     </div>

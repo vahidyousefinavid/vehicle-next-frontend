@@ -95,7 +95,7 @@ export default function MechanicDashboard() {
             <button key={a.href} onClick={() => router.push(a.href)} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
               background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 18, padding: '13px 5px', fontFamily: 'Vazirmatn, sans-serif',
+              borderRadius: 18, padding: '13px 5px', fontFamily: 'var(--font-sans)',
             }}>
               <span style={{
                 width: 38, height: 38, borderRadius: 13,

@@ -54,7 +54,7 @@ const headerBtn: React.CSSProperties = {
   borderRadius: 10, padding: '5px 12px',
   cursor: 'pointer', color: C.text,
   fontSize: 13, fontWeight: 800,
-  fontFamily: 'Vazirmatn, sans-serif',
+  fontFamily: 'var(--font-sans)',
   transition: 'background 0.12s',
 };
 
@@ -189,7 +189,7 @@ export default function PersianDatePicker({
           {/* weekday header */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 4 }}>
             {WEEKDAYS.map(d => (
-              <div key={d} style={{ textAlign: 'center', fontSize: 11, color: C.muted, fontWeight: 700, fontFamily: 'Vazirmatn, sans-serif', padding: '2px 0' }}>
+              <div key={d} style={{ textAlign: 'center', fontSize: 11, color: C.muted, fontWeight: 700, fontFamily: 'var(--font-sans)', padding: '2px 0' }}>
                 {d}
               </div>
             ))}
@@ -212,7 +212,7 @@ export default function PersianDatePicker({
                     background: isSel ? C.green : 'transparent',
                     color: isSel ? C.onAccent : isToday ? C.green : C.text,
                     fontSize: 12.5, fontWeight: isSel || isToday ? 800 : 400,
-                    cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
                     textAlign: 'center', transition: 'background 0.10s',
                   }}
                   onMouseEnter={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,206,180,0.15)'; }}
@@ -257,7 +257,7 @@ export default function PersianDatePicker({
                     background: isSel ? C.green : C.fill2,
                     color: isSel ? C.onAccent : isToday ? C.green : C.text,
                     fontSize: 12, fontWeight: isSel || isToday ? 800 : 500,
-                    cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
                     textAlign: 'center', transition: 'background 0.10s',
                   }}
                   onMouseEnter={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,206,180,0.15)'; }}
@@ -276,7 +276,7 @@ export default function PersianDatePicker({
         <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 6 }}>
             <button type="button" onClick={() => setYearPage((p: number) => p + 12)} style={navBtn}>›</button>
-            <span style={{ color: C.text, fontWeight: 800, fontSize: 13, fontFamily: 'Vazirmatn, sans-serif', flex: 1, textAlign: 'center' }}>
+            <span style={{ color: C.text, fontWeight: 800, fontSize: 13, fontFamily: 'var(--font-sans)', flex: 1, textAlign: 'center' }}>
               {toFa(yearPage)} – {toFa(yearPage + 11)}
             </span>
             <button type="button" onClick={() => setYearPage((p: number) => p - 12)} style={navBtn}>‹</button>
@@ -297,7 +297,7 @@ export default function PersianDatePicker({
                     background: isSel ? C.green : C.fill2,
                     color: isSel ? C.onAccent : isToday ? C.green : C.text,
                     fontSize: 12, fontWeight: isSel || isToday ? 800 : 500,
-                    cursor: 'pointer', fontFamily: 'Vazirmatn, sans-serif',
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
                     textAlign: 'center', transition: 'background 0.10s',
                   }}
                   onMouseEnter={e => { if (!isSel) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,206,180,0.15)'; }}
@@ -326,7 +326,7 @@ export default function PersianDatePicker({
           borderRadius: 14, padding: '11px 14px',
           fontSize: 13, fontWeight: value ? 600 : 400,
           color: value ? C.text : C.muted,
-          fontFamily: 'Vazirmatn, sans-serif',
+          fontFamily: 'var(--font-sans)',
           cursor: 'pointer', textAlign: 'right',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           transition: 'border-color 0.15s',

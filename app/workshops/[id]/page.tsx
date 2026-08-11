@@ -320,7 +320,7 @@ function BookAppointmentSheet({ vehicle, mechanicId, services, onClose }: {
               {(['in_shop', 'on_site'] as ServiceMode[]).map(m => (
                 <button key={m} type="button" onClick={() => setSvcMode(m)} style={{
                   flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 700,
-                  fontFamily: 'Vazirmatn, sans-serif',
+                  fontFamily: 'var(--font-sans)',
                   border: `1.5px solid ${svcMode === m ? C.green : C.border}`,
                   background: svcMode === m ? `${alpha(C.green, 12)}` : 'transparent',
                   color: svcMode === m ? C.green : C.muted,
