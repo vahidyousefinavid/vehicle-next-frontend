@@ -84,7 +84,12 @@ export default function TrackingPage() {
       setDevices(live);
       setProtocols(protocolList);
       setVehicles(vehicleList);
-      setSelectedId((current) => current ?? live.find((d) => d.lat != null)?.id ?? null);
+      /* A tracker alert links straight to the device it is about. Read from
+         window.location rather than useSearchParams, which would force this
+         page behind a Suspense boundary to keep building. */
+      const asked = new URLSearchParams(window.location.search).get('device');
+      const linked = asked && live.some((d) => d.id === asked) ? asked : null;
+      setSelectedId((current) => current ?? linked ?? live.find((d) => d.lat != null)?.id ?? null);
     } catch (err: any) {
       setError(err?.message || 'دریافت اطلاعات ناموفق بود');
     } finally {

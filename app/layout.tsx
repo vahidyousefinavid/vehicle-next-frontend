@@ -37,19 +37,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body style={{ minHeight: '100vh' }}>
         {children}
-        {/* Rahbord feedback widget — whatever is written here becomes a task in
-            https://rahbord.rahbit.ir. Lifted above the 64px BottomNav and put on
-            the opposite side from the voice-agent bubble, which sits at
-            inset-inline-end (the left, in RTL). */}
-        <script
-          src="https://rahbord.rahbit.ir/api/widget/embed.js"
-          data-token="9lQFlVO2VQYyKo1EZJToOw"
-          data-title="ثبت درخواست"
-          data-color="#22C55E"
-          data-side="right"
-          data-bottom="88px"
-          defer
-        />
       </body>
     </html>
   );

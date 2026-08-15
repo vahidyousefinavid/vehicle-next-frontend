@@ -246,11 +246,26 @@ export const api = {
     createVehicle: (d: CreateMechanicVehicleInput) => req<MechanicVehicleDetail>('POST', '/mechanic/vehicles', d),
   },
   notifications: {
+    /** The bell's glance: newest few. */
     list:         ()                 => req<AppNotification[]>('GET', '/notifications'),
+    /** The page: filtered and paged, with the counts behind each chip. */
+    inbox:        (q: InboxQuery = {}) => {
+      const qs = new URLSearchParams();
+      if (q.page !== undefined) qs.set('page', String(q.page));
+      if (q.pageSize !== undefined) qs.set('pageSize', String(q.pageSize));
+      if (q.category && q.category !== 'all') qs.set('category', q.category);
+      if (q.unreadOnly) qs.set('unreadOnly', 'true');
+      const query = qs.toString();
+      return req<NotificationInbox>('GET', `/notifications/inbox${query ? `?${query}` : ''}`);
+    },
     unreadCount:  ()                 => req<{ count: number }>('GET', '/notifications/unread-count'),
+    /** No id means every unread one. Returns what is left, rather than assuming zero. */
+    read:         (id?: string)      => req<{ unread: number }>('POST', '/notifications/read', id ? { id } : {}),
     markRead:     (id: string)       => req<AppNotification>('POST', `/notifications/${id}/read`, {}),
     confirm:      (id: string)       => req<AppNotification>('POST', `/notifications/${id}/confirm`, {}),
     reject:       (id: string)       => req<AppNotification>('POST', `/notifications/${id}/reject`, {}),
+    /** EventSource cannot send an Authorization header, so the token rides in the query. */
+    streamUrl:    ()                 => `/api/notifications/stream?token=${encodeURIComponent(token())}`,
   },
   reviews: {
     list:    (mechanicId: string)                        => req<MechanicReview[]>('GET', `/mechanics/${mechanicId}/reviews`),
@@ -674,10 +689,36 @@ export interface CreateMechanicVehicleInput {
   plateNumber?: string; customerName?: string; color?: string; currentMileage?: number; notes?: string;
 }
 
+/**
+ * The subject a notification is about. The API derives it from the type, so
+ * the filter chips stay stable while new event types keep being added.
+ */
+export type NotificationCategory =
+  | 'link' | 'appointment' | 'invoice' | 'message' | 'tracker' | 'reminder' | 'other';
+
 export interface AppNotification {
-  id: string; type: string; status: 'pending' | 'confirmed' | 'rejected';
+  id: string; type: string; category: NotificationCategory;
+  status: 'pending' | 'confirmed' | 'rejected';
   title: string; body: string; read: boolean; createdAt: string;
-  data?: { mechanicVehicleId: string; realVehicleId: string; mechanicId: string; workshopName?: string; plateNumber?: string } | null;
+  /** Where tapping it goes. Decided by the sender, null when it is answered in place. */
+  url: string | null;
+  /** Shape depends on the type; every id the destination screen might need. */
+  data?: Record<string, string | number | undefined> | null;
+}
+
+export interface NotificationInbox {
+  items: AppNotification[];
+  total: number;
+  unread: number;
+  /** Keyed by category, plus `all`. Missing means none of that kind. */
+  counts: Record<string, number>;
+}
+
+export interface InboxQuery {
+  page?: number;
+  pageSize?: number;
+  category?: NotificationCategory | 'all';
+  unreadOnly?: boolean;
 }
 
 export interface FuelLog {
