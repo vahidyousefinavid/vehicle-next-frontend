@@ -23,11 +23,12 @@ const tones = { green: { color: C.green, bg: alpha(C.green, 12), border: alpha(C
 const activeTiles: Tile[] = [
   { title: 'تعویض باتری در محل', desc: 'روشن نشدن خودرو یا باتری ضعیف؛ ثبت درخواست و پیگیری سریع.', action: 'ثبت درخواست', type: 'تعویض باتری', icon: <BatteryIcon size={24} />, tone: tones.red },
   { title: 'دیاگ و عیب‌یابی', desc: 'چراغ چک، خطای موتور و بررسی اولیه قبل از تعمیر.', action: 'شروع دیاگ', type: 'تنظیم موتور', icon: <GaugeIcon size={24} />, tone: tones.blue },
-  { title: 'سرویس و تعمیر خودرو', desc: 'سرویس دوره‌ای، تعمیرات، سوابق و هزینه‌ها.', action: 'درخواست سرویس', type: 'سرویس جلوبندی', icon: <WrenchIcon size={24} />, tone: tones.green },
+  { title: 'چکاپ دوره‌ای و قبل سفر', desc: 'بازدید ضروری قبل از سفر؛ باتری، دیاگ، ترمز، روغن و وضعیت کلی خودرو.', action: 'درخواست چکاپ', type: 'چکاپ قبل سفر', icon: <WrenchIcon size={24} />, tone: tones.green },
   { title: 'تعمیر ترمز', desc: 'بازدید، تعمیر و پیگیری سرویس ترمز.', action: 'ثبت سرویس', type: 'تعمیر ترمز', icon: <DiscIcon size={24} />, tone: tones.warn },
 ];
 const upcomingTiles: Tile[] = [
   { title: 'تعویض روغن', desc: 'روغن و فیلترها', action: 'به‌زودی', disabled: true, icon: <DropletIcon size={20} />, tone: tones.warn },
+  { title: 'سرویس جلوبندی', desc: 'کمک، سیبک، طبق، فرمان و صداهای زیر خودرو', action: 'به‌زودی', disabled: true, icon: <WrenchIcon size={20} />, tone: tones.green },
   { title: 'لاستیک و پنچرگیری', desc: 'چرخ، باد و پنچرگیری', action: 'به‌زودی', disabled: true, icon: <DiscIcon size={20} />, tone: tones.blue },
   { title: 'کارواش و دیتیلینگ', desc: 'شست‌وشو و زیبایی خودرو', action: 'به‌زودی', disabled: true, icon: <StoreIcon size={20} />, tone: tones.mint },
   { title: 'کولر و برق خودرو', desc: 'کولر، دینام و برق', action: 'به‌زودی', disabled: true, icon: <SnowflakeIcon size={20} />, tone: tones.blue },

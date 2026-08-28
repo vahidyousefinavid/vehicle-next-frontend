@@ -26,10 +26,11 @@ const tones = {
 const activeServices: Service[] = [
   { title: 'تعویض باتری در محل', desc: 'وقتی ماشین روشن نمی‌شود، درخواست را سریع ثبت کن و روند پیگیری را ببین.', hint: 'مناسب خرابی ناگهانی و باتری ضعیف', status: 'فعال', icon: <BatteryIcon size={28} />, tone: tones.red },
   { title: 'دیاگ و عیب‌یابی', desc: 'چراغ چک، خطای موتور و ایرادهای اولیه قبل از تعمیر بررسی می‌شود.', hint: 'برای تصمیم بهتر قبل از هزینه سنگین', status: 'فعال', icon: <GaugeIcon size={28} />, tone: tones.blue },
-  { title: 'سرویس و تعمیر خودرو', desc: 'سرویس دوره‌ای، تعمیرگاه، سوابق و هزینه‌ها در یک مسیر مشخص.', hint: 'برای نگهداری کامل ماشین', status: 'فعال', icon: <WrenchIcon size={28} />, tone: tones.green },
+  { title: 'چکاپ دوره‌ای و قبل سفر', desc: 'قبل از سفر یا در سرویس دوره‌ای، وضعیت باتری، دیاگ، ترمز، روغن و موارد ضروری بررسی می‌شود.', hint: 'برای اطمینان قبل از حرکت و پیشگیری از خرابی', status: 'فعال', icon: <WrenchIcon size={28} />, tone: tones.green },
 ];
 const upcomingServices: Service[] = [
   { title: 'تعویض روغن', desc: 'روغن موتور، فیلتر و سرویس‌های دوره‌ای.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <DropletIcon size={24} />, tone: tones.warn },
+  { title: 'سرویس جلوبندی', desc: 'بررسی کمک، سیبک، طبق، فرمان و صداهای زیر خودرو.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <WrenchIcon size={24} />, tone: tones.green },
   { title: 'لاستیک و پنچرگیری', desc: 'تعویض لاستیک، باد، پنچرگیری و سرویس چرخ.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <DiscIcon size={24} />, tone: tones.blue },
   { title: 'کارواش و دیتیلینگ', desc: 'شست‌وشو، صفرشویی و زیبایی خودرو.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <ShieldIcon size={24} />, tone: tones.mint },
   { title: 'کولر و برق خودرو', desc: 'کولر، دینام، باتری و خطاهای برقی.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <SnowflakeIcon size={24} />, tone: tones.blue },
