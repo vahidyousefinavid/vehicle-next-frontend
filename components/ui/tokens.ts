@@ -36,6 +36,7 @@ export const C = {
   fill5: 'var(--fill-5)',
 
   textStrong: 'var(--text-strong)',
+  brandInk:   'var(--brand-ink)',
   text:       'var(--text)',
   text2:      'var(--text-2)',
   muted:      'var(--muted)',
@@ -50,6 +51,7 @@ export const C = {
   borderStrong: 'var(--border-strong)',
 
   shadowGlass:  'var(--shadow-glass)',
+  shadowBrand:  'var(--shadow-green)',
   shadowCard:   'var(--shadow-card)',
   shadowNav:    'var(--shadow-nav)',
   shadowTabbar: 'var(--shadow-tabbar)',

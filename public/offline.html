@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>آفلاین — دستیار خودرو</title>
+<style>
+  :root { color-scheme: light; --bg:#F4F2FE; --card:#fff; --ink:#241F86; --body:#4A4770; --brand:#6C4CF0; --line:#E6E1FB; }
+  @media (prefers-color-scheme: dark) {
+    :root { color-scheme: dark; --bg:#0B1220; --card:#111B2E; --ink:#EEF2FF; --body:#A9B2CC; --brand:#8B6CFF; --line:#1E2A44; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; min-height:100dvh; display:grid; place-items:center; padding:24px;
+    background:var(--bg); color:var(--body);
+    font-family: 'IRANSans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  .card {
+    background:var(--card); border:1px solid var(--line); border-radius:24px;
+    padding:32px 24px; max-width:380px; width:100%; text-align:center;
+    box-shadow:0 18px 40px -24px rgba(36,31,134,.35);
+  }
+  .mark { width:64px; height:64px; margin:0 auto 18px; display:grid; place-items:center;
+          border-radius:19px; background:color-mix(in srgb, var(--brand) 12%, transparent); color:var(--brand); }
+  h1 { margin:0 0 10px; font-size:18px; font-weight:800; color:var(--ink); }
+  p  { margin:0 0 22px; font-size:13.5px; line-height:2; }
+  button {
+    width:100%; border:0; cursor:pointer; border-radius:14px; padding:14px;
+    background:var(--brand); color:#fff; font:800 14px inherit; font-family:inherit;
+  }
+  button:active { transform:scale(.98); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 17h14M6 17l1.2-5.2A2 2 0 0 1 9.2 10h5.6a2 2 0 0 1 2 1.8L18 17"/>
+        <circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>
+      </svg>
+    </div>
+    <h1>اتصال اینترنت قطع است</h1>
+    <p>دستیار خودرو نصب شده و روی گوشی‌ات باز می‌شود، ولی برای دیدن نوبت‌ها و خدمات به اینترنت نیاز دارد. وصل که شدی دوباره تلاش کن.</p>
+    <button onclick="location.reload()">تلاش دوباره</button>
+  </div>
+</body>
+</html>

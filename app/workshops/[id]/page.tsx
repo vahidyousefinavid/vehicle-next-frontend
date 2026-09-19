@@ -193,7 +193,7 @@ function RateSheet({ mechanicId, existing, onClose, onSaved }: { mechanicId: str
           <TextArea value={comment} onChange={e => setComment(e.target.value)} rows={3} placeholder="تجربه‌ات رو با دیگران به اشتراک بذار..." />
         </FormField>
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button onClick={submit} loading={loading} fullWidth size="lg">ثبت نظر</Button>
       </div>
@@ -342,7 +342,7 @@ function BookAppointmentSheet({ vehicle, mechanicId, services, onClose }: {
         </div>
         <FormField label="توضیحات"><TextArea value={notes} onChange={e => setNotes(e.target.value)} rows={2} /></FormField>
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">ارسال درخواست نوبت</Button>
       </form>

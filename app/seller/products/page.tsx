@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
+import { useUrlFilter } from '@/hooks/useUrlFilter';
 import CatalogImportSheet from '@/components/CatalogImportSheet';
 import { api, Product, productImageUrl } from '@/lib/api';
-import { C, Card, Button, IconButton, FormField, Input, TextArea, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
-import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon, ImageIcon, SparklesIcon } from '@/components/icons';
+import { C, alpha, Button, EmptyState, Skeleton, FormField, Input, TextArea, Sheet } from '@/components/ui';
+import { Screen, ScreenHeader, Glance, Row, RowList, Chip, Filters, SearchBar, SCREEN_CSS, fa, shortMoney } from '@/components/ScreenKit';
+import { BoxIcon, PlusIcon, TrashIcon, SparklesIcon, ImageIcon } from '@/components/icons';
 
 export default function SellerProductsPage() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function SellerProductsPage() {
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [filter, setFilter] = useUrlFilter('stock', ['all', 'low', 'out', 'off'] as const, 'all');
   const [editing, setEditing] = useState<Product | null>(null);
   const [showCatalog, setShowCatalog] = useState(false);
   const [ownedNames, setOwnedNames] = useState<string[]>([]);
@@ -51,125 +53,106 @@ export default function SellerProductsPage() {
     load();
   }
 
+  const active = products.filter((x) => x.active);
+  const low = products.filter((x) => x.stock > 0 && x.stock <= 3);
+  const out = products.filter((x) => x.stock <= 0);
+  const value = products.reduce((n, x) => n + x.price * Math.max(0, x.stock), 0);
+  const shown = filter === 'low' ? low : filter === 'out' ? out : filter === 'off' ? products.filter((x) => !x.active) : products;
+
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <Navbar title="محصولات من" />
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '0 14px calc(88px + env(safe-area-inset-bottom))' }}>
-        <button
-          onClick={() => router.back()}
-          style={{ background: 'none', border: 'none', color: C.muted, fontSize: 13, fontWeight: 600, padding: '14px 0 10px', display: 'flex', alignItems: 'center', gap: 5 }}
-        >
-          <ChevronRightIcon size={16} /> بازگشت
-        </button>
+    <Screen dense>
+      <ScreenHeader
+        eyebrow="انبار فروشگاه"
+        title="محصولات"
+        subtitle={out.length ? `${fa(out.length)} کالا ناموجود است` : low.length ? `${fa(low.length)} کالا رو به اتمام` : 'موجودی سالم است'}
+        back="/seller"
+        action={<Button size="sm" onClick={() => setShowAdd(true)} icon={<PlusIcon size={14} />}>افزودن</Button>}
+      />
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <div style={{ flex: 1 }}>
-            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="جستجوی محصول..." />
-          </div>
-          <Button onClick={() => setShowAdd(true)} icon={<PlusIcon size={15} />}>افزودن</Button>
-        </div>
+      {!loading && products.length > 0 && (
+        <Glance items={[
+          { label: 'کالا', value: fa(products.length), hint: `${fa(active.length)} فعال` },
+          { label: 'ارزش انبار', value: shortMoney(value), hint: 'تومان', tone: C.statusOk },
+          { label: 'رو به اتمام', value: fa(low.length), tone: low.length ? C.statusWarn : undefined, alert: low.length > 0 },
+          { label: 'ناموجود', value: fa(out.length), tone: out.length ? C.statusExpired : undefined, alert: out.length > 0 },
+        ]} />
+      )}
 
-        <button
-          onClick={openCatalog}
-          style={{
-            width: '100%', marginBottom: 14, padding: '11px 14px', borderRadius: 14,
-            background: alpha(C.green, 8), border: `1px dashed ${alpha(C.green, 34)}`,
-            color: C.green, fontSize: 12.5, fontWeight: 800,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-          }}
-        >
-          <SparklesIcon size={15} /> افزودن از لیست آماده کالاها
-        </button>
+      <SearchBar value={q} onChange={setQ} placeholder="جستجوی کالا..." />
 
-        {notice && (
-          <div style={{
-            marginBottom: 12, padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700,
-            color: C.green, background: alpha(C.green, 10), border: `1px solid ${alpha(C.green, 22)}`,
-          }}>
-            {notice}
-          </div>
-        )}
-
-        {loading ? (
-          <Spinner />
-        ) : products.length === 0 ? (
-          <EmptyState
-            icon={<BoxIcon size={26} />}
-            title="هنوز محصولی ثبت نکردی"
-            sub="محصولاتت رو با عکس، قیمت و موجودی ثبت کن — یا از لیست آماده‌ی بالا یکجا اضافه کن"
-            onAdd={() => setShowAdd(true)}
-            btnLabel="افزودن اولین محصول"
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {products.map(p => (
-              <Card key={p.id} padding="12px">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div
-                    onClick={() => setEditing(p)}
-                    style={{
-                      width: 56, height: 56, borderRadius: 12, flexShrink: 0, cursor: 'pointer',
-                      background: C.surface2, border: `1px solid ${C.border}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-                    }}
-                  >
-                    {p.imageUrl ? (
-                      <img src={productImageUrl(p.imageUrl)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <ImageIcon size={20} color={C.subtle} />
-                    )}
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setEditing(p)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-                      <p style={{ fontSize: 13.5, fontWeight: 800, color: C.text, margin: 0 }}>{p.name}</p>
-                      <span style={{
-                        fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 7,
-                        color: p.stock > 0 ? C.green : C.red,
-                        background: p.stock > 0 ? alpha(C.green, 12) : alpha(C.statusExpired, 12),
-                      }}>
-                        {p.stock > 0 ? `موجود · ${p.stock} ${p.unit}` : 'ناموجود'}
-                      </span>
-                      {!p.active && (
-                        <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 7, color: C.muted, background: C.surface2 }}>
-                          غیرفعال
-                        </span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: 11, color: C.muted, margin: '4px 0 0' }}>{p.category || 'بدون دسته‌بندی'}</p>
-                    <p style={{ fontSize: 13, fontWeight: 800, color: C.green, margin: '4px 0 0' }}>{p.price.toLocaleString()} ت</p>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                    <IconButton label={p.active ? 'غیرفعال کردن' : 'فعال کردن'} onClick={() => toggleActive(p)} size={28}>
-                      <span style={{ fontSize: 14 }}>{p.active ? '👁' : '🚫'}</span>
-                    </IconButton>
-                    <IconButton label="حذف" onClick={() => del(p.id)} size={28}><TrashIcon size={13} /></IconButton>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-
-      {(showAdd || editing) && (
-        <ProductEditSheet
-          product={editing}
-          onClose={() => { setShowAdd(false); setEditing(null); }}
-          onSaved={() => { setShowAdd(false); setEditing(null); load(); }}
+      {products.length > 0 && (
+        <Filters
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { key: 'all', label: 'همه', count: products.length },
+            { key: 'low', label: 'رو به اتمام', count: low.length },
+            { key: 'out', label: 'ناموجود', count: out.length },
+            { key: 'off', label: 'غیرفعال', count: products.length - active.length },
+          ]}
         />
       )}
+
+      <button onClick={openCatalog} className="pr-import" style={{ background: alpha(C.green, 8), color: C.green }}>
+        <SparklesIcon size={15} /> افزودن از کاتالوگ آماده
+      </button>
+
+      {notice && <div className="pr-note" style={{ color: C.green, background: alpha(C.green, 10) }}>{notice}</div>}
+
+      {loading ? (
+        <RowList>{[0, 1, 2].map((i) => <Skeleton key={i} height={74} radius={18} />)}</RowList>
+      ) : shown.length === 0 ? (
+        <EmptyState
+          icon={<BoxIcon size={26} />}
+          title={products.length ? 'در این دسته کالایی نیست' : 'هنوز کالایی ثبت نکردی'}
+          sub={products.length ? 'فیلتر دیگری را امتحان کن' : 'از کاتالوگ آماده ده‌ها کالای پرفروش را یکجا اضافه کن'}
+          onAdd={products.length ? undefined : () => setShowAdd(true)}
+          btnLabel="افزودن کالا"
+        />
+      ) : (
+        <RowList>
+          {shown.map((x) => {
+            const hue = !x.active ? C.statusNeutral : x.stock <= 0 ? C.statusExpired : x.stock <= 3 ? C.statusWarn : C.statusOk;
+            return (
+              <Row
+                key={x.id}
+                hue={hue}
+                dim={!x.active}
+                icon={<BoxIcon size={20} />}
+                title={x.name}
+                meta={x.category || 'بدون دسته'}
+                onClick={() => setEditing(x)}
+                chips={<>
+                  <Chip tone={hue}>{x.stock > 0 ? `${fa(x.stock)} ${x.unit}` : 'ناموجود'}</Chip>
+                  {!x.active && <Chip tone={C.statusNeutral}>غیرفعال</Chip>}
+                </>}
+                trailing={<>
+                  <b className="sk-fig" style={{ color: C.textStrong, fontSize: 13.5, fontWeight: 900 }}>{shortMoney(x.price)}</b>
+                  <small style={{ color: C.subtle, fontSize: 10 }}>تومان</small>
+                </>}
+                actions={<>
+                  <Button size="sm" variant="secondary" onClick={() => toggleActive(x)}>{x.active ? 'غیرفعال' : 'فعال'}</Button>
+                  <Button size="sm" variant="danger" onClick={() => del(x.id)} icon={<TrashIcon size={13} />}>حذف</Button>
+                </>}
+              />
+            );
+          })}
+        </RowList>
+      )}
+
+      {showAdd && <ProductEditSheet product={null} onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
+      {editing && <ProductEditSheet product={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
       {showCatalog && (
-        <CatalogImportSheet
-          kind="products"
-          existing={ownedNames}
-          onClose={() => setShowCatalog(false)}
-          onImported={afterImport}
-        />
+        <CatalogImportSheet kind="products" existing={ownedNames} onClose={() => setShowCatalog(false)} onImported={afterImport} />
       )}
+
       <BottomNav />
-    </div>
+      <style>{SCREEN_CSS + `
+.pr-import{width:100%;border:0;border-radius:15px;padding:12px 14px;margin-bottom:12px;font:900 12.5px var(--font-sans);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:transform .16s ease}
+.pr-import:active{transform:scale(.99)}
+.pr-note{border-radius:13px;padding:10px 14px;font:800 12px var(--font-sans);margin-bottom:12px}
+      `}</style>
+    </Screen>
   );
 }
 
@@ -248,7 +231,7 @@ function ProductEditSheet({ product, onClose, onSaved }: { product: Product | nu
         </div>
 
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">{product ? 'ذخیره تغییرات' : 'افزودن محصول'}</Button>
       </form>

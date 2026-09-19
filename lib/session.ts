@@ -43,7 +43,7 @@ export function getRole(): Role {
  *  just gets bounced back, which is what the hardcoded link used to do. */
 export function homeHref(role: Role = getRole()): string {
   if (role === 'mechanic') return '/mechanic';
-  if (role === 'seller') return '/seller/products';
+  if (role === 'seller') return '/seller';
   return '/dashboard';
 }
 

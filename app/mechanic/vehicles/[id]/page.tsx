@@ -353,7 +353,7 @@ function AddServiceWithInvoiceSheet({ vehicleId, record, onClose, onSaved }: { v
         )}
 
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
             {error}
           </div>
         )}

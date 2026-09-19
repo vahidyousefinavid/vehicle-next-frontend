@@ -52,7 +52,9 @@ export function Skeleton({ height = 16, width = '100%', radius = 8, style }: { h
   return (
     <div style={{
       height, width, borderRadius: radius,
-      background: 'linear-gradient(90deg, ${C.fill2} 25%, C.fill4 37%, C.fill2 63%)',
+      // was a template literal inside single quotes, so the gradient never
+      // parsed and every skeleton rendered as an invisible box
+      background: `linear-gradient(90deg, ${C.fill2} 25%, ${C.fill4} 37%, ${C.fill2} 63%)`,
       backgroundSize: '400% 100%',
       animation: 'shimmer 1.6s ease infinite',
       ...style,

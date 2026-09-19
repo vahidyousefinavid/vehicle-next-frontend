@@ -10,15 +10,16 @@ export function IconBadge({
   radius?: number;
 }) {
   return (
-    <div style={{
-      width: size, height: size, borderRadius: radius, flexShrink: 0,
-      background: `${alpha(color, 12)}`,
-      border: `1px solid ${alpha(color, 25)}`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color,
-      boxShadow: `0 4px 12px ${alpha(color, 13)}`,
-    }}>
+    <span
+      className="uib"
+      style={{
+        width: size, height: size, borderRadius: radius, flexShrink: 0,
+        background: alpha(color, 12),
+        display: 'grid', placeItems: 'center',
+        color,
+      }}
+    >
       {children}
-    </div>
+    </span>
   );
 }

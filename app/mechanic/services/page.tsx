@@ -84,7 +84,7 @@ export default function MechanicServicesPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {services.map(s => {
-              const meta = svcMeta(s.serviceType);
+              const meta = svcMeta(s.serviceType, s.customName);
               const Icon = meta.icon;
               return (
                 <Card key={s.id} padding="13px 15px">
@@ -207,7 +207,7 @@ function ServiceEditSheet({ existing, takenTypes, onClose, onSaved }: {
         </FormField>
 
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">{existing ? 'ذخیره تغییرات' : 'افزودن خدمت'}</Button>
       </form>

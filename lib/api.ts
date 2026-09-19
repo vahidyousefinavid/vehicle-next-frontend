@@ -158,6 +158,8 @@ export const api = {
     requestOtp: (phone: string)              => req<{ sent: boolean }>('POST', '/auth/otp/request', { phone }),
     register:   (d: RegisterInput)           => req<AuthRes>('POST', '/auth/register', d),
     login:      (phone: string, code: string) => req<AuthRes>('POST', '/auth/login', { phone, code }),
+    /** توکن تازه، برای اینکه کاربر فعال هرگز بیرون انداخته نشود */
+    refresh:    ()                           => req<AuthRes>('POST', '/auth/refresh', {}),
     me:         ()                           => req<User>('GET', '/auth/me'),
     updateProfile: (d: UpdateProfileInput)   => req<User>('PATCH', '/auth/me', d),
   },
@@ -273,13 +275,38 @@ export const api = {
     mine:    (mechanicId: string)                         => req<MechanicReview | null>('GET', `/mechanics/${mechanicId}/reviews/mine`),
     upsert:  (mechanicId: string, d: { rating: number; comment?: string }) => req<MechanicReview>('POST', `/mechanics/${mechanicId}/reviews`, d),
   },
+  serviceRequests: {
+    create:  (d: CreateServiceRequestInput) => req<ServiceRequestDetail>('POST', '/service-requests', d),
+    mine:    ()          => req<ServiceRequestSummary[]>('GET', '/service-requests/mine'),
+    open:    ()          => req<ServiceRequestSummary[]>('GET', '/service-requests/open'),
+    get:     (id: string) => req<ServiceRequestDetail>('GET', `/service-requests/${id}`),
+    cancel:  (id: string) => req<{ ok: boolean }>('PATCH', `/service-requests/${id}/cancel`),
+    accept:  (id: string, offerId: string) =>
+      req<ServiceRequestDetail>('POST', `/service-requests/${id}/offers/${offerId}/accept`, {}),
+    offer:   (id: string, d: { price: number; availability?: string; message?: string }) =>
+      req<{ id: string; price: number; status: OfferStatus }>('POST', `/service-requests/${id}/offers`, d),
+    withdraw: (id: string) => req<{ ok: boolean }>('PATCH', `/service-requests/${id}/offers/withdraw`),
+  },
   workshops: {
-    search: (params: { lat?: number; lng?: number; q?: string; serviceType?: string; mode?: ServiceMode }) => {
+    /** بدون نیاز به ورود — بازدیدکننده باید بتواند تعمیرگاه‌ها را ببیند */
+    publicSearch: (params: { lat?: number; lng?: number; q?: string; serviceType?: string; serviceTypes?: string[]; mode?: ServiceMode }) => {
       const qs = new URLSearchParams();
       if (params.lat !== undefined) qs.set('lat', String(params.lat));
       if (params.lng !== undefined) qs.set('lng', String(params.lng));
       if (params.q) qs.set('q', params.q);
       if (params.serviceType) qs.set('serviceType', params.serviceType);
+      if (params.serviceTypes?.length) qs.set('serviceTypes', params.serviceTypes.join(','));
+      if (params.mode) qs.set('mode', params.mode);
+      const query = qs.toString();
+      return req<Workshop[]>('GET', `/workshops/public${query ? `?${query}` : ''}`);
+    },
+    search: (params: { lat?: number; lng?: number; q?: string; serviceType?: string; serviceTypes?: string[]; mode?: ServiceMode }) => {
+      const qs = new URLSearchParams();
+      if (params.lat !== undefined) qs.set('lat', String(params.lat));
+      if (params.lng !== undefined) qs.set('lng', String(params.lng));
+      if (params.q) qs.set('q', params.q);
+      if (params.serviceType) qs.set('serviceType', params.serviceType);
+      if (params.serviceTypes?.length) qs.set('serviceTypes', params.serviceTypes.join(','));
       if (params.mode) qs.set('mode', params.mode);
       const query = qs.toString();
       return req<Workshop[]>('GET', `/workshops${query ? `?${query}` : ''}`);
@@ -317,6 +344,9 @@ export const api = {
     parts:    (q?: string, category?: string) => req<CatalogPage<PresetPart>>('GET', `/catalog/parts${catalogQuery(q, category)}`),
     products: (q?: string, category?: string) => req<CatalogPage<PresetProduct>>('GET', `/catalog/products${catalogQuery(q, category)}`),
     services: (q?: string, category?: string) => req<CatalogPage<PresetService>>('GET', `/catalog/services${catalogQuery(q, category)}`),
+    /** بدون نیاز به ورود — برای انتخاب تخصص در مراحل ثبت‌نام مکانیک */
+    publicServices: (q?: string, category?: string) =>
+      req<CatalogPage<PresetService>>('GET', `/catalog/public/services${catalogQuery(q, category)}`),
   },
   parts: {
     list:   (q?: string) => req<Part[]>('GET', `/mechanic/parts${q ? `?q=${encodeURIComponent(q)}` : ''}`),
@@ -466,6 +496,9 @@ export type Role = 'owner' | 'mechanic' | 'seller';
 
 export interface RegisterInput {
   phone: string; code: string; name: string; role?: Role; workshopName?: string; workshopAddress?: string;
+  workshopLat?: number; workshopLng?: number;
+  /** تخصص‌هایی که مکانیک هنگام ثبت‌نام انتخاب کرده؛ همان‌جا به خدماتش اضافه می‌شوند */
+  services?: ImportServiceItem[];
 }
 
 export interface Product {
@@ -497,10 +530,44 @@ export interface MechanicStats {
 export interface MechanicReview { id: string; rating: number; comment?: string; createdAt: string; ownerName?: string }
 export interface RatingSummary { avg: number; count: number }
 
+/* ── درخواست باز خدمت ──────────────────────────────────────────────────────
+   مشتری می‌گوید چه می‌خواهد و تعمیرگاه‌ها قیمت می‌دهند؛ پذیرفتن یک پیشنهاد،
+   همان لحظه‌ای است که درخواست تبدیل به نوبت می‌شود. */
+export type ServiceRequestStatus = 'open' | 'matched' | 'cancelled' | 'expired';
+export type OfferStatus = 'pending' | 'accepted' | 'declined' | 'withdrawn';
+
+export interface OfferWorkshop { id: string; name: string; address?: string | null; phone?: string | null }
+
+export interface ServiceOffer {
+  id: string; price: number; availability?: string | null; message?: string | null;
+  status: OfferStatus; createdAt: string; workshop: OfferWorkshop | null;
+}
+
+export interface ServiceRequestSummary {
+  id: string; vehicleId: string; serviceType: string; serviceKey?: string | null;
+  serviceName?: string | null; mode: ServiceMode; address?: string | null;
+  preferredAt?: string | null; notes?: string | null; budget?: number | null;
+  status: ServiceRequestStatus; appointmentId?: string | null; createdAt: string;
+  offerCount?: number;
+  vehicle?: { make?: string | null; model?: string | null; year?: number | null; plateNumber?: string | null } | null;
+  myOffer?: { id: string; price: number; availability?: string | null; message?: string | null; status: OfferStatus } | null;
+}
+
+export interface ServiceRequestDetail extends ServiceRequestSummary { offers: ServiceOffer[] }
+
+export interface CreateServiceRequestInput {
+  vehicleId: string; serviceType: string; serviceKey?: string; serviceName?: string;
+  mode?: ServiceMode; address?: string; lat?: number; lng?: number;
+  preferredAt?: string; notes?: string; budget?: number;
+}
+
 export interface Workshop {
   id: string; workshopName?: string; workshopAddress?: string;
   workshopLat?: number | null; workshopLng?: number | null;
   rating: number; reviewCount: number; distanceKm?: number | null;
+  /** چه خدماتی می‌دهد — کارت باید به «کار من را می‌کنند؟» جواب بدهد.
+   *  نام «services» روی WorkshopDetail برای شکل کامل رزرو شده است. */
+  serviceNames?: string[]; serviceTypes?: string[]; serviceCount?: number; onSite?: boolean;
 }
 
 export interface WorkshopDetail extends Workshop {
@@ -562,6 +629,8 @@ export interface PresetProduct {
 export interface PresetService {
   key: string; serviceType: string; customName?: string; category: string;
   suggestedPrice: number; supportsInShop: boolean; supportsOnSite: boolean;
+  /** خدمت در کاتالوگ هست ولی هنوز واقعاً ارائه نمی‌شود → «به‌زودی». */
+  availableNow?: boolean;
 }
 export interface ImportPartItem    { key: string; unitPrice?: number; quantity?: number }
 export interface ImportProductItem { key: string; price?: number; stock?: number }

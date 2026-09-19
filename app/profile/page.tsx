@@ -8,9 +8,10 @@ import InteractiveMapPicker from '@/components/InteractiveMapPicker';
 import PushToggle from '@/components/PushToggle';
 import SmsToggle from '@/components/SmsToggle';
 import {
-  UserIcon, LogOutIcon, ShieldIcon, CarIcon, ChevronLeftIcon, WrenchIcon,
+  UserIcon, LogOutIcon, CarIcon, ChevronLeftIcon, WrenchIcon,
   StoreIcon, CalendarIcon, BoxIcon, UsersIcon, CompassIcon, MessageIcon, SettingsIcon, PinIcon,
   BellIcon, WalletIcon,
+  SparklesIcon,
 } from '@/components/icons';
 import { C, Card, Button, alpha} from '@/components/ui';
 import { api } from '@/lib/api';
@@ -54,29 +55,35 @@ export default function ProfilePage() {
             <UserIcon size={34} />
           </div>
           <div>
-            <p style={{ color: C.text, fontSize: 18, fontWeight: 900, margin: 0 }}>
+            <p style={{ color: C.textStrong, fontSize: 18, fontWeight: 950, margin: 0 }}>
               {(user?.role === 'mechanic' || user?.role === 'seller') ? (user?.workshopName || 'کاربر') : (user?.name || 'کاربر مهمان')}
             </p>
             {(user?.role === 'mechanic' || user?.role === 'seller') && (
               <p style={{ color: C.subtle, fontSize: 12, fontWeight: 500, margin: '3px 0 0' }}>{user?.name}</p>
             )}
-            <p style={{ color: C.muted, fontSize: 13, fontWeight: 500, margin: '4px 0 0', direction: 'ltr' }}>
-              {user?.phone || ''}
+            <p style={{ color: C.muted, fontSize: 13, fontWeight: 600, margin: '4px 0 0' }}>
+              <bdi dir="ltr">{user?.phone || ''}</bdi>
             </p>
+            {user?.role && (
+              <span className="pf-role" style={{ background: alpha(C.green, 12), color: C.green }}>
+                {user.role === 'mechanic' ? 'تعمیرگاه' : user.role === 'seller' ? 'فروشنده' : 'مالک خودرو'}
+              </span>
+            )}
           </div>
         </div>
 
         {user?.role === 'mechanic' ? (
           <>
             <Card style={{ marginBottom: 12 }} padding="4px">
-              <MenuRow icon={<WrenchIcon size={18} />} label="خودروهای متصل" onClick={() => router.push('/mechanic')} />
-              <MenuRow icon={<UsersIcon size={18} />} label="مشتری‌های من" onClick={() => router.push('/mechanic/customers')} />
-              <MenuRow icon={<WalletIcon size={18} />} label="حسابداری و درآمد" onClick={() => router.push('/mechanic/accounting')} />
-              <MenuRow icon={<BoxIcon size={18} />} label="کاتالوگ قطعات" onClick={() => router.push('/mechanic/parts')} />
-              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌ها" onClick={() => router.push('/appointments')} />
-              <MenuRow icon={<SettingsIcon size={18} />} label="خدمات من" onClick={() => router.push('/mechanic/services')} />
-              <MenuRow icon={<MessageIcon size={18} />} label="گفتگوها" onClick={() => router.push('/messages')} />
-              <MenuRow icon={<UsersIcon size={18} />} label="سازمان‌ها / ناوگان" onClick={() => router.push('/organizations')} />
+              <MenuRow icon={<SparklesIcon size={18} />} label="درخواست‌های باز" hint="کار تازه بردار" hue="var(--svc-tuning)" onClick={() => router.push('/mechanic/requests')} />
+              <MenuRow icon={<WrenchIcon size={18} />} label="خودروهای متصل" hue="var(--svc-oil)" onClick={() => router.push('/mechanic')} />
+              <MenuRow icon={<UsersIcon size={18} />} label="مشتری‌های من" hue="var(--svc-filter)" onClick={() => router.push('/mechanic/customers')} />
+              <MenuRow icon={<WalletIcon size={18} />} label="حسابداری و درآمد" hue="var(--svc-gearbox)" onClick={() => router.push('/mechanic/accounting')} />
+              <MenuRow icon={<BoxIcon size={18} />} label="کاتالوگ قطعات" hue="var(--svc-tire)" onClick={() => router.push('/mechanic/parts')} />
+              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌ها" hue="var(--svc-filter)" onClick={() => router.push('/appointments')} />
+              <MenuRow icon={<SettingsIcon size={18} />} label="خدمات من" hue="var(--svc-plug)" onClick={() => router.push('/mechanic/services')} />
+              <MenuRow icon={<MessageIcon size={18} />} label="گفتگوها" hue="var(--svc-ac)" onClick={() => router.push('/messages')} />
+              <MenuRow icon={<UsersIcon size={18} />} label="سازمان‌ها / ناوگان" hue="var(--svc-gearbox)" onClick={() => router.push('/organizations')} />
             </Card>
 
             <div style={{ marginBottom: 12 }}>
@@ -94,9 +101,9 @@ export default function ProfilePage() {
         ) : user?.role === 'seller' ? (
           <>
             <Card style={{ marginBottom: 12 }} padding="4px">
-              <MenuRow icon={<BoxIcon size={18} />} label="محصولات من" onClick={() => router.push('/seller/products')} />
-              <MenuRow icon={<WrenchIcon size={18} />} label="ثبت و سابقه فروش" onClick={() => router.push('/seller/sales')} />
-              <MenuRow icon={<WalletIcon size={18} />} label="حسابداری و مشتری‌ها" onClick={() => router.push('/seller/accounting')} />
+              <MenuRow icon={<BoxIcon size={18} />} label="محصولات من" hue="var(--svc-tire)" onClick={() => router.push('/seller/products')} />
+              <MenuRow icon={<WrenchIcon size={18} />} label="ثبت و سابقه فروش" hue="var(--svc-oil)" onClick={() => router.push('/seller/sales')} />
+              <MenuRow icon={<WalletIcon size={18} />} label="حسابداری و مشتری‌ها" hue="var(--svc-gearbox)" onClick={() => router.push('/seller/accounting')} />
             </Card>
 
             <div style={{ marginBottom: 12 }}>
@@ -114,14 +121,14 @@ export default function ProfilePage() {
         ) : (
           <>
             <Card style={{ marginBottom: 12 }} padding="4px">
-              <MenuRow icon={<CarIcon size={18} />} label="خودروهای من" onClick={() => router.push('/dashboard')} />
-              <MenuRow icon={<BellIcon size={18} />} label="یادآورها و سررسیدها" onClick={() => router.push('/reminders')} />
-              <MenuRow icon={<WalletIcon size={18} />} label="هزینه‌ها" onClick={() => router.push('/expenses')} />
-              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌های من" onClick={() => router.push('/appointments')} />
-              <MenuRow icon={<StoreIcon size={18} />} label="پیدا کردن تعمیرگاه" onClick={() => router.push('/workshops')} />
-              <MenuRow icon={<MessageIcon size={18} />} label="گفتگوها" onClick={() => router.push('/messages')} />
-              <MenuRow icon={<UsersIcon size={18} />} label="سازمان‌ها / ناوگان" onClick={() => router.push('/organizations')} />
-              <MenuRow icon={<ShieldIcon size={18} />} label="حریم خصوصی و امنیت" />
+              <MenuRow icon={<CarIcon size={18} />} label="خودروهای من" hint="مدارک و سوابق" hue="var(--svc-tire)" onClick={() => router.push('/dashboard')} />
+              <MenuRow icon={<SparklesIcon size={18} />} label="درخواست‌های من" hint="پیشنهاد تعمیرگاه‌ها" hue="var(--svc-tuning)" onClick={() => router.push('/requests')} />
+              <MenuRow icon={<BellIcon size={18} />} label="یادآورها و سررسیدها" hue="var(--svc-battery)" onClick={() => router.push('/reminders')} />
+              <MenuRow icon={<WalletIcon size={18} />} label="هزینه‌ها" hue="var(--svc-oil)" onClick={() => router.push('/expenses')} />
+              <MenuRow icon={<CalendarIcon size={18} />} label="نوبت‌های من" hue="var(--svc-filter)" onClick={() => router.push('/appointments')} />
+              <MenuRow icon={<StoreIcon size={18} />} label="پیدا کردن تعمیرگاه" hue="var(--svc-brake)" onClick={() => router.push('/workshops')} />
+              <MenuRow icon={<MessageIcon size={18} />} label="گفتگوها" hue="var(--svc-ac)" onClick={() => router.push('/messages')} />
+              <MenuRow icon={<UsersIcon size={18} />} label="سازمان‌ها / ناوگان" hue="var(--svc-gearbox)" onClick={() => router.push('/organizations')} />
             </Card>
 
             {user && (
@@ -156,6 +163,31 @@ export default function ProfilePage() {
       </main>
 
       <BottomNav />
+
+      {/* `.pf-row` / `.pf-ico` / `.pf-txt` are rendered by <MenuRow>, a sibling
+          component — and <style jsx> scopes per component, not per file, so
+          those rules only match once they opt out with :global(). `.pf-role`
+          is rendered here, so it stays scoped. */}
+      <style jsx>{`
+        :global(.pf-row){
+          width:100%;display:flex;align-items:center;gap:12px;
+          padding:12px 13px;background:transparent;border:0;cursor:pointer;
+          font-family:var(--font-sans);border-radius:14px;
+          transition:background var(--dur-move,260ms) var(--ease-soft,ease),transform var(--dur-press,120ms) var(--ease-soft,ease);
+        }
+        :global(.pf-row:active){transform:scale(.985);background:var(--fill-1)}
+        :global(.pf-row:focus-visible){outline:2px solid var(--brand);outline-offset:-2px}
+        @media (hover:hover){ :global(.pf-row:hover){background:var(--fill-1)} }
+        :global(.pf-ico){width:36px;height:36px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;
+                transition:transform var(--dur-move,260ms) var(--ease-spring,ease)}
+        :global(.pf-row:active .pf-ico){transform:scale(.93)}
+        :global(.pf-txt){flex:1;min-width:0;text-align:start}
+        :global(.pf-txt b){display:block;font-size:13.5px;font-weight:800;line-height:1.4}
+        :global(.pf-txt small){display:block;font-size:10.5px;margin-top:2px;line-height:1.5}
+        .pf-role{display:inline-block;margin-top:9px;font-size:11px;font-weight:900;
+                 border-radius:999px;padding:5px 12px}
+        @media (prefers-reduced-motion: reduce){ :global(.pf-row:active),:global(.pf-row:active .pf-ico){transform:none} }
+      `}</style>
     </div>
   );
 }
@@ -222,22 +254,25 @@ function WorkshopLocationCard({ user, onSaved }: { user: User; onSaved: (u: User
   );
 }
 
-function MenuRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
+/**
+ * One line of the profile menu.
+ *
+ * Every row used to carry the same green glyph, so the list was a wall of
+ * identical ticks and you navigated it by reading every label. Each entry has
+ * its own hue on a plate now, which is how the rest of the app is scanned, and
+ * the row reacts to a press — before, nothing on this screen moved under a
+ * finger.
+ */
+function MenuRow({
+  icon, label, hint, hue = C.green, onClick,
+}: { icon: React.ReactNode; label: string; hint?: string; hue?: string; onClick?: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={!onClick}
-      style={{
-        width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-        padding: '13px 14px', background: 'transparent', border: 'none',
-        color: C.text, fontSize: 13.5, fontWeight: 600,
-        fontFamily: 'var(--font-sans)',
-        opacity: onClick ? 1 : 0.55,
-        cursor: onClick ? 'pointer' : 'default',
-      }}
-    >
-      <span style={{ color: C.green, display: 'flex' }}>{icon}</span>
-      <span style={{ flex: 1, textAlign: 'right' }}>{label}</span>
+    <button onClick={onClick} className="pf-row" style={{ ['--pf-hue' as string]: hue }}>
+      <span className="pf-ico" style={{ background: alpha(hue, 12), color: hue }}>{icon}</span>
+      <span className="pf-txt">
+        <b style={{ color: C.text }}>{label}</b>
+        {hint && <small style={{ color: C.subtle }}>{hint}</small>}
+      </span>
       <ChevronLeftIcon size={16} color={C.subtle} />
     </button>
   );

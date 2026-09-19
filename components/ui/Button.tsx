@@ -53,6 +53,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={isDisabled}
+      className={size === 'sm' ? 'tap44' : undefined}
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7,
         padding: PAD[size],
@@ -90,6 +91,7 @@ export function IconButton({
       onClick={onClick}
       aria-label={label}
       title={label}
+      className="tap44"
       style={{
         width: size, height: size, borderRadius: 11,
         background: active ? alpha(C.green, 14) : C.surface2,

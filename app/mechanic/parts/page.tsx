@@ -1,13 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
+import { useUrlFilter } from '@/hooks/useUrlFilter';
 import VoiceAgentWidget from '@/components/VoiceAgentWidget';
 import CatalogImportSheet from '@/components/CatalogImportSheet';
 import { api, Part } from '@/lib/api';
-import { C, Card, Button, IconButton, FormField, Input, Sheet, EmptyState, Spinner, alpha} from '@/components/ui';
-import { ChevronRightIcon, BoxIcon, PlusIcon, TrashIcon, SparklesIcon } from '@/components/icons';
+import { C, alpha, Button, EmptyState, Skeleton, FormField, Input, Sheet } from '@/components/ui';
+import { Screen, ScreenHeader, Glance, Row, RowList, Chip, Filters, SearchBar, SCREEN_CSS, fa, money, shortMoney } from '@/components/ScreenKit';
+import { BoxIcon, PlusIcon, TrashIcon, SparklesIcon } from '@/components/icons';
 
 export default function PartsCatalogPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function PartsCatalogPage() {
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [filter, setFilter] = useUrlFilter('stock', ['all', 'low', 'out'] as const, 'all');
   const [editing, setEditing] = useState<Part | null>(null);
   const [showCatalog, setShowCatalog] = useState(false);
   const [ownedNames, setOwnedNames] = useState<string[]>([]);
@@ -47,98 +49,102 @@ export default function PartsCatalogPage() {
     load();
   }
 
+  const inStock = parts.filter((x) => x.inStock && x.quantity > 0);
+  const out = parts.filter((x) => !x.inStock || x.quantity <= 0);
+  const low = parts.filter((x) => x.inStock && x.quantity > 0 && x.quantity <= 2);
+  const value = parts.reduce((n, x) => n + (x.inStock ? x.quantity * x.unitPrice : 0), 0);
+  const shown = filter === 'out' ? out : filter === 'low' ? low : parts;
+
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <Navbar title="کاتالوگ قطعات" />
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '0 14px calc(88px + env(safe-area-inset-bottom))' }}>
-        <button
-          onClick={() => router.back()}
-          style={{ background: 'none', border: 'none', color: C.muted, fontSize: 13, fontWeight: 600, padding: '14px 0 10px', display: 'flex', alignItems: 'center', gap: 5 }}
-        >
-          <ChevronRightIcon size={16} /> بازگشت
-        </button>
+    <Screen dense>
+      <ScreenHeader
+        eyebrow="انبار تعمیرگاه"
+        title="قطعات"
+        subtitle={out.length ? `${fa(out.length)} قلم ناموجود است` : low.length ? `${fa(low.length)} قلم رو به اتمام` : 'موجودی سالم است'}
+        back="/mechanic"
+        action={<Button size="sm" onClick={() => setShowAdd(true)} icon={<PlusIcon size={14} />}>افزودن</Button>}
+      />
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <div style={{ flex: 1 }}>
-            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="جستجوی قطعه..." />
-          </div>
-          <Button onClick={() => setShowAdd(true)} icon={<PlusIcon size={15} />}>افزودن</Button>
-        </div>
+      {!loading && parts.length > 0 && (
+        <Glance items={[
+          { label: 'قلم کالا', value: fa(parts.length) },
+          { label: 'ارزش انبار', value: shortMoney(value), hint: 'تومان', tone: C.statusOk },
+          { label: 'رو به اتمام', value: fa(low.length), tone: low.length ? C.statusWarn : undefined, alert: low.length > 0 },
+          { label: 'ناموجود', value: fa(out.length), tone: out.length ? C.statusExpired : undefined, alert: out.length > 0 },
+        ]} />
+      )}
 
-        <button
-          onClick={openCatalog}
-          style={{
-            width: '100%', marginBottom: 14, padding: '11px 14px', borderRadius: 14,
-            background: alpha(C.green, 8), border: `1px dashed ${alpha(C.green, 34)}`,
-            color: C.green, fontSize: 12.5, fontWeight: 800,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-          }}
-        >
-          <SparklesIcon size={15} /> افزودن از لیست آماده قطعات
-        </button>
+      <SearchBar value={q} onChange={setQ} placeholder="جستجوی قطعه..." />
 
-        {notice && (
-          <div style={{
-            marginBottom: 12, padding: '10px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700,
-            color: C.green, background: alpha(C.green, 10), border: `1px solid ${alpha(C.green, 22)}`,
-          }}>
-            {notice}
-          </div>
-        )}
-
-        {loading ? (
-          <Spinner />
-        ) : parts.length === 0 ? (
-          <EmptyState icon={<BoxIcon size={26} />} title="کاتالوگی نداری" sub="قطعات پرکاربردت رو با قیمت ثبت کن تا موقع صدور فاکتور سریع انتخابشون کنی" onAdd={() => setShowAdd(true)} btnLabel="افزودن اولین قطعه" />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {parts.map(p => (
-              <Card key={p.id} padding="13px 15px">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                  <div style={{ minWidth: 0, cursor: 'pointer' }} onClick={() => setEditing(p)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <p style={{ fontSize: 13.5, fontWeight: 800, color: C.text, margin: 0 }}>{p.name}</p>
-                      <span style={{
-                        fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 7,
-                        color: p.inStock ? C.green : C.red,
-                        background: p.inStock ? alpha(C.green, 12) : alpha(C.statusExpired, 12),
-                      }}>
-                        {p.inStock ? `موجود · ${p.quantity}` : 'ناموجود'}
-                      </span>
-                    </div>
-                    <p style={{ fontSize: 11, color: C.muted, margin: '4px 0 0' }}>
-                      {p.category ? `${p.category} · ` : ''}{p.unit}{p.sku ? ` · کد ${p.sku}` : ''}
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{p.unitPrice.toLocaleString()} ت</span>
-                    <IconButton label="حذف" onClick={() => del(p.id)} size={28}><TrashIcon size={13} /></IconButton>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-
-      {(showAdd || editing) && (
-        <PartEditSheet
-          part={editing}
-          onClose={() => { setShowAdd(false); setEditing(null); }}
-          onSaved={() => { setShowAdd(false); setEditing(null); load(); }}
+      {parts.length > 0 && (
+        <Filters
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { key: 'all', label: 'همه', count: parts.length },
+            { key: 'low', label: 'رو به اتمام', count: low.length },
+            { key: 'out', label: 'ناموجود', count: out.length },
+          ]}
         />
       )}
+
+      <button onClick={openCatalog} className="pt-import" style={{ background: alpha(C.green, 8), color: C.green }}>
+        <SparklesIcon size={15} /> افزودن از لیست آماده قطعات
+      </button>
+
+      {notice && <div className="pt-note" style={{ color: C.green, background: alpha(C.green, 10) }}>{notice}</div>}
+
+      {loading ? (
+        <RowList>{[0, 1, 2].map((i) => <Skeleton key={i} height={72} radius={18} />)}</RowList>
+      ) : shown.length === 0 ? (
+        <EmptyState
+          icon={<BoxIcon size={26} />}
+          title={parts.length ? 'در این دسته چیزی نیست' : 'کاتالوگی نداری'}
+          sub={parts.length ? 'فیلتر دیگری را امتحان کن' : 'قطعات پرکاربردت را با قیمت ثبت کن تا موقع صدور فاکتور سریع انتخابشان کنی'}
+          onAdd={parts.length ? undefined : () => setShowAdd(true)}
+          btnLabel="افزودن اولین قطعه"
+        />
+      ) : (
+        <RowList>
+          {shown.map((x) => {
+            const stock = x.inStock ? x.quantity : 0;
+            const hue = stock <= 0 ? C.statusExpired : stock <= 2 ? C.statusWarn : C.statusOk;
+            return (
+              <Row
+                key={x.id}
+                hue={hue}
+                icon={<BoxIcon size={20} />}
+                title={x.name}
+                meta={<>{x.category || 'بدون دسته'}{x.sku ? ` · ${x.sku}` : ''}</>}
+                onClick={() => setEditing(x)}
+                chips={<>
+                  <Chip tone={hue}>{stock > 0 ? `${fa(stock)} ${x.unit}` : 'ناموجود'}</Chip>
+                  <Chip tone={C.muted}>{money(x.unitPrice)}</Chip>
+                </>}
+                trailing={<>
+                  <b className="sk-fig" style={{ color: C.textStrong, fontSize: 13.5, fontWeight: 900 }}>{shortMoney(stock * x.unitPrice)}</b>
+                  <small style={{ color: C.subtle, fontSize: 10 }}>ارزش</small>
+                </>}
+                actions={<Button size="sm" variant="danger" onClick={() => del(x.id)} icon={<TrashIcon size={13} />}>حذف</Button>}
+              />
+            );
+          })}
+        </RowList>
+      )}
+
+      {showAdd && <PartEditSheet part={null} onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
+      {editing && <PartEditSheet part={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
       {showCatalog && (
-        <CatalogImportSheet
-          kind="parts"
-          existing={ownedNames}
-          onClose={() => setShowCatalog(false)}
-          onImported={afterImport}
-        />
+        <CatalogImportSheet kind="parts" existing={ownedNames} onClose={() => setShowCatalog(false)} onImported={afterImport} />
       )}
-      <VoiceAgentWidget tenantId="vehicle-parts" onExecuted={load} />
+
       <BottomNav />
-    </div>
+      <style>{SCREEN_CSS + `
+.pt-import{width:100%;border:0;border-radius:15px;padding:12px 14px;margin-bottom:12px;font:900 12.5px var(--font-sans);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:transform .16s ease}
+.pt-import:active{transform:scale(.99)}
+.pt-note{border-radius:13px;padding:10px 14px;font:800 12px var(--font-sans);margin-bottom:12px}
+      `}</style>
+    </Screen>
   );
 }
 
@@ -190,7 +196,7 @@ function PartEditSheet({ part, onClose, onSaved }: { part: Part | null; onClose:
           </FormField>
         </div>
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={loading} fullWidth size="lg">{part ? 'ذخیره تغییرات' : 'افزودن به کاتالوگ'}</Button>
       </form>

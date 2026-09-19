@@ -2,14 +2,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import PlateInput from '@/components/PlateInput';
 import PersianYearPicker, { currentJalaliYear } from '@/components/PersianYearPicker';
 import { api, MechanicVehicle, MechanicStats, CreateMechanicVehicleInput, User } from '@/lib/api';
 import { getToken, getUser, homeHref } from '@/lib/session';
-import { C, Card, StatGrid, EmptyState, SkeletonRow, Button, Input, FormField, Sheet, alpha } from '@/components/ui';
-import { CarIcon, WrenchIcon, WalletIcon, ChevronLeftIcon, LinkIcon, PlusIcon, CheckIcon, CalendarIcon, SettingsIcon, BoxIcon, MessageIcon } from '@/components/icons';
+import { C, EmptyState, SkeletonRow, Button, Input, FormField, Sheet, alpha } from '@/components/ui';
+import { RoleGreeting, HeroStat, QueueCard, ToolRow, SectionHead, ROLE_HOME_CSS, fa } from '@/components/RoleHome';
+import ThemeToggle from '@/components/ThemeToggle';
+import NotificationsBell from '@/components/NotificationsBell';
+import { CarIcon, WalletIcon, ChevronLeftIcon, LinkIcon, PlusIcon, CheckIcon, CalendarIcon, SettingsIcon, BoxIcon, MessageIcon, UsersIcon, CopyIcon, SparklesIcon } from '@/components/icons';
 
 export default function MechanicDashboard() {
   const router = useRouter();
@@ -58,165 +60,117 @@ export default function MechanicDashboard() {
   }
 
   const invoiced = stats?.invoicedThisMonth ?? 0;
-  const statCards = [
-    { label: 'خودروها', value: String(stats?.vehicles ?? vehicles.length), icon: <CarIcon size={17} />, color: C.green },
-    { label: 'سرویس این ماه', value: String(stats?.servicesThisMonth ?? 0), icon: <WrenchIcon size={17} />, color: C.statusInfo },
-    {
-      label: 'درآمد این ماه', icon: <WalletIcon size={17} />, color: C.statusMint,
-      value: invoiced > 0 ? `${(invoiced / 1_000_000).toFixed(1)}M` : '—',
-      sub: invoiced > 0 ? 'تومان' : '',
-    },
-  ];
+  const pending = stats?.pendingAppointments ?? 0;
+  const connected = stats?.vehicles ?? vehicles.length;
+  const awaitingOwner = vehicles.filter((v) => v.linkStatus === 'pending').length;
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <Navbar />
-      <main style={{ maxWidth: 520, margin: '0 auto', padding: '0 16px calc(88px + env(safe-area-inset-bottom))' }}>
+    <div className="mech" data-density="dense">
+      <main className="mech-main">
+        <RoleGreeting
+          eyebrow="تعمیرگاه من"
+          title={workshop?.workshopName || workshop?.name || 'تعمیرگاه'}
+          subtitle={pending > 0 ? `${fa(pending)} درخواست منتظر جواب توست` : 'امروز درخواست بی‌جواب نداری'}
+          right={<>
+            <NotificationsBell />
+            <ThemeToggle size={38} />
+            <Link href="/profile" className="mech-avatar" style={{ background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`, color: C.onAccent }}>
+              {(workshop?.workshopName || workshop?.name || 'ت').trim().slice(0, 1)}
+            </Link>
+          </>}
+        />
 
-        <div style={{ padding: '18px 0 14px' }}>
-          <p style={{ color: C.muted, fontSize: 12, margin: 0, fontWeight: 500 }}>پنل تعمیرگاه</p>
-          <h1 style={{ color: C.text, fontSize: 21, fontWeight: 900, margin: '5px 0 0' }}>
-            {workshop?.workshopName || workshop?.name || 'تعمیرگاه'}
-          </h1>
-        </div>
+        {/* the figure a workshop actually opens the app for */}
+        <HeroStat
+          label="درآمد فاکتورهای این ماه"
+          value={invoiced ? fa(invoiced) : '—'}
+          unit={invoiced ? 'تومان' : undefined}
+          note={invoiced ? undefined : 'وقتی فاکتور صادر کنی، اینجا جمع می‌شود'}
+          tone={C.statusOk}
+          side={[
+            { label: 'سرویس این ماه', value: fa(stats?.servicesThisMonth ?? 0) },
+            { label: 'خودروی متصل', value: fa(connected) },
+          ]}
+        />
 
-        <div style={{ marginBottom: 16 }}>
-          <StatGrid stats={statCards} />
-        </div>
-
-        {/* The screens the tab bar can't fit, one tap from the panel. */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 9, marginBottom: 18 }}>
-          {[
-            { label: 'خدمات من', hint: 'قیمت و نوع', icon: <SettingsIcon size={18} />, href: '/mechanic/services', color: C.green },
-            { label: 'قطعات', hint: 'کاتالوگ', icon: <BoxIcon size={18} />, href: '/mechanic/parts', color: C.statusInfo },
-            { label: 'گفتگوها', hint: 'با مشتری', icon: <MessageIcon size={18} />, href: '/messages', color: C.statusMint },
-            { label: 'هزینه‌ها', hint: 'اجاره، حقوق', icon: <WalletIcon size={18} />, href: '/mechanic/expenses', color: C.statusExpired },
-          ].map(a => (
-            <button key={a.href} onClick={() => router.push(a.href)} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 18, padding: '13px 5px', fontFamily: 'var(--font-sans)',
-            }}>
-              <span style={{
-                width: 38, height: 38, borderRadius: 13,
-                background: alpha(a.color, 12), border: `1px solid ${alpha(a.color, 25)}`,
-                color: a.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>{a.icon}</span>
-              <span style={{ fontSize: 11, fontWeight: 800, color: C.text }}>{a.label}</span>
-              <span style={{ fontSize: 9.5, color: C.subtle }}>{a.hint}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* A pending request is the one thing on this screen that needs an
-            answer today, so it gets a route out of the dashboard rather than
-            only living behind the tab bar. */}
-        {(stats?.pendingAppointments ?? 0) > 0 && (
-          <Card style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 38, height: 38, borderRadius: 12, flexShrink: 0,
-                background: alpha(C.statusWarn, 12), border: `1px solid ${alpha(C.statusWarn, 25)}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.statusWarn,
-              }}><CalendarIcon size={18} /></div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 13.5, fontWeight: 800, color: C.text, margin: 0 }}>
-                  {stats!.pendingAppointments} درخواست نوبت در انتظار پاسخ
-                </p>
-                <p style={{ fontSize: 11, color: C.muted, margin: '3px 0 0' }}>
-                  تا تایید نکنی، مشتری منتظر می‌مونه
-                </p>
-              </div>
-              <Button size="sm" onClick={() => router.push('/appointments')}>بررسی</Button>
-            </div>
-          </Card>
+        {pending > 0 && (
+          <QueueCard
+            icon={<CalendarIcon size={20} />}
+            title={`${fa(pending)} درخواست نوبت بی‌جواب`}
+            body="تا تایید نکنی مشتری منتظر می‌ماند"
+            cta="بررسی"
+            href="/appointments"
+          />
+        )}
+        {awaitingOwner > 0 && (
+          <QueueCard
+            icon={<LinkIcon size={20} />}
+            title={`${fa(awaitingOwner)} خودرو منتظر تایید مالک`}
+            body="تا مالک تایید نکند، سوابق کامل را نمی‌بینی"
+            cta="مشاهده"
+            href="/mechanic/customers"
+            tone={C.statusInfo}
+          />
         )}
 
-        <Card style={{ marginBottom: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-            <div style={{
-              width: 30, height: 30, borderRadius: 10,
-              background: alpha(C.green, 12), border: `1px solid ${alpha(C.green, 19)}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
-            }}><CarIcon size={15} /></div>
-            <h2 style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: 0 }}>افزودن ماشین با پلاک</h2>
-          </div>
-          <p style={{ fontSize: 12, color: C.muted, margin: '0 0 14px', lineHeight: 1.7 }}>
-            بدون نیاز به کد دعوت — فقط پلاک و مشخصات ماشین رو وارد کن و همین الان سرویس ثبت کن.
-          </p>
-          <Button fullWidth icon={<PlusIcon size={15} />} onClick={() => setShowAddVehicle(true)}>افزودن ماشین جدید</Button>
-        </Card>
+        <SectionHead title="ابزارهای تعمیرگاه" />
+        <ToolRow tools={[
+          { href: '/mechanic/requests',   label: 'درخواست‌های باز', hint: 'کار تازه', icon: <SparklesIcon size={19} />, hue: 'var(--svc-tuning)' },
+          { href: '/mechanic/services',   label: 'خدمات من', hint: 'نوع و قیمت',  icon: <SettingsIcon size={19} />, hue: 'var(--svc-oil)' },
+          { href: '/mechanic/parts',      label: 'انبار قطعات', hint: 'موجودی',   icon: <BoxIcon size={19} />,      hue: 'var(--svc-tire)' },
+          { href: '/mechanic/customers',  label: 'مشتری‌ها', hint: 'سوابق',       icon: <UsersIcon size={19} />,    hue: 'var(--svc-filter)' },
+          { href: '/mechanic/accounting', label: 'حساب‌وکتاب', hint: 'فاکتورها',  icon: <WalletIcon size={19} />,   hue: 'var(--svc-gearbox)' },
+          { href: '/mechanic/expenses',   label: 'هزینه‌ها', hint: 'اجاره، حقوق', icon: <CopyIcon size={19} />,     hue: 'var(--svc-paint)' },
+          { href: '/messages',            label: 'گفتگوها', hint: 'با مشتری',     icon: <MessageIcon size={19} />,  hue: 'var(--svc-ac)' },
+        ]} />
 
-        <Card style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-            <div style={{
-              width: 30, height: 30, borderRadius: 10,
-              background: alpha(C.green, 12), border: `1px solid ${alpha(C.green, 19)}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
-            }}><LinkIcon size={15} /></div>
-            <h2 style={{ fontSize: 14, fontWeight: 800, color: C.text, margin: 0 }}>اتصال با کد دعوت مالک</h2>
-          </div>
-          <form onSubmit={redeem} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <FormField label="کد دعوت مالک خودرو">
+        <SectionHead title="خودروهای من" />
+        <div className="mech-add">
+          <button type="button" onClick={() => setShowAddVehicle(true)} className="mech-add-btn" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+            <span style={{ background: alpha(C.green, 12), color: C.green }}><PlusIcon size={18} /></span>
+            <b style={{ color: C.textStrong }}>افزودن با پلاک</b>
+            <small style={{ color: C.muted }}>بدون کد دعوت</small>
+          </button>
+          <form onSubmit={redeem} className="mech-redeem" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+            <label style={{ color: C.muted }}>کد دعوت مالک</label>
+            <div>
               <Input
                 value={code}
-                onChange={e => setCode(e.target.value.toUpperCase())}
-                placeholder="مثلاً: DTQMHPDB"
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="DTQMHPDB"
                 dir="ltr"
                 style={{ textAlign: 'center', letterSpacing: 3, fontWeight: 800 }}
               />
-            </FormField>
-            {redeemError && (
-              <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
-                {redeemError}
-              </div>
-            )}
-            <Button type="submit" loading={redeeming} fullWidth>اتصال</Button>
+              <Button type="submit" loading={redeeming} size="sm">اتصال</Button>
+            </div>
           </form>
-        </Card>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h2 style={{ color: C.text2, fontSize: 14, fontWeight: 700, margin: 0 }}>خودروهای متصل</h2>
         </div>
+        {redeemError && (
+          <div className="mech-err" role="alert" style={{ color: C.statusExpired, background: alpha(C.statusExpired, 10) }}>{redeemError}</div>
+        )}
 
         {loading ? (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 22, overflow: 'hidden' }}>
-            <SkeletonRow /><SkeletonRow />
-          </div>
+          <div style={{ background: C.surfaceSolid, borderRadius: 20, overflow: 'hidden' }}><SkeletonRow /><SkeletonRow /></div>
         ) : vehicles.length === 0 ? (
           <EmptyState
             icon={<CarIcon size={26} />}
-            title="هنوز به خودرویی متصل نشدی"
-            sub="کد دعوت رو از مالک خودرو بگیر و بالا وارد کن"
+            title="هنوز خودرویی وصل نشده"
+            sub="با پلاک اضافه کن یا کد دعوت مالک را وارد کن"
           />
         ) : (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 22, overflow: 'hidden' }}>
-            {vehicles.map((v, i) => (
-              <Link key={v.accessId} href={`/mechanic/vehicles/${v.vehicleId}`} style={{ textDecoration: 'none', display: 'block' }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
-                  borderBottom: i === vehicles.length - 1 ? 'none' : `1px solid ${C.border}`,
-                }}>
-                  <div style={{
-                    width: 46, height: 46, borderRadius: 15, flexShrink: 0,
-                    background: `${alpha(C.green, 12)}`, border: `1px solid ${alpha(C.green, 25)}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
-                  }}><CarIcon size={21} /></div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ color: C.text, fontSize: 14, fontWeight: 700, margin: 0 }}>{v.make} {v.model}</p>
-                    <p style={{ color: C.muted, fontSize: 12, fontWeight: 500, margin: '3px 0 0' }}>
-                      مالک: {v.ownerName || '—'} {v.plateNumber ? `· ${v.plateNumber}` : ''}
-                    </p>
-                    {v.linkStatus === 'pending' && (
-                      <span style={{
-                        display: 'inline-block', marginTop: 6, fontSize: 10, fontWeight: 800,
-                        color: C.statusWarn, background: alpha(C.statusWarn, 14),
-                        padding: '2px 9px', borderRadius: 8,
-                      }}>در انتظار تایید مالک</span>
-                    )}
-                  </div>
-                  <ChevronLeftIcon size={16} color={C.subtle} />
+          <div className="mech-cars">
+            {vehicles.map((v) => (
+              <Link key={v.accessId} href={`/mechanic/vehicles/${v.vehicleId}`} className="mech-car" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+                <span style={{ background: alpha(C.green, 11), color: C.green }}><CarIcon size={21} /></span>
+                <div>
+                  <b style={{ color: C.textStrong }}>{v.make} {v.model}</b>
+                  <small style={{ color: C.muted }}>
+                    {v.ownerName || 'بدون مالک ثبت‌شده'}{v.plateNumber ? ` · ${v.plateNumber}` : ''}
+                  </small>
                 </div>
+                {v.linkStatus === 'pending'
+                  ? <em style={{ color: C.statusWarn, background: alpha(C.statusWarn, 12) }}>در انتظار مالک</em>
+                  : <ChevronLeftIcon size={16} color={C.subtle} />}
               </Link>
             ))}
           </div>
@@ -230,6 +184,31 @@ export default function MechanicDashboard() {
         />
       )}
       <BottomNav />
+      <style>{ROLE_HOME_CSS + `
+.mech{min-height:100vh;background:var(--bg-gradient)}
+.mech-main{max-width:640px;margin:0 auto;padding:8px 16px calc(104px + env(safe-area-inset-bottom))}
+.mech-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font:900 17px var(--font-sans);text-decoration:none;flex-shrink:0}
+.mech-add{display:grid;grid-template-columns:150px 1fr;gap:10px;margin-bottom:14px}
+.mech-add-btn{border:0;border-radius:18px;padding:13px 12px;cursor:pointer;font-family:var(--font-sans);display:grid;justify-items:start;gap:2px;text-align:right;transition:transform .18s cubic-bezier(.16,1,.3,1)}
+.mech-add-btn:hover{transform:translateY(-2px)}
+.mech-add-btn:active{transform:scale(.98)}
+.mech-add-btn>span{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;margin-bottom:6px}
+.mech-add-btn b{font-size:12.5px;font-weight:900}
+.mech-add-btn small{font-size:10.5px}
+.mech-redeem{border-radius:18px;padding:12px 13px;display:grid;gap:7px}
+.mech-redeem label{font-size:10.5px;font-weight:900}
+.mech-redeem>div{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.mech-err{border-radius:14px;padding:10px 13px;font-size:12px;font-weight:800;margin-bottom:12px}
+.mech-cars{display:grid;gap:10px}
+.mech-car{display:flex;align-items:center;gap:12px;border-radius:18px;padding:12px 13px;text-decoration:none;transition:transform .16s ease}
+.mech-car:hover{transform:translateY(-2px)}
+.mech-car>span{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;flex-shrink:0}
+.mech-car>div{flex:1;min-width:0}
+.mech-car b{display:block;font-size:14px;font-weight:900}
+.mech-car small{display:block;font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mech-car em{font-style:normal;font-size:10.5px;font-weight:900;border-radius:999px;padding:5px 10px;white-space:nowrap;flex-shrink:0}
+@media(max-width:420px){.mech-add{grid-template-columns:1fr}}
+      `}</style>
     </div>
   );
 }
@@ -286,7 +265,7 @@ function AddVehicleSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (
         </FormField>
 
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>
             {error}
           </div>
         )}

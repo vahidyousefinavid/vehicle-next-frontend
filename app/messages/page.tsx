@@ -5,9 +5,18 @@ import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
 import Chat from '@/components/Chat';
 import { api, Conversation, toJalali } from '@/lib/api';
-import { C, Card, Button, EmptyState, Spinner, alpha } from '@/components/ui';
-import { ChevronRightIcon, MessageIcon, StoreIcon, CarIcon } from '@/components/icons';
+import { C, alpha, Button } from '@/components/ui';
+import { Screen, ScreenHeader, Row, RowList, fa, SCREEN_CSS } from '@/components/ScreenKit';
+import { MessageIcon, StoreIcon, CarIcon } from '@/components/icons';
 
+/**
+ * گفتگوها.
+ *
+ * A conversation list is read by scanning for what is unanswered, so unread is
+ * the loudest thing on a row and unread rows carry the accent rail. The card
+ * used to hold a click handler on an inner div, which meant the row could be
+ * tapped but never focused or reached by keyboard.
+ */
 export default function MessagesPage() {
   const router = useRouter();
   const [role, setRole] = useState<'owner' | 'mechanic'>('owner');
@@ -16,95 +25,108 @@ export default function MessagesPage() {
   const [active, setActive] = useState<Conversation | null>(null);
 
   const load = useCallback(() => {
-    api.messages.conversations().then(setList).finally(() => setLoading(false));
+    api.messages.conversations().then(setList).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem('vtoken')) { router.replace('/'); return; }
-    try { setRole(JSON.parse(localStorage.getItem('vuser') || '{}').role || 'owner'); } catch {}
+    if (!localStorage.getItem('vtoken')) { router.replace('/login?next=/messages'); return; }
+    try { setRole(JSON.parse(localStorage.getItem('vuser') || '{}').role || 'owner'); } catch { /* no cached user */ }
     load();
     const id = setInterval(load, 15_000);
     return () => clearInterval(id);
-  }, [load]);
+  }, [router, load]);
 
   function openChat(c: Conversation) {
     setActive(c);
-    setList(prev => prev.map(it => (it.vehicleId === c.vehicleId && it.mechanicId === c.mechanicId ? { ...it, unreadCount: 0 } : it)));
+    setList((prev) => prev.map((it) =>
+      it.vehicleId === c.vehicleId && it.mechanicId === c.mechanicId ? { ...it, unreadCount: 0 } : it));
   }
+
+  const unreadTotal = list.reduce((n, c) => n + (c.unreadCount || 0), 0);
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <Navbar title="گفتگوها" />
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '0 14px calc(88px + env(safe-area-inset-bottom))' }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: C.muted, fontSize: 13, fontWeight: 600, padding: '14px 0 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <ChevronRightIcon size={16} /> بازگشت
-        </button>
+      <Navbar title="گفتگوها" back />
+      <Screen>
+        <ScreenHeader
+          title="گفتگوها"
+          subtitle={unreadTotal ? `${fa(unreadTotal)} پیام خوانده‌نشده` : 'همه‌ی پیام‌ها خوانده شده'}
+          back={false}
+        />
 
         {loading ? (
-          <Spinner />
+          <RowList>{[0, 1, 2].map((i) => <div key={i} className="ms-skel" style={{ background: C.fill2 }} />)}</RowList>
         ) : list.length === 0 ? (
-          <EmptyState
-            icon={<MessageIcon size={26} />}
-            title="گفتگویی نداری"
-            sub={role === 'owner' ? 'با تعمیرگاه‌های متصل به خودروهات می‌تونی گفتگو کنی' : 'با مالک خودروهایی که بهت دسترسی دادن می‌تونی گفتگو کنی'}
-            onAdd={role === 'owner' ? () => router.push('/workshops') : undefined}
-            btnLabel={role === 'owner' ? 'پیدا کردن تعمیرگاه' : undefined}
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {list.map(c => (
-              <Card key={`${c.vehicleId}:${c.mechanicId}`} padding="13px 15px" style={{ cursor: 'pointer' }}>
-                <div onClick={() => openChat(c)} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 13, flexShrink: 0,
-                    background: `${alpha(C.green, 12)}`, border: `1px solid ${alpha(C.green, 25)}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.green,
-                  }}>{role === 'owner' ? <StoreIcon size={19} /> : <CarIcon size={19} />}</div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                      <p style={{ fontSize: 13.5, fontWeight: 800, color: C.text, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {c.counterpartName}
-                      </p>
-                      {c.lastMessageAt && (
-                        <span style={{ fontSize: 10, color: C.subtle, flexShrink: 0 }}>{toJalali(c.lastMessageAt.slice(0, 10))}</span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: 11, color: C.subtle, margin: '2px 0 0' }}>
-                      {c.vehicle.make} {c.vehicle.model} {c.vehicle.plateNumber ? `· ${c.vehicle.plateNumber}` : ''}
-                    </p>
-                    <p style={{
-                      fontSize: 12, color: c.unreadCount > 0 ? C.text : C.muted, fontWeight: c.unreadCount > 0 ? 700 : 500,
-                      margin: '5px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>
-                      {c.lastMessage || 'هنوز پیامی رد و بدل نشده'}
-                    </p>
-                  </div>
-
-                  {c.unreadCount > 0 && (
-                    <span style={{
-                      minWidth: 20, height: 20, borderRadius: 10, background: C.green, color: C.onAccent,
-                      fontSize: 10.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      padding: '0 5px', flexShrink: 0,
-                    }}>{c.unreadCount > 9 ? '9+' : c.unreadCount}</span>
-                  )}
-                </div>
-              </Card>
-            ))}
+          <div className="ms-empty" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+            <span style={{ background: alpha(C.green, 11), color: C.green }}><MessageIcon size={26} /></span>
+            <b style={{ color: C.textStrong }}>گفتگویی نداری</b>
+            <p style={{ color: C.muted }}>
+              {role === 'owner'
+                ? 'با تعمیرگاه‌هایی که به خودروهایت وصل‌اند می‌توانی همین‌جا حرف بزنی.'
+                : 'با مالک خودروهایی که به تو دسترسی داده‌اند می‌توانی همین‌جا حرف بزنی.'}
+            </p>
+            {role === 'owner' && <Button onClick={() => router.push('/workshops')}>پیدا کردن تعمیرگاه</Button>}
           </div>
+        ) : (
+          <RowList>
+            {list.map((c) => {
+              const unread = c.unreadCount > 0;
+              const car = [c.vehicle.make, c.vehicle.model].filter(Boolean).join(' ');
+              return (
+                <Row
+                  key={`${c.vehicleId}:${c.mechanicId}`}
+                  hue={unread ? C.green : C.fill4}
+                  icon={role === 'owner' ? <StoreIcon size={19} /> : <CarIcon size={19} />}
+                  title={c.counterpartName}
+                  meta={
+                    <span style={{ color: unread ? C.text : C.muted, fontWeight: unread ? 800 : 600 }}>
+                      {c.lastMessage || 'هنوز پیامی رد و بدل نشده'}
+                    </span>
+                  }
+                  chips={<span style={{ fontSize: 10.5, color: C.subtle }}>{car}{c.vehicle.plateNumber ? ` · ${c.vehicle.plateNumber}` : ''}</span>}
+                  trailing={
+                    <>
+                      {c.lastMessageAt && (
+                        <small style={{ fontSize: 10, color: C.subtle }}>{toJalali(c.lastMessageAt.slice(0, 10))}</small>
+                      )}
+                      {unread && (
+                        <b style={{
+                          minWidth: 21, height: 21, borderRadius: 11, padding: '0 6px',
+                          background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`, color: C.onAccent,
+                          fontSize: 10.5, fontWeight: 900, display: 'grid', placeItems: 'center',
+                          boxShadow: C.shadowBrand,
+                        }}>{c.unreadCount > 9 ? '+۹' : fa(c.unreadCount)}</b>
+                      )}
+                    </>
+                  }
+                  onClick={() => openChat(c)}
+                />
+              );
+            })}
+          </RowList>
         )}
-      </main>
+      </Screen>
 
       {active && (
         <Chat
           vehicleId={active.vehicleId}
           mechanicId={active.mechanicId}
           role={role}
-          title={`${active.counterpartName} · ${active.vehicle.make} ${active.vehicle.model}`}
+          title={`${active.counterpartName} · ${[active.vehicle.make, active.vehicle.model].filter(Boolean).join(' ')}`}
           onClose={() => { setActive(null); load(); }}
         />
       )}
       <BottomNav />
+
+      <style jsx global>{SCREEN_CSS}</style>
+      <style jsx>{`
+        .ms-skel{height:74px;border-radius:18px;animation:msPulse 1.4s ease-in-out infinite}
+        @keyframes msPulse{0%,100%{opacity:1}50%{opacity:.55}}
+        .ms-empty{border-radius:22px;padding:32px 20px;text-align:center;display:grid;justify-items:center;gap:10px}
+        .ms-empty>span{width:56px;height:56px;border-radius:18px;display:grid;place-items:center}
+        .ms-empty b{font-size:15px;font-weight:900}
+        .ms-empty p{margin:0 0 6px;font-size:12.5px;line-height:2;max-width:36ch}
+      `}</style>
     </div>
   );
 }

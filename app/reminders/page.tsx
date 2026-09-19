@@ -1,14 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
+import { useUrlFilter } from '@/hooks/useUrlFilter';
 import PersianDatePicker from '@/components/PersianDatePicker';
 import { api, AgendaItem, Vehicle, toJalali } from '@/lib/api';
 import { getToken } from '@/lib/session';
-import {
-  C, alpha, Card, Button, EmptyState, Spinner, FormField, Input, TextArea, Sheet, ChipGroup,
-} from '@/components/ui';
+import { C, alpha, Button, EmptyState, Skeleton, FormField, Input, TextArea, Sheet, ChipGroup } from '@/components/ui';
+import { Screen, ScreenHeader, Glance, Row, RowList, Chip, Filters, SCREEN_CSS, fa } from '@/components/ScreenKit';
 import {
   ChevronRightIcon, BellIcon, PlusIcon, ShieldIcon, WrenchIcon, CheckIcon, CarIcon,
 } from '@/components/icons';
@@ -35,6 +34,7 @@ export default function RemindersPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [filter, setFilter] = useUrlFilter('when', ['all', 'overdue', 'soon', 'later'] as const, 'all');
 
   function load() {
     api.agenda.list().then(setItems).finally(() => setLoading(false));
@@ -45,7 +45,7 @@ export default function RemindersPage() {
     load();
   }, [router]);
 
-  async function complete(item: AgendaItem) {
+  async function onCompleteItem(item: AgendaItem) {
     setBusyId(item.id);
     try {
       await api.reminders.toggle(item.vehicleId, item.id);
@@ -55,114 +55,100 @@ export default function RemindersPage() {
     }
   }
 
-  const overdue = items.filter(i => i.daysLeft !== null && i.daysLeft < 0);
-  const soon = items.filter(i => i.daysLeft !== null && i.daysLeft >= 0 && i.daysLeft <= 30);
-  const later = items.filter(i => i.daysLeft === null || i.daysLeft > 30);
+  const overdue = items.filter((i) => i.daysLeft !== null && i.daysLeft < 0);
+  const soon = items.filter((i) => i.daysLeft !== null && i.daysLeft >= 0 && i.daysLeft <= 30);
+  const later = items.filter((i) => i.daysLeft === null || i.daysLeft > 30);
+  const shown = filter === 'overdue' ? overdue : filter === 'soon' ? soon : filter === 'later' ? later : items;
+  const nextUp = soon[0] ?? later[0];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <Navbar title="یادآورها" />
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '0 14px calc(88px + env(safe-area-inset-bottom))' }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: C.muted, fontSize: 13, fontWeight: 600, padding: '14px 0 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <ChevronRightIcon size={16} /> بازگشت
-        </button>
+    <Screen>
+      <ScreenHeader
+        eyebrow="برنامه من"
+        title="یادآورها"
+        subtitle={overdue.length
+          ? `${fa(overdue.length)} مورد از سررسید گذشته`
+          : soon.length ? `${fa(soon.length)} مورد در ۳۰ روز آینده` : 'چیزی نزدیک سررسید نیست'}
+        back="/dashboard"
+        action={<Button size="sm" onClick={() => setShowAdd(true)} icon={<PlusIcon size={14} />}>جدید</Button>}
+      />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.7 }}>
-            یادآورها، مدارک و سرویس‌های همه خودروهات یک‌جا
-          </p>
-          <Button size="sm" onClick={() => setShowAdd(true)} icon={<PlusIcon size={14} />}>یادآور جدید</Button>
-        </div>
+      {!loading && items.length > 0 && (
+        <Glance items={[
+          { label: 'از سررسید گذشته', value: fa(overdue.length), tone: overdue.length ? C.statusExpired : C.statusOk, alert: overdue.length > 0 },
+          { label: 'تا ۳۰ روز', value: fa(soon.length), tone: soon.length ? C.statusWarn : undefined },
+          { label: 'بعداً', value: fa(later.length) },
+          nextUp
+            ? { label: 'نزدیک‌ترین', value: nextUp.daysLeft === null ? '—' : `${fa(Math.abs(nextUp.daysLeft))} روز`, hint: nextUp.title.slice(0, 18) }
+            : { label: 'نزدیک‌ترین', value: '—' },
+        ]} />
+      )}
 
-        {loading ? (
-          <Spinner />
-        ) : items.length === 0 ? (
-          <EmptyState
-            icon={<BellIcon size={26} />}
-            title="چیزی در پیش نیست"
-            sub="تاریخ بیمه و معاینه فنی خودروهات رو ثبت کن تا قبل از انقضا بهت خبر بدیم"
-            onAdd={() => setShowAdd(true)}
-            btnLabel="افزودن یادآور"
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <Group title="گذشته از موعد" items={overdue} onComplete={complete} busyId={busyId} />
-            <Group title="۳۰ روز آینده" items={soon} onComplete={complete} busyId={busyId} />
-            <Group title="بعدتر" items={later} onComplete={complete} busyId={busyId} />
-          </div>
-        )}
-      </main>
-
-      {showAdd && (
-        <AddReminderSheet
-          onClose={() => setShowAdd(false)}
-          onSaved={() => { setShowAdd(false); load(); }}
+      {items.length > 0 && (
+        <Filters
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { key: 'all', label: 'همه', count: items.length },
+            { key: 'overdue', label: 'گذشته', count: overdue.length },
+            { key: 'soon', label: '۳۰ روز', count: soon.length },
+            { key: 'later', label: 'بعداً', count: later.length },
+          ]}
         />
       )}
+
+      {loading ? (
+        <RowList>{[0, 1, 2].map((i) => <Skeleton key={i} height={74} radius={18} />)}</RowList>
+      ) : shown.length === 0 ? (
+        <EmptyState
+          icon={<BellIcon size={26} />}
+          title={items.length ? 'در این بازه چیزی نیست' : 'یادآوری ثبت نشده'}
+          sub={items.length ? 'فیلتر دیگری را امتحان کن' : 'برای بیمه، معاینه فنی یا سرویس دوره‌ای یادآور بگذار'}
+          onAdd={items.length ? undefined : () => setShowAdd(true)}
+          btnLabel="یادآور جدید"
+        />
+      ) : (
+        <RowList>
+          {shown.map((item) => {
+            const meta = KIND_META[item.kind];
+            const Icon = meta.icon;
+            const u = urgency(item.daysLeft);
+            const hue = item.daysLeft === null ? meta.color
+              : item.daysLeft < 0 ? C.statusExpired
+              : item.daysLeft <= 7 ? C.statusWarn
+              : item.daysLeft <= 30 ? C.statusInfo : C.statusOk;
+            return (
+              <Row
+                key={`${item.kind}-${item.id}`}
+                hue={hue}
+                icon={<Icon size={20} />}
+                title={item.title}
+                meta={<>{item.vehicleName}{item.plateNumber ? ` · ${item.plateNumber}` : ''}</>}
+                chips={<>
+                  <Chip tone={meta.color}>{meta.label}</Chip>
+                  {item.daysLeft !== null && (
+                    <Chip tone={hue}>
+                      {item.daysLeft < 0 ? `${fa(Math.abs(item.daysLeft))} روز گذشته` : item.daysLeft === 0 ? 'امروز' : `${fa(item.daysLeft)} روز مانده`}
+                    </Chip>
+                  )}
+                  {item.dueDate && <Chip tone={C.muted}>{toJalali(item.dueDate)}</Chip>}
+                  {item.dueMileage && <Chip tone={C.muted}>{fa(item.dueMileage)} km</Chip>}
+                </>}
+                actions={item.kind === 'reminder' ? (
+                  <Button size="sm" variant="secondary" loading={busyId === item.id} onClick={() => onCompleteItem(item)} icon={<CheckIcon size={13} />}>
+                    انجام شد
+                  </Button>
+                ) : undefined}
+              />
+            );
+          })}
+        </RowList>
+      )}
+
+      {showAdd && <AddReminderSheet onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); load(); }} />}
       <BottomNav />
-    </div>
-  );
-}
-
-function Group({ title, items, onComplete, busyId }: {
-  title: string; items: AgendaItem[];
-  onComplete: (i: AgendaItem) => void; busyId: string | null;
-}) {
-  if (items.length === 0) return null;
-  return (
-    <div>
-      <h2 style={{ color: C.text2, fontSize: 13, fontWeight: 700, margin: '0 0 9px' }}>
-        {title} <span style={{ color: C.subtle, fontWeight: 600 }}>({items.length})</span>
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {items.map(item => {
-          const meta = KIND_META[item.kind];
-          const Icon = meta.icon;
-          const u = urgency(item.daysLeft);
-          return (
-            <Card key={item.id} padding="12px 14px">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 12, flexShrink: 0,
-                  background: alpha(meta.color, 12), border: `1px solid ${alpha(meta.color, 25)}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: meta.color,
-                }}><Icon size={17} /></div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 800, color: C.text, margin: 0 }}>{item.title}</p>
-                  <p style={{ fontSize: 10.5, color: C.subtle, margin: '3px 0 0', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span>{item.vehicleName}</span>
-                    <span>· {meta.label}</span>
-                    {item.dueDate && <span>· {toJalali(item.dueDate)}</span>}
-                    {item.dueMileage != null && <span>· {item.dueMileage.toLocaleString()} km</span>}
-                  </p>
-                </div>
-
-                <span style={{
-                  fontSize: 10, fontWeight: 800, color: u.color, background: alpha(u.color, 12),
-                  padding: '3px 9px', borderRadius: 8, whiteSpace: 'nowrap', flexShrink: 0,
-                }}>{u.text}</span>
-
-                {/* only something the user wrote can be ticked off — an expiry
-                    date goes away by being renewed, not by being checked */}
-                {item.completable && (
-                  <button
-                    onClick={() => onComplete(item)}
-                    disabled={busyId === item.id}
-                    aria-label="انجام شد"
-                    style={{
-                      width: 30, height: 30, borderRadius: 10, flexShrink: 0,
-                      background: 'transparent', border: `1px solid ${C.border}`,
-                      color: C.muted, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  ><CheckIcon size={14} /></button>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
+      <style>{SCREEN_CSS}</style>
+    </Screen>
   );
 }
 
@@ -255,7 +241,7 @@ function AddReminderSheet({ onClose, onSaved }: { onClose: () => void; onSaved: 
         </p>
 
         {error && (
-          <div style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
+          <div role="alert" style={{ fontSize: 12, color: C.statusExpired, background: alpha(C.statusExpired, 10), border: `1px solid ${alpha(C.statusExpired, 20)}`, borderRadius: 11, padding: '10px 14px' }}>{error}</div>
         )}
         <Button type="submit" loading={saving} disabled={vehicles.length === 0} fullWidth size="lg">ثبت یادآور</Button>
       </form>

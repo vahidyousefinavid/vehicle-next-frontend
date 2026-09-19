@@ -52,11 +52,16 @@
 
 /* ═══════════════════════════════════════════════════════════════════
    THEMES
-   Two themes live here. Dark is the product's identity and the default:
-   every value under `:root` is the original palette, untouched. Light is
-   an alternate skin modelled on the Defuse project — paper-white surfaces,
-   hairline borders instead of shadows, near-black text, green as an accent
-   rather than a wash.
+   Two themes live here. Dark is the product's identity and the default: a
+   warm-neutral graphite ground with one amber voltage, reserved for the
+   things you can act on. Light is the daylight alternate — warm paper, white
+   cards, the same amber pushed to a bronze that survives on white.
+
+   The warm region used to be crowded: the brand, --amber, --status-warn,
+   --status-danger and --svc-oil were five golds and oranges competing for the
+   same meaning, so nothing read as urgent. The ramp is now amber = act,
+   yellow = warn, red = wrong, and the brand is the only one of the five that
+   ever fills a button.
 
    `html[data-theme="light"]` is set by the inline script in layout.tsx
    before first paint, so switching never flashes.
@@ -68,98 +73,129 @@
   /* ── Type ── */
   --font-sans: 'IRANSans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* ── Brand (navy + green fintech) ── */
-  --green:        #22C55E;
-  --green-dark:   #16A34A;
-  --green-glow:   rgba(34,197,94,0.35);
-  --amber:        #F59E0B;
-  --amber-glow:   rgba(245,158,11,0.30);
-  --red:          #EF4444;
-  --blue:         #3B82F6;
+  /* ── Spacing — 8px modular scale ──
+     Every gap and pad is a step on this ladder. Provider screens (mechanic,
+     seller) drop one step via [data-density="dense"], which is the whole
+     mechanism behind "the owner's screens sell, the provider's screens work". */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* ── Radius ladder — tighter as elements nest ── */
+  --r-sheet: 26px;
+  --r-card:  20px;
+  --r-row:   18px;
+  --r-plate: 13px;
+  --r-step:  11px;
+
+  /* ── Brand ──
+     The app's accent is signal amber — the one colour a car uses to say "look
+     here". It is reserved for interaction: a filled button, the active tab,
+     the focus ring. Data never wears it, which is what keeps it legible next
+     to thirteen service hues.
+
+     The token is still called --green because every screen reads it as "the
+     accent colour"; genuine success states use --status-ok, which really is
+     green. Renaming would touch every file for no visual gain, so the meaning
+     is documented here instead. */
+  --brand:        #F2A413;
+  --brand-dark:   #C2840F;
+  --green:        var(--brand);
+  --green-dark:   var(--brand-dark);
+  --green-glow:   rgba(242,164,19,0.30);
+  --amber:        #F5C03B;
+  --amber-glow:   rgba(245,192,59,0.28);
+  --red:          #FF6066;
+  --blue:         #6E9CF5;
 
   /* ── Backgrounds ── */
-  --bg:            #0A1120;
-  --bg-elevated:   #0D1526;
-  --bg-gradient:   linear-gradient(180deg, #0A1120 0%, #0D1526 45%, #0A0F1C 100%);
-  --hero-start:    #0C1830;
-  --hero-mid:      #0F2A28;
-  --hero-end:      #0A1120;
+  --bg:            #0E1013;
+  --bg-elevated:   #16191E;
+  --bg-gradient:   linear-gradient(180deg, #0E1013 0%, #121519 50%, #0B0D10 100%);
+  --hero-start:    #1A1E24;
+  --hero-mid:      #15181D;
+  --hero-end:      #0E1013;
 
   /* ── Glass surfaces ── */
-  --surface:       rgba(255,255,255,0.06);
-  --surface-2:     rgba(255,255,255,0.03);
-  --surface-solid: #111B2E;
-  --surface-mid:   rgba(13,21,38,0.92);
+  --surface:       #16191E;
+  --surface-2:     #121519;
+  --surface-solid: #16191E;
+  --surface-mid:   rgba(22,25,30,0.94);
 
   /* ── Overlay fill ladder ──
      The old code reached for literal rgba(255,255,255,0.0X) inline. Those are
      now these five steps, so a light theme can invert them in one place. */
-  --fill-1: rgba(255,255,255,0.03);
-  --fill-2: rgba(255,255,255,0.05);
-  --fill-3: rgba(255,255,255,0.07);
-  --fill-4: rgba(255,255,255,0.10);
-  --fill-5: rgba(255,255,255,0.13);
+  --fill-1: rgba(255,255,255,0.035);
+  --fill-2: rgba(255,255,255,0.055);
+  --fill-3: rgba(255,255,255,0.080);
+  --fill-4: rgba(255,255,255,0.110);
+  --fill-5: rgba(255,255,255,0.150);
 
   /* ── Text ── */
   --text-strong: #FFFFFF;
-  --text:        rgba(240,246,255,0.92);
-  --text-2:      rgba(255,255,255,0.72);
-  --muted:       rgba(200,215,235,0.60);
-  --text-4:      rgba(255,255,255,0.45);
-  --subtle:      rgba(200,215,235,0.38);
+  --brand-ink:   #F2F4F7;
+  --text:        #F2F4F7;
+  --text-2:      #C3CAD3;
+  --muted:       #99A1AC;
+  --text-4:      #838B96;
+  --subtle:      #828A94;
   /* text drawn on top of an accent fill (green button, coloured badge) */
-  --on-accent:   #FFFFFF;
+  --on-accent:   #14110A;
 
   /* ── Chrome (sticky header + bottom tab bar) ── */
-  --nav-bg:      rgba(10,17,32,0.88);
-  --tabbar-bg:   rgba(10,17,32,0.90);
+  --nav-bg:      rgba(14,16,19,0.88);
+  --tabbar-bg:   rgba(14,16,19,0.92);
 
   /* ── Expiry / status hues ──
      Four distinct steps so a document's remaining life reads at a glance.
      Kept as their own vars because the light theme has to darken every one of
      them to survive on white. */
-  --status-ok:      #4ADE80;
-  --status-warn:    #FBBF24;
-  --status-danger:  #FB923C;
-  --status-expired: #F87171;
-  --status-info:    #818CF8;
-  --status-neutral: #94A3B8;
-  --status-mint:    #34D399;
-  --blue-light:     #60A5FA;
+  --status-ok:      #34D98A;
+  --status-warn:    #F5C03B;
+  --status-danger:  #FF8A5B;
+  --status-expired: #FF6066;
+  --status-info:    #6E9CF5;
+  --status-neutral: #8A93A0;
+  --status-mint:    #2DD4A3;
+  --blue-light:     #6E9CF5;
 
   /* ── Service-category hues ──
      One hue per service type so a record is identifiable by colour alone.
      They are tuned for a navy background; the light theme restates all
      thirteen at a darkness that survives on paper. */
-  --svc-oil:      #FBBF24;
-  --svc-tire:     #60A5FA;
-  --svc-brake:    #F87171;
-  --svc-filter:   #34D399;
+  --svc-oil:      #E3A93C;
+  --svc-tire:     #6E9CF5;
+  --svc-brake:    #FF6066;
+  --svc-filter:   #34D98A;
   --svc-plug:     #A78BFA;
-  --svc-gearbox:  #818CF8;
+  --svc-gearbox:  #8B9BF7;
   --svc-timing:   #F472B6;
-  --svc-battery:  #FB923C;
-  --svc-tuning:   #2DD4BF;
-  --svc-ac:       #22D3EE;
+  --svc-battery:  #FF9E64;
+  --svc-tuning:   #2DD4A3;
+  --svc-ac:       #4FD1E0;
   --svc-paint:    #C084FC;
   --svc-suspension: #A3E635;
-  --svc-other:    #94A3B8;
+  --svc-other:    #8A93A0;
 
   /* ── Borders ── */
-  --border:        rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.16);
-  --green-border:  rgba(34,197,94,0.28);
-  --amber-border:  rgba(245,158,11,0.28);
-  --red-border:    rgba(239,68,68,0.28);
+  --border:        rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.17);
+  --green-border:  rgba(242,164,19,0.30);
+  --amber-border:  rgba(245,192,59,0.28);
+  --red-border:    rgba(255,96,102,0.30);
 
   /* ── Shadows ── */
-  --shadow-glass: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
-  --shadow-glass-strong: 0 12px 40px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.09);
-  --shadow-green: 0 4px 20px rgba(34,197,94,0.28);
-  --shadow-card:  0 20px 60px rgba(0,0,0,0.45);
+  --shadow-glass: 0 8px 24px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.045);
+  --shadow-glass-strong: 0 12px 34px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.07);
+  --shadow-green: 0 6px 20px rgba(242,164,19,0.26);
+  --shadow-card:  0 18px 48px rgba(0,0,0,0.50);
   --shadow-nav:   0 1px 0 rgba(0,0,0,0.30);
   --shadow-tabbar: 0 -4px 24px rgba(0,0,0,0.30);
-  --shadow-account: 0 20px 60px rgba(0,0,0,0.50), 0 4px 20px rgba(34,197,94,0.10);
+  --shadow-account: 0 18px 48px rgba(0,0,0,0.52);
   --shadow-soft:    0 2px 12px rgba(0,0,0,0.18);
   --shadow-hero:    0 16px 48px rgba(0,0,0,0.30);
   --shadow-popover: 0 24px 72px rgba(0,0,0,0.70), 0 4px 16px rgba(0,0,0,0.40);
@@ -168,12 +204,12 @@
 
   /* Text drawn on the hero / account card. That card is deep navy in dark and
      pale mint in light, so its foreground can't just be white in both. */
-  --hero-text-shadow: 0 2px 12px rgba(0,0,0,0.25);
-  --on-hero:        #FFFFFF;
-  --on-hero-muted:  rgba(255,255,255,0.60);
+  --hero-text-shadow: none;
+  --on-hero:        #F2F4F7;
+  --on-hero-muted:  rgba(255,255,255,0.62);
 
   /* ── Blur (glass depth; light theme goes flat) ── */
-  --glass-blur: 22px;
+  --glass-blur: 0px;
 
   /* ── Scale ── */
   --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
@@ -212,103 +248,114 @@
 }
 
 /* ── LIGHT ──
-   Defuse's surface language: white paper, a single hairline grey for every
-   division, black-leaning text, and #00B86B doing the accent work. Depth is
-   removed rather than lightened — a blurred glass panel over white just reads
-   as grey, so the glass blur drops to zero and cards separate by their border.
-   Shape (radii, spacing, type scale) is deliberately inherited from dark: the
-   two themes are the same product, not two products. */
+   Daylight, not an inversion. Warm paper rather than pure white — it has to
+   sit under an amber accent without going sour — white cards, near-black
+   text, and the brand pushed to a bronze dark enough to carry white button
+   text at 4.5:1. Shape (radii, spacing, type scale) is deliberately inherited
+   from dark: the two themes are the same product, not two products. */
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --green:        #00B86B;
-  --green-dark:   #009957;
-  --green-glow:   rgba(0,184,107,0.22);
-  --amber:        #B45309;
-  --amber-glow:   rgba(180,83,9,0.18);
-  --red:          #D92D20;
+  /* Warm paper, white cards, bronze ink and a soft warm shadow. Depth here is
+     real rather than the hairline borders an earlier light theme used,
+     because the cards are the interface. */
+  --brand:        #9C5C08;
+  --brand-dark:   #7F4A06;
+  --green:        var(--brand);
+  --green-dark:   var(--brand-dark);
+  --green-glow:   rgba(156,92,8,0.22);
+  --amber:        #A86A08;
+  --amber-glow:   rgba(168,106,8,0.18);
+  --red:          #C22B30;
   --blue:         #1D4ED8;
 
-  --bg:            #FFFFFF;
-  --bg-elevated:   #F7F8F7;
-  --bg-gradient:   linear-gradient(180deg, #FFFFFF 0%, #F7F8F7 45%, #FFFFFF 100%);
-  --hero-start:    #F4F7F4;
-  --hero-mid:      #EAF4EE;
-  --hero-end:      #FFFFFF;
+  --bg:            #F5F4F1;
+  --bg-elevated:   #FFFFFF;
+  --bg-gradient:   linear-gradient(180deg, #F4F3F0 0%, #F8F7F5 45%, #FCFBFA 100%);
+  --hero-start:    #EFEDE8;
+  --hero-mid:      #F5F4F1;
+  --hero-end:      #FCFBFA;
 
   --surface:       #FFFFFF;
-  --surface-2:     #F7F8F7;
+  --surface-2:     #FAF9F7;
   --surface-solid: #FFFFFF;
   --surface-mid:   rgba(255,255,255,0.96);
 
-  --fill-1: rgba(0,0,0,0.015);
-  --fill-2: #F7F8F7;
-  --fill-3: #F2F4F2;
-  --fill-4: #ECEFEC;
-  --fill-5: #E3E7E3;
+  --fill-1: #FAF9F7;
+  --fill-2: #F4F2EE;
+  --fill-3: #EDEBE6;
+  --fill-4: #E4E1DA;
+  --fill-5: #D8D4CB;
 
-  --text-strong: #000000;
-  --text:        #0B0F0C;
-  --text-2:      #3A403A;
-  --muted:       #676E64;
-  --text-4:      #7D847C;
-  --subtle:      #8B918A;
+  --text-strong: #14161A;
+  /* Card titles in the reference kit are indigo rather than near-black. */
+  --brand-ink:   #14161A;
+  --text:        #1B1E23;
+  /* Every step of this ladder clears WCAG AA (4.5:1) on all three grounds the
+     app puts text on — white cards, the warm paper page, and the tint fill.
+     The tint fill is the hardest of the three, so that is the number quoted;
+     verify against it, not against white, when adding a step. */
+  --text-2:      #474C55;   /* 8.63 white · 7.85 paper · 7.72 tint */
+  --muted:       #5A606A;   /* 6.33 white · 5.76 paper · 5.66 tint */
+  --text-4:      #636972;   /* 5.53 white · 5.03 paper · 4.95 tint */
+  --subtle:      #686E77;   /* 5.14 white · 4.67 paper · 4.60 tint */
   --on-accent:   #FFFFFF;
 
-  --nav-bg:      rgba(255,255,255,0.92);
+  --nav-bg:      rgba(255,255,255,0.90);
   --tabbar-bg:   rgba(255,255,255,0.94);
 
   /* same steps, pushed dark enough to read as text on paper */
-  --status-ok:      #047857;
-  --status-warn:    #B45309;
-  --status-danger:  #C2410C;
-  --status-expired: #B91C1C;
-  --status-info:    #4338CA;
-  --status-neutral: #64748B;
-  --status-mint:    #047857;
+  --status-ok:      #0F7A46;
+  --status-warn:    #8A5D07;
+  --status-danger:  #B4362C;
+  --status-expired: #A81F24;
+  --status-info:    #2A52BE;
+  --status-neutral: #5E646D;
+  --status-mint:    #0F7A46;
   --blue-light:     #1D4ED8;
 
-  --svc-oil:      #B45309;
+  --svc-oil:      #8A5D07;
   --svc-tire:     #1D4ED8;
-  --svc-brake:    #B91C1C;
-  --svc-filter:   #047857;
+  --svc-brake:    #B01F26;
+  --svc-filter:   #0F7A46;
   --svc-plug:     #6D28D9;
-  --svc-gearbox:  #4338CA;
-  --svc-timing:   #BE185D;
-  --svc-battery:  #C2410C;
+  --svc-gearbox:  #3B45B5;
+  --svc-timing:   #B01362;
+  --svc-battery:  #A8480F;
   --svc-tuning:   #0F766E;
-  --svc-ac:       #0E7490;
+  --svc-ac:       #0E6F86;
   --svc-paint:    #7E22CE;
-  --svc-suspension: #4D7C0F;
-  --svc-other:    #64748B;
+  --svc-suspension: #4A7A0E;
+  --svc-other:    #5E646D;
 
-  --border:        #D7DBD7;
-  --border-strong: #B9BFB8;
-  --green-border:  rgba(0,184,107,0.38);
-  --amber-border:  rgba(180,83,9,0.32);
-  --red-border:    rgba(217,45,32,0.32);
+  --border:        #E6E2DA;
+  --border-strong: #D6D1C6;
+  --green-border:  rgba(156,92,8,0.32);
+  --amber-border:  rgba(168,106,8,0.30);
+  --red-border:    rgba(194,43,48,0.30);
 
-  /* hairlines, not depth */
-  --shadow-glass: 0 1px 0 rgba(0,0,0,0.03);
-  --shadow-glass-strong: 0 2px 0 rgba(0,0,0,0.04);
-  --shadow-green: 0 4px 16px rgba(0,184,107,0.20);
-  --shadow-card:  0 18px 40px -28px rgba(0,0,0,0.45);
-  --shadow-nav:   0 1px 0 rgba(0,0,0,0.06);
-  --shadow-tabbar: 0 -1px 0 rgba(0,0,0,0.06);
-  --shadow-account: 0 18px 40px -30px rgba(0,0,0,0.40);
-  --shadow-soft:    0 1px 0 rgba(0,0,0,0.04);
-  --shadow-hero:    0 16px 36px -28px rgba(0,0,0,0.35);
-  --shadow-popover: 0 20px 48px -24px rgba(0,0,0,0.35), 0 0 0 1px #D7DBD7;
-  --shadow-sheet:   0 -16px 40px -28px rgba(0,0,0,0.30);
-  --shadow-lift:    0 1px 0 rgba(0,0,0,0.05);
+  /* soft warm depth — cards float on the paper ground */
+  --shadow-glass: 0 6px 18px -12px rgba(60,48,28,0.26);
+  --shadow-glass-strong: 0 10px 24px -14px rgba(60,48,28,0.30);
+  --shadow-green: 0 10px 24px -8px rgba(156,92,8,0.38);
+  --shadow-card:  0 18px 40px -24px rgba(60,48,28,0.34);
+  --shadow-nav:   0 8px 24px -18px rgba(60,48,28,0.30);
+  --shadow-tabbar: 0 -10px 30px -18px rgba(60,48,28,0.30);
+  --shadow-account: 0 18px 40px -26px rgba(60,48,28,0.32);
+  --shadow-soft:    0 8px 22px -16px rgba(60,48,28,0.26);
+  --shadow-hero:    0 24px 50px -30px rgba(60,48,28,0.38);
+  --shadow-popover: 0 20px 48px -24px rgba(0,0,0,0.30), 0 0 0 1px #E6E2DA;
+  --shadow-sheet:   0 -16px 40px -28px rgba(0,0,0,0.26);
+  /* the floating tab bar and any raised control */
+  --shadow-lift:    0 14px 34px -14px rgba(60,48,28,0.28);
 
   --hero-text-shadow: none;
-  --on-hero:        #0B0F0C;
-  --on-hero-muted:  #55605A;
+  --on-hero:        #14161A;
+  --on-hero-muted:  #5E646D;
 
   --glass-blur: 0px;
 
-  --gold-light:   #B45309;
+  --gold-light:   #8A5D07;
   --shadow-sm:    0 1px 0 rgba(0,0,0,0.04);
 }
 
@@ -416,9 +463,9 @@ header.glass {
   66%       { transform: scale(0.97) rotate(-1deg); }
 }
 
-.animate-fade-in-up { animation: fadeInUp 0.45s cubic-bezier(.34,1.2,.64,1) both; }
-.animate-fade-in    { animation: fadeIn 0.3s ease both; }
-.animate-scale-in   { animation: scaleIn 0.35s cubic-bezier(.34,1.2,.64,1) both; }
+.animate-fade-in-up { animation: fadeInUp 0.45s cubic-bezier(.34,1.2,.64,1) backwards; }
+.animate-fade-in    { animation: fadeIn 0.3s ease backwards; }
+.animate-scale-in   { animation: scaleIn 0.35s cubic-bezier(.34,1.2,.64,1) backwards; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -484,4 +531,395 @@ select:-webkit-autofill {
   box-shadow: 0 0 0 1000px var(--surface-solid) inset;
   caret-color: var(--text);
   transition: background-color 9999s ease-in-out 0s;
+}
+
+/* ── Touch targets ───────────────────────────────────────────────────────
+   Apple and Android both put the reliable minimum at 44px. Several controls
+   in this app are visually smaller than that on purpose (a 34px icon button,
+   a 32px chip). Rather than inflate them and break the layout, each grows an
+   invisible hit area with a ::before, so the tap zone is 44px while the paint
+   stays where the design put it. */
+@media (pointer: coarse) {
+  .tap44 { position: relative; }
+  .tap44::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+  }
+
+  /* the shared kit's own controls */
+  .sk-back, .sk-filters button, .sk-search button { min-height: 44px; min-width: 44px; }
+  .sk-search input, .search input { min-height: 44px; }
+  .tab { min-height: 48px; }
+  .rh-tool, .sk-row { min-height: 44px; }
+}
+
+/* A screen people work in all day earns more information per screen than one
+   they visit occasionally. Provider surfaces opt in and every scale step drops
+   one notch — no separate stylesheet, no separate components. */
+[data-density='dense'] {
+  --sp-3: 10px;
+  --sp-4: 12px;
+  --sp-5: 18px;
+  --sp-6: 24px;
+}
+
+/* ── Motion system ──────────────────────────────────────────────────────────
+   Everything that moves under a finger shares two curves and three durations,
+   so the app has one sense of weight rather than a different feel per screen.
+   `--ease-soft` decelerates hard and settles without a bounce, which is what
+   makes a lift read as smooth; `--ease-spring` overshoots a hair and is only
+   for things arriving on screen. A press is deliberately quicker than a hover:
+   touch feedback has to land inside the tap, not after it.                    */
+:root {
+  --ease-soft:   cubic-bezier(.32, .72, 0, 1);
+  --ease-spring: cubic-bezier(.34, 1.16, .64, 1);
+  --dur-press: 120ms;
+  --dur-move:  260ms;
+  --dur-enter: 460ms;
+}
+
+/* ── Service card ───────────────────────────────────────────────────────────
+   Shared by the landing page and the signed-in home. The hue of the service
+   travels in `--svc-hue`, so the hover shadow is tinted with the service's own
+   colour rather than generic black, and `--i` staggers the grid's entry.      */
+.svc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--sp-3);
+}
+@media (min-width: 720px) {
+  .svc-grid { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); }
+}
+
+.svc {
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  text-decoration: none;
+  text-align: start;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--dur-move) var(--ease-soft),
+              box-shadow var(--dur-move) var(--ease-soft);
+  /* `backwards`, not `both`: a filled-forwards animation keeps its last
+     keyframe applied for ever, and animations outrank author rules — which
+     silently kills every :hover and :active transform below. */
+  animation: svcIn var(--dur-enter) var(--ease-spring) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+@keyframes svcIn {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Hover belongs to pointers. Without the query a phone latches the hover state
+   after a tap and the card stays lifted. */
+@media (hover: hover) {
+  .svc:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 34px -16px color-mix(in srgb, var(--svc-hue, var(--brand)) 55%, transparent),
+                var(--shadow-soft);
+  }
+  .svc:hover .svc-art-fig { transform: scale(1.06); }
+  .svc:hover .svc-go      { transform: translateX(-3px); }
+}
+.svc:active { transform: scale(.972); transition-duration: var(--dur-press); }
+.svc:active .svc-art-fig { transform: scale(.955); transition-duration: var(--dur-press); }
+.svc:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+
+/* `.svc` renders as a <button> on the landing page and an <a> on the home, and
+   a button's UA styling leaves its flex items at flex-start instead of
+   stretching them. The art wrapper is a span with no intrinsic width, so it
+   collapsed to zero — and the `width:100%` inside it then resolved against
+   zero, which is why the picture on every service card was invisible while
+   every computed colour and size still looked correct.
+   Measured: wrap 0x100 inside a 173px card. */
+.svc { align-items: stretch; }
+.svc-art-wrap { position: relative; display: block; width: 100%; }
+.svc-art-fig  { transition: transform var(--dur-move) var(--ease-spring); }
+
+.svc-chip {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--surface-solid);
+  color: var(--svc-hue, var(--brand));
+  box-shadow: 0 2px 8px -3px rgba(0, 0, 0, .3);
+}
+
+.svc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 12px 11px;
+  flex: 1;
+}
+/* Clamped to two lines so that every price in the row lands on one baseline —
+   ragged card bodies are what make a grid look unfinished. */
+.svc-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: var(--brand-ink);
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* No min-height here: the grid row already sizes every card alike and the
+   footer is pinned with margin-top:auto, so prices line up without svc-name
+   reserves an empty second line on every single-line card. */
+.svc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+.svc-price {
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.svc-price i {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.svc-go {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--svc-hue, var(--brand)) 12%, transparent);
+  color: var(--svc-hue, var(--brand));
+  transition: transform var(--dur-move) var(--ease-soft);
+}
+
+.svc-skel {
+  height: 196px;
+  border-radius: var(--r-card);
+  animation: svcPulse 1.4s ease-in-out infinite;
+}
+@keyframes svcPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+
+/* The global reduced-motion block collapses durations, which stops the
+   animation but still snaps the transform into place. These are the states
+   that must not move at all. */
+@media (prefers-reduced-motion: reduce) {
+  .svc, .svc:hover, .svc:active,
+  .svc .svc-art-fig, .svc .svc-go { transform: none; }
+}
+
+/* ── «به‌زودی» ───────────────────────────────────────────────────────────────
+   A service that is in the catalogue but not yet actually offered. It stays
+   visible — providers can already stock it and customers can see what is
+   coming — but it must not look tappable, so the artwork drains of colour and
+   the card loses its lift, its press and its chevron.                        */
+.svc.is-soon {
+  cursor: default;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--surface-solid) 72%, transparent);
+  border: 1px solid var(--border);
+}
+.svc.is-soon .svc-art-wrap { filter: saturate(.25) opacity(.72); }
+.svc.is-soon .svc-name  { color: var(--text-2); }
+.svc.is-soon .svc-price { color: var(--muted); font-weight: 800; }
+.svc-chip.is-soon { color: var(--text-2); background: var(--fill-3); }
+@media (hover: hover) {
+  .svc.is-soon:hover { transform: none; box-shadow: none; }
+  .svc.is-soon:hover .svc-art-fig { transform: none; }
+}
+.svc.is-soon:active { transform: none; }
+
+/* «موجود» first, so the five services that actually run are what a visitor
+   meets before the ones that are still coming. */
+.svc-soon-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 2px 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--muted);
+}
+.svc-soon-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Shared surfaces ────────────────────────────────────────────────────────
+   `Card` is what most of the older screens are built from, so its interactive
+   states are what make those screens feel like the rest of the app. A card
+   without an onClick gets none of this and stays completely still.          */
+.uic-tap { cursor: pointer; transition: transform var(--dur-move) var(--ease-soft), box-shadow var(--dur-move) var(--ease-soft); }
+.uic-tap:active { transform: scale(.985); transition-duration: var(--dur-press); }
+.uic-tap:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+@media (hover: hover) {
+  .uic-tap:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 30px -15px color-mix(in srgb, var(--uic-hue, var(--brand)) 45%, transparent), var(--shadow-soft);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .uic-tap, .uic-tap:hover, .uic-tap:active { transform: none; }
+}
+
+/* An icon plate. Used inside rows and cards across the app; it follows the
+   card it sits in rather than animating on its own. */
+.uic-tap:hover .uib { transform: scale(1.06); }
+.uib { transition: transform var(--dur-move) var(--ease-spring); }
+
+
+/* ── «به‌زودی» as a list, not a grid ─────────────────────────────────────────
+   These are catalogue entries that exist but cannot be ordered yet. Rendered
+   as cards they were eleven greyed-out tiles competing with the five real
+   services for the same attention; rendered as a list they answer "is it
+   coming?" in one glance and take a tenth of the page.                       */
+.soon-block {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+.soon-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 2px var(--sp-3);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+/* the count sits at the far end of the line, away from the label */
+.soon-title span {
+  margin-inline-start: auto;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.soon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.soon-list li {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+
+/* ── SKINS ────────────────────────────────────────────────────────────────
+   The accent is the user's choice; the neutrals are not. `data-skin` moves
+   --brand and everything derived from it, and touches nothing else — the
+   graphite ground, the status ramp (amber = act, yellow = warn, red = wrong)
+   and the thirteen service hues are the same product in every skin.
+
+   Every accent here clears 4.5:1 as text on all three grounds of its theme and
+   carries its own button label at 4.5:1. `indigo` is #9580FF rather than the
+   original #8B72FF because that one measured 4.48 on the raised surface.
+
+   Written as :not([data-theme='light']) / [data-theme='light'] pairs so both
+   sides are (0,3,0) and mutually exclusive: a bare :root[data-skin] would tie
+   with :root[data-theme='light'] and be decided by source order alone.        */
+:root:not([data-theme='light'])[data-skin='amber'] {
+  --brand:        #F2A413;
+  --brand-dark:   #C2840F;
+  --green-glow:   rgba(242,164,19,0.30);
+  --green-border: rgba(242,164,19,0.30);
+  --shadow-green: 0 6px 20px rgba(242,164,19,0.26);
+}
+:root[data-theme='light'][data-skin='amber'] {
+  --brand:        #9C5C08;
+  --brand-dark:   #7F4A06;
+  --green-glow:   rgba(156,92,8,0.22);
+  --green-border: rgba(156,92,8,0.32);
+  --shadow-green: 0 10px 24px -8px rgba(156,92,8,0.38);
+}
+:root:not([data-theme='light'])[data-skin='blue'] {
+  --brand:        #5AA2F0;
+  --brand-dark:   #3E85D6;
+  --green-glow:   rgba(90,162,240,0.30);
+  --green-border: rgba(90,162,240,0.30);
+  --shadow-green: 0 6px 20px rgba(90,162,240,0.26);
+}
+:root[data-theme='light'][data-skin='blue'] {
+  --brand:        #1D5FBF;
+  --brand-dark:   #164C9B;
+  --green-glow:   rgba(29,95,191,0.22);
+  --green-border: rgba(29,95,191,0.32);
+  --shadow-green: 0 10px 24px -8px rgba(29,95,191,0.38);
+}
+:root:not([data-theme='light'])[data-skin='emerald'] {
+  --brand:        #2DD4A3;
+  --brand-dark:   #19AC82;
+  --green-glow:   rgba(45,212,163,0.30);
+  --green-border: rgba(45,212,163,0.30);
+  --shadow-green: 0 6px 20px rgba(45,212,163,0.26);
+}
+:root[data-theme='light'][data-skin='emerald'] {
+  --brand:        #0E7A63;
+  --brand-dark:   #0B6150;
+  --green-glow:   rgba(14,122,99,0.22);
+  --green-border: rgba(14,122,99,0.32);
+  --shadow-green: 0 10px 24px -8px rgba(14,122,99,0.38);
+}
+:root:not([data-theme='light'])[data-skin='indigo'] {
+  --brand:        #9580FF;
+  --brand-dark:   #7159E8;
+  --green-glow:   rgba(149,128,255,0.30);
+  --green-border: rgba(149,128,255,0.30);
+  --shadow-green: 0 6px 20px rgba(149,128,255,0.26);
+}
+:root[data-theme='light'][data-skin='indigo'] {
+  --brand:        #5B3FD6;
+  --brand-dark:   #4830AE;
+  --green-glow:   rgba(91,63,214,0.22);
+  --green-border: rgba(91,63,214,0.32);
+  --shadow-green: 0 10px 24px -8px rgba(91,63,214,0.38);
+}
+:root:not([data-theme='light'])[data-skin='rose'] {
+  --brand:        #F472B6;
+  --brand-dark:   #D9539A;
+  --green-glow:   rgba(244,114,182,0.30);
+  --green-border: rgba(244,114,182,0.30);
+  --shadow-green: 0 6px 20px rgba(244,114,182,0.26);
+}
+:root[data-theme='light'][data-skin='rose'] {
+  --brand:        #B01362;
+  --brand-dark:   #8E0F4E;
+  --green-glow:   rgba(176,19,98,0.22);
+  --green-border: rgba(176,19,98,0.32);
+  --shadow-green: 0 10px 24px -8px rgba(176,19,98,0.38);
 }

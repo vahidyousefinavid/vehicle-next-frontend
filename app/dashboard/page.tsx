@@ -1,57 +1,350 @@
 "use client";
-import { useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 import BottomNav from '@/components/BottomNav';
-import RequestServiceModal from '@/components/RequestServiceModal';
-import NetworkGrowingNotice from '@/components/NetworkGrowingNotice';
-import QuickEntry from '@/components/QuickEntry';
-import AgendaPreview from '@/components/AgendaPreview';
-import { api, Vehicle, daysUntil, expiryStatus } from '@/lib/api';
-import { C, EmptyState, SkeletonRow, SkeletonHero, alpha } from '@/components/ui';
+import ServiceCard from '@/components/ServiceCard';
+import ThemeToggle from '@/components/ThemeToggle';
+import NotificationsBell from '@/components/NotificationsBell';
+import { api, Appointment, PresetService, Vehicle, daysUntil, expiryStatus, toJalali } from '@/lib/api';
+import { C, alpha, EmptyState, SkeletonRow } from '@/components/ui';
 import {
-  BatteryIcon, BellIcon, CarIcon, ChevronLeftIcon, CloudIcon, CopyIcon, DiscIcon, DropletIcon,
-  FuelIcon, GaugeIcon, NavigationIcon, PaintbrushIcon, PaperclipIcon, PlusIcon, RoadIcon, SnowflakeIcon,
-  StoreIcon, WrenchIcon, ZapIcon,
+  BellIcon, CalendarIcon, CarIcon, ChevronLeftIcon, ClockIcon, DropletIcon, NavigationIcon,
+  PaperclipIcon, SearchIcon, SettingsIcon, SparklesIcon, StoreIcon, WalletIcon, WrenchIcon,
 } from '@/components/icons';
 
-type TabKey = 'service' | 'garage' | 'tracking';
-type Tile = { title: string; desc: string; action: string; type?: string; href?: string; disabled?: boolean; icon: ReactNode; tone: { color: string; bg: string; border: string } };
-const tones = { green: { color: C.green, bg: alpha(C.green, 12), border: alpha(C.green, 30) }, red: { color: C.statusDanger, bg: alpha(C.statusDanger, 11), border: alpha(C.statusDanger, 28) }, blue: { color: C.statusInfo, bg: alpha(C.statusInfo, 11), border: alpha(C.statusInfo, 28) }, warn: { color: C.statusWarn, bg: alpha(C.statusWarn, 12), border: alpha(C.statusWarn, 30) }, mint: { color: C.statusMint, bg: alpha(C.statusMint, 11), border: alpha(C.statusMint, 28) } };
-const activeTiles: Tile[] = [
-  { title: 'تعویض باتری در محل', desc: 'روشن نشدن خودرو یا باتری ضعیف؛ ثبت درخواست و پیگیری سریع.', action: 'ثبت درخواست', type: 'تعویض باتری', icon: <BatteryIcon size={24} />, tone: tones.red },
-  { title: 'دیاگ و عیب‌یابی', desc: 'چراغ چک، خطای موتور و بررسی اولیه قبل از تعمیر.', action: 'شروع دیاگ', type: 'تنظیم موتور', icon: <GaugeIcon size={24} />, tone: tones.blue },
-  { title: 'چکاپ دوره‌ای و قبل سفر', desc: 'بازدید ضروری قبل از سفر؛ باتری، دیاگ، ترمز، روغن و وضعیت کلی خودرو.', action: 'درخواست چکاپ', type: 'چکاپ قبل سفر', icon: <WrenchIcon size={24} />, tone: tones.green },
-  { title: 'تعمیر ترمز', desc: 'بازدید، تعمیر و پیگیری سرویس ترمز.', action: 'ثبت سرویس', type: 'تعمیر ترمز', icon: <DiscIcon size={24} />, tone: tones.warn },
+/**
+ * The end-user home, laid out like the reference template: greeting, one
+ * search, a row of category tiles, then a grid of service cards that lead into
+ * an order screen. The services are read from the catalogue the admin panel
+ * manages, so the grid is the real product rather than a set of placeholders.
+ */
+
+/** One tile per catalogue category, plus the icon each should wear. */
+const CATEGORY_ICON: Record<string, React.ReactNode> = {
+  'سرویس دوره‌ای': <DropletIcon size={22} />,
+  'تعمیرات': <WrenchIcon size={22} />,
+  'خدمات تکمیلی': <SparklesIcon size={22} />,
+};
+
+const SHORTCUTS = [
+  { href: '/vehicles',   label: 'خودروها', icon: <CarIcon size={19} />,        hue: 'var(--svc-tire)' },
+  { href: '/vehicles',   label: 'مدارک',   icon: <PaperclipIcon size={19} />,  hue: 'var(--svc-filter)' },
+  { href: '/expenses',   label: 'هزینه‌ها', icon: <WalletIcon size={19} />,     hue: 'var(--svc-oil)' },
+  { href: '/tracking',   label: 'ردیابی',  icon: <NavigationIcon size={19} />, hue: 'var(--svc-gearbox)' },
+  { href: '/requests',   label: 'درخواست‌ها', icon: <SparklesIcon size={19} />,  hue: 'var(--svc-tuning)' },
 ];
-const upcomingTiles: Tile[] = [
-  { title: 'تعویض روغن', desc: 'روغن و فیلترها', action: 'به‌زودی', disabled: true, icon: <DropletIcon size={20} />, tone: tones.warn },
-  { title: 'سرویس جلوبندی', desc: 'کمک، سیبک، طبق، فرمان و صداهای زیر خودرو', action: 'به‌زودی', disabled: true, icon: <WrenchIcon size={20} />, tone: tones.green },
-  { title: 'لاستیک و پنچرگیری', desc: 'چرخ، باد و پنچرگیری', action: 'به‌زودی', disabled: true, icon: <DiscIcon size={20} />, tone: tones.blue },
-  { title: 'کارواش و دیتیلینگ', desc: 'شست‌وشو و زیبایی خودرو', action: 'به‌زودی', disabled: true, icon: <StoreIcon size={20} />, tone: tones.mint },
-  { title: 'کولر و برق خودرو', desc: 'کولر، دینام و برق', action: 'به‌زودی', disabled: true, icon: <SnowflakeIcon size={20} />, tone: tones.blue },
-  { title: 'صافکاری و بدنه', desc: 'بدنه و رنگ', action: 'به‌زودی', disabled: true, icon: <PaintbrushIcon size={20} />, tone: tones.red },
-  { title: 'امداد جاده‌ای', desc: 'کمک فوری در مسیر', action: 'به‌زودی', disabled: true, icon: <RoadIcon size={20} />, tone: tones.green },
-  { title: 'سوخت و مصرف', desc: 'هزینه سوخت و تحلیل مصرف', action: 'به‌زودی', disabled: true, icon: <FuelIcon size={20} />, tone: tones.warn },
-  { title: 'برق پیشرفته', desc: 'دینام و برق‌دزدی', action: 'به‌زودی', disabled: true, icon: <ZapIcon size={20} />, tone: tones.mint },
-];
-const softwareTiles: Tile[] = [
-  { title: 'ثبت ماشین', desc: 'پلاک، مدل، کیلومتر و اطلاعات پایه.', action: 'افزودن ماشین', href: '/vehicles/new', icon: <CarIcon size={22} />, tone: tones.green },
-  { title: 'مدارک خودرو', desc: 'بیمه، معاینه فنی، کارت ماشین و سررسیدها.', action: 'مدیریت مدارک', href: '/vehicles', icon: <PaperclipIcon size={22} />, tone: tones.blue },
-  { title: 'هزینه‌ها و سوابق', desc: 'خرج‌ها، تعمیرات و سابقه سرویس‌ها.', action: 'مشاهده سوابق', href: '/expenses', icon: <CopyIcon size={22} />, tone: tones.warn },
-  { title: 'یادآوری‌ها', desc: 'قبل از موعد سرویس و مدارک خبر بگیر.', action: 'تنظیم یادآوری', href: '/reminders', icon: <BellIcon size={22} />, tone: tones.mint },
-];
-const trackingTiles: Tile[] = [
-  { title: 'ردیابی خودرو', desc: 'موقعیت و وضعیت خودرو در یک بخش جدا.', action: 'ورود به ردیابی', href: '/tracking', icon: <NavigationIcon size={22} />, tone: tones.blue },
-  { title: 'مسیرها و گزارش‌ها', desc: 'مسیرهای اخیر و سابقه حرکت.', action: 'مشاهده مسیرها', href: '/tracking', icon: <CloudIcon size={22} />, tone: tones.green },
-  { title: 'تعمیرگاه‌ها', desc: 'پیدا کردن مراکز خدمات نزدیک.', action: 'دیدن تعمیرگاه', href: '/workshops', icon: <StoreIcon size={22} />, tone: tones.warn },
-];
-function TileCard({ item, onPick, disabledByVehicle = false, compact = false }: { item: Tile; onPick: (type: string) => void; disabledByVehicle?: boolean; compact?: boolean }) { const disabled = item.disabled || disabledByVehicle; const body = <><span className="tile-icon" style={{ color: item.tone.color, background: item.tone.bg, border: `1px solid ${item.tone.border}` }}>{item.icon}</span><span className="tile-pill" style={{ color: item.disabled ? C.statusWarn : item.tone.color, background: item.disabled ? alpha(C.statusWarn, 10) : item.tone.bg, border: `1px solid ${item.disabled ? alpha(C.statusWarn, 25) : item.tone.border}` }}>{item.disabled ? 'به‌زودی' : 'فعال'}</span><strong style={{ color: C.textStrong }}>{item.title}</strong><p style={{ color: C.text2 }}>{item.desc}</p><em style={{ color: disabled ? C.muted : item.tone.color }}>{disabledByVehicle ? 'اول ماشین ثبت کن' : item.action}</em></>; if (item.href && !disabled) return <Link className={`tile-card ${compact ? 'compact' : ''}`} href={item.href} style={{ background: C.surfaceSolid, border: `1px solid ${C.borderStrong}` }}>{body}</Link>; return <button type="button" disabled={disabled} onClick={() => item.type && onPick(item.type)} className={`tile-card ${compact ? 'compact' : ''}`} style={{ background: C.surfaceSolid, border: `1px solid ${item.disabled ? C.border : item.tone.border}` }}>{body}</button>; }
-function CommandCenter({ vehicles, alerts, onPick }: { vehicles: Vehicle[]; alerts: Vehicle[]; onPick: (type: string) => void }) { const [tab, setTab] = useState<TabKey>('service'); const hasVehicle = vehicles.length > 0; return <section className="command" style={{ background: C.surfaceSolid, border: `1px solid ${C.borderStrong}`, boxShadow: C.shadowCard }}><div className="command-head"><div><p className="eyebrow" style={{ color: C.green }}>مرکز عملیات</p><h2 style={{ color: C.textStrong }}>کار اصلی‌ات را از اینجا انجام بده</h2><p style={{ color: C.text2 }}>خدمات ماشین، ثبت ماشین/مدارک و ردیابی هرکدام فضای جدا دارند.</p></div><div className="alert-badge" style={{ background: alerts.length ? alpha(C.statusDanger, 10) : alpha(C.green, 10), border: `1px solid ${alerts.length ? alpha(C.statusDanger, 25) : alpha(C.green, 25)}` }}><b style={{ color: alerts.length ? C.statusDanger : C.green }}>{alerts.length}</b><span style={{ color: C.muted }}>هشدار</span></div></div><div className="dash-tabs" style={{ background: C.fill1, border: `1px solid ${C.border}` }}>{[{k:'service' as const,t:'خدمات ماشین',i:<WrenchIcon size={17}/>},{k:'garage' as const,t:'ماشین و مدارک',i:<CarIcon size={17}/>},{k:'tracking' as const,t:'ردیابی و سوابق',i:<NavigationIcon size={17}/>}].map(x=><button type="button" key={x.k} onClick={()=>setTab(x.k)} style={{ background: tab===x.k ? `linear-gradient(135deg, ${C.green}, ${C.statusMint})` : C.surfaceSolid, color: tab===x.k ? '#06130b' : C.textStrong, border: tab===x.k ? `1px solid ${alpha(C.green, 70)}` : `1px solid ${C.borderStrong}`, boxShadow: tab===x.k ? `0 14px 32px ${alpha(C.green, 20)}` : 'none' }}>{x.i}<span>{x.t}</span></button>)}</div>{tab==='service' && <div className="tab-area"><div className="section-line"><b style={{ color: C.green }}>خدمات فعال</b><small style={{ color: C.muted }}>قابل درخواست</small></div>{!hasVehicle && <p className="helper" style={{ color: C.statusWarn, background: alpha(C.statusWarn, 9), border: `1px solid ${alpha(C.statusWarn, 22)}` }}>برای ثبت درخواست، اول یک ماشین اضافه کن.</p>}<div className="tile-grid active">{activeTiles.map((x,i)=><TileCard key={x.title} item={x} onPick={onPick} disabledByVehicle={!hasVehicle} compact={i>0}/>)}</div><div className="section-line soon"><b style={{ color: C.statusWarn }}>خدمات به‌زودی</b><small style={{ color: C.muted }}>در نقشه توسعه</small></div><div className="tile-grid soon-grid">{upcomingTiles.map(x=><TileCard key={x.title} item={x} onPick={onPick} compact />)}</div></div>}{tab==='garage' && <div className="tab-area"><div className="tile-grid software">{softwareTiles.map(x=><TileCard key={x.title} item={x} onPick={onPick}/>)}</div><QuickEntry vehicleId={vehicles[0]?.id} /></div>}{tab==='tracking' && <div className="tab-area"><div className="tile-grid software">{trackingTiles.map(x=><TileCard key={x.title} item={x} onPick={onPick}/>)}</div><AgendaPreview /></div>}</section>; }
-function Summary({ user, vehicles, alerts }: { user: { name: string } | null; vehicles: Vehicle[]; alerts: Vehicle[] }) { const pct = vehicles.length ? Math.round(((vehicles.length - alerts.length) / vehicles.length) * 100) : 100; return <section className="summary" style={{ background: C.surfaceSolid, border: `1px solid ${C.borderStrong}` }}><div><p style={{ color: C.muted }}>وضعیت حساب</p><h2 style={{ color: C.textStrong }}>{user?.name || 'کاربر خودرو'}</h2></div><div>{[{l:'خودرو',v:vehicles.length,c:C.green},{l:'هشدار',v:alerts.length,c:alerts.length?C.statusDanger:C.green},{l:'سلامت',v:`${pct}%`,c:pct>70?C.green:C.statusWarn}].map(x=><span key={x.l} style={{background:C.fill2,border:`1px solid ${C.border}`}}><b style={{color:x.c}}>{x.v}</b><small style={{color:C.muted}}>{x.l}</small></span>)}</div></section>; }
-function VehicleRow({ v, isLast }: { v: Vehicle; isLast: boolean }) { const insDays = daysUntil(v.insuranceExpiry); const tecDays = daysUntil(v.technicalExpiry); const hasAlert = expiryStatus(insDays) !== 'ok' || expiryStatus(tecDays) !== 'ok'; const color = hasAlert ? C.statusExpired : C.green; return <Link href={`/vehicles/${v.id}`} style={{ textDecoration: 'none', display: 'block' }}><div className="vehicle-row" style={{ borderBottom: isLast ? 'none' : `1px solid ${C.border}` }}><div className="vehicle-icon" style={{ background: alpha(color, 12), border: `1px solid ${alpha(color, 25)}`, color }}><CarIcon size={21} /></div><div style={{ flex: 1, minWidth: 0 }}><p style={{ color: C.text, fontSize: 14, fontWeight: 800, margin: 0 }}>{v.make} {v.model}</p><p style={{ color: C.muted, fontSize: 12, margin: '3px 0 0' }}>{v.year}{v.fuelType ? ` · ${v.fuelType}` : ''} · {v.currentMileage.toLocaleString()} km</p></div><span style={{ color, fontSize: 11, fontWeight: 800 }}>{hasAlert ? 'هشدار' : 'سالم'}</span><ChevronLeftIcon size={16} color={C.subtle} /></div></Link>; }
-export default function Dashboard() { const router = useRouter(); const [vehicles,setVehicles]=useState<Vehicle[]>([]); const [loading,setLoading]=useState(true); const [user,setUser]=useState<{name:string}|null>(null); const [requestType,setRequestType]=useState<string|null>(null); useEffect(()=>{if(!localStorage.getItem('vtoken')){router.replace('/');return} try{setUser(JSON.parse(localStorage.getItem('vuser')||'{}'))}catch{} api.vehicles.list().then(setVehicles).finally(()=>setLoading(false))},[router]); const alerts=vehicles.filter(v=>expiryStatus(daysUntil(v.insuranceExpiry))!=='ok'||expiryStatus(daysUntil(v.technicalExpiry))!=='ok'); const today=new Date().toLocaleDateString('fa-IR',{weekday:'long',day:'numeric',month:'long'}); return <div style={{minHeight:'100vh'}}><Navbar/><main className="dashboard-main"><div className="welcome"><p style={{color:C.muted}}>{today}</p><h1 style={{color:C.text}}>{user?.name?`سلام ${user.name}`:'خوش آمدی'}</h1></div>{loading?<SkeletonHero/>:<CommandCenter vehicles={vehicles} alerts={alerts} onPick={setRequestType}/>} {loading?<SkeletonHero/>:<Summary user={user} vehicles={vehicles} alerts={alerts}/>}<section className="panel" style={{ background: C.surface, border: `1px solid ${C.border}` }}><div className="panel-head"><div><p className="eyebrow" style={{ color: C.green }}>خودروهای من</p><h2 style={{ color: C.text2 }}>ماشین‌ها و وضعیت‌ها</h2></div><Link href="/vehicles/new" className="add-link" style={{color:C.green,background:alpha(C.green,10),border:`1px solid ${alpha(C.green,22)}`}}><PlusIcon size={14}/> افزودن</Link></div>{loading ? <div style={{ background: C.surface, borderRadius: 18, overflow: 'hidden' }}><SkeletonRow /><SkeletonRow /></div> : vehicles.length === 0 ? <EmptyState icon={<CarIcon size={30} />} title="هنوز خودرویی ثبت نکردی" sub="اولین خودروت رو اضافه کن تا خدمات ماشین فعال شود" onAdd={() => router.push('/vehicles/new')} btnLabel="افزودن خودرو" /> : <div style={{ background: C.surfaceSolid, border: `1px solid ${C.border}`, borderRadius: 18, overflow: 'hidden' }}>{vehicles.map((v, i) => <VehicleRow key={v.id} v={v} isLast={i === vehicles.length - 1} />)}</div>}</section><NetworkGrowingNotice/></main>{requestType&&<RequestServiceModal serviceType={requestType} onClose={()=>setRequestType(null)}/>}<BottomNav/><style>{`
-.dashboard-main{max-width:920px;margin:0 auto;padding:0 16px calc(92px + env(safe-area-inset-bottom))}.welcome{padding:20px 0 16px}.welcome p{font-size:12px;margin:0;font-weight:700}.welcome h1{font-size:26px;font-weight:950;margin:5px 0 0}.command,.summary,.panel{border-radius:28px;margin-bottom:18px;padding:18px}.command-head{display:flex;justify-content:space-between;gap:14px;margin-bottom:16px}.eyebrow{margin:0 0 6px;font-size:11px;font-weight:950}.command-head h2,.panel-head h2,.summary h2{margin:0;font-size:21px;font-weight:950}.command-head p:not(.eyebrow){font-size:12.5px;line-height:1.8;margin:6px 0 0}.alert-badge{min-width:76px;border-radius:18px;padding:10px;text-align:center}.alert-badge b,.alert-badge span{display:block}.alert-badge b{font-size:24px}.alert-badge span{font-size:10px;font-weight:800}.dash-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;border-radius:24px;padding:8px;margin-bottom:18px;background:linear-gradient(135deg,rgba(34,197,94,.11),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}.dash-tabs button{border:1px solid transparent;border-radius:18px;padding:15px 10px;cursor:pointer;font:950 13px var(--font-sans);display:flex;gap:8px;justify-content:center;align-items:center;min-height:58px;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}.dash-tabs button:hover{transform:translateY(-1px);border-color:rgba(34,197,94,.42)}.section-line{display:flex;justify-content:space-between;align-items:center;margin:10px 2px 12px}.section-line b{font-size:13px}.section-line small{font-size:11px}.section-line.soon{margin-top:18px}.helper{border-radius:14px;padding:9px 12px;margin:0 0 12px;font-size:12px;font-weight:800}.tile-grid{display:grid;gap:10px}.tile-grid.active{grid-template-columns:1.15fr 1fr 1fr 1fr}.tile-grid.soon-grid{grid-template-columns:repeat(4,1fr)}.tile-grid.software{grid-template-columns:repeat(3,1fr)}.tile-card{position:relative;min-height:150px;border-radius:22px;padding:14px;text-decoration:none;text-align:right;cursor:pointer;font-family:var(--font-sans);display:flex;flex-direction:column;align-items:flex-start;gap:8px}.tile-card.compact{min-height:132px}.tile-card:disabled{cursor:not-allowed;opacity:.72}.tile-icon{width:42px;height:42px;border-radius:16px;display:grid;place-items:center}.tile-pill{position:absolute;top:12px;left:12px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:950}.tile-card strong{font-size:14px;line-height:1.5;margin-top:6px}.tile-card p{font-size:11.5px;line-height:1.6;margin:0}.tile-card em{font-style:normal;font-size:11px;font-weight:950;margin-top:auto}.summary{display:flex;justify-content:space-between;align-items:center;gap:14px}.summary p{margin:0 0 5px;font-size:12px}.summary>div:last-child{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-width:270px}.summary span{border-radius:16px;padding:10px 8px;text-align:center}.summary b,.summary small{display:block}.summary b{font-size:20px}.summary small{font-size:10.5px;font-weight:800}.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}.add-link{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:850;text-decoration:none;border-radius:12px;padding:7px 12px}.vehicle-row{display:flex;align-items:center;gap:12px;padding:13px 14px}.vehicle-icon{width:44px;height:44px;border-radius:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center}@media(max-width:820px){.dashboard-main{max-width:560px}.tile-grid.active,.tile-grid.soon-grid,.tile-grid.software,.summary{grid-template-columns:1fr 1fr;display:grid}.summary>div:last-child{min-width:0;width:100%}}@media(max-width:560px){.dashboard-main{padding-left:12px;padding-right:12px}.command,.summary,.panel{padding:14px;border-radius:24px}.command-head{display:grid}.dash-tabs,.tile-grid.active,.tile-grid.soon-grid,.tile-grid.software,.summary,.summary>div:last-child{grid-template-columns:1fr}.dash-tabs button{justify-content:flex-start}.tile-card{min-height:126px}}
-`}</style></div>; }
+
+export default function Dashboard() {
+  const router = useRouter();
+  const [user, setUser] = useState<{ name?: string } | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [services, setServices] = useState<PresetService[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [appts, setAppts] = useState<Appointment[]>([]);
+  const [q, setQ] = useState('');
+  const [cat, setCat] = useState('');
+
+  useEffect(() => {
+    if (!localStorage.getItem('vtoken')) { router.replace('/'); return; }
+    try { setUser(JSON.parse(localStorage.getItem('vuser') || '{}')); } catch { /* no cached user */ }
+    api.vehicles.list().then(setVehicles).catch(() => {}).finally(() => setLoading(false));
+    api.catalog.publicServices()
+      .then((res) => { setServices(res.items); setCategories(res.categories); })
+      .catch(() => {})
+      .finally(() => setServicesLoading(false));
+    api.appointments.mine().then(setAppts).catch(() => {});
+  }, [router]);
+
+  const alerts = vehicles.filter(
+    (v) => expiryStatus(daysUntil(v.insuranceExpiry)) !== 'ok' || expiryStatus(daysUntil(v.technicalExpiry)) !== 'ok',
+  );
+
+  const shown = useMemo(() => {
+    const needle = q.trim();
+    return services.filter((s) => {
+      if (cat && s.category !== cat) return false;
+      if (!needle) return true;
+      return `${s.customName ?? ''} ${s.serviceType} ${s.category}`.includes(needle);
+    });
+  }, [services, q, cat]);
+
+  // خدماتی که واقعاً ارائه می‌شوند اول می‌آیند؛ بقیه زیر یک تیتر «به‌زودی».
+  const live = useMemo(() => shown.filter((s) => s.availableNow !== false), [shown]);
+  const soon = useMemo(() => shown.filter((s) => s.availableNow === false), [shown]);
+
+
+  const firstName = (user?.name || '').split(' ')[0];
+  /* the soonest booking that has not already happened */
+  const nextAppt = appts
+    .filter((a) => ['pending', 'confirmed'].includes(a.status) && new Date(a.requestedAt).getTime() >= Date.now() - 864e5)
+    .sort((a, b) => +new Date(a.requestedAt) - +new Date(b.requestedAt))[0];
+  const countIn = (c: string) => services.filter((s) => s.category === c).length;
+
+  return (
+    <div className="home">
+      <main className="home-main">
+        {/* ── greeting ── */}
+        <header className="greet">
+          <div>
+            <h1 style={{ color: C.textStrong }}>{firstName ? `سلام ${firstName}` : 'خوش آمدی'}</h1>
+            <p style={{ color: C.muted }}>چه کمکی لازم داری؟</p>
+          </div>
+          <div className="greet-side">
+            <NotificationsBell />
+            <ThemeToggle size={38} />
+            <Link href="/profile" className="avatar" style={{ background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`, color: C.onAccent }}>
+              {(firstName || 'ک').slice(0, 1)}
+            </Link>
+          </div>
+        </header>
+
+        {/* ── the owner's own state, before anything asks them to browse ── */}
+        {(nextAppt || alerts.length > 0) && (
+          <div className="status">
+            {nextAppt && (
+              <Link href="/appointments" className="status-card" style={{ background: alpha(C.statusMint, 10), boxShadow: C.shadowSoft }}>
+                <span style={{ background: alpha(C.statusMint, 16), color: C.statusMint }}><CalendarIcon size={19} /></span>
+                <div>
+                  <b style={{ color: C.textStrong }}>نوبت بعدی</b>
+                  <small style={{ color: C.text2 }}>
+                    {toJalali(nextAppt.requestedAt.slice(0, 10))}
+                    {nextAppt.serviceType ? ` · ${nextAppt.serviceType}` : ''}
+                  </small>
+                </div>
+                <ChevronLeftIcon size={16} color={C.subtle} />
+              </Link>
+            )}
+            {alerts.length > 0 && (
+              <Link href="/reminders" className="status-card" style={{ background: alpha(C.statusExpired, 9), boxShadow: C.shadowSoft }}>
+                <span style={{ background: alpha(C.statusExpired, 15), color: C.statusExpired }}><BellIcon size={19} /></span>
+                <div>
+                  <b style={{ color: C.textStrong }}>{alerts.length.toLocaleString('fa-IR')} مدرک نزدیک سررسید</b>
+                  <small style={{ color: C.text2 }}>بیمه یا معاینه فنی به موعد نزدیک شده</small>
+                </div>
+                <ChevronLeftIcon size={16} color={C.subtle} />
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* ── search ── */}
+        <div className="search" style={{ background: C.fill2, border: `1px solid ${C.border}` }}>
+          <SearchIcon size={18} color={C.muted} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="جستجوی خدمت..." style={{ color: C.textStrong }} />
+          {q && <button type="button" onClick={() => setQ('')} style={{ color: C.muted }}>✕</button>}
+        </div>
+
+        {/* ── category tiles ── */}
+        {categories.length > 0 && (
+          <div className="tiles">
+            {categories.map((c) => {
+              const on = cat === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCat(on ? '' : c)}
+                  className={`tile ${on ? 'on' : ''}`}
+                  style={{
+                    background: on ? `linear-gradient(160deg, ${C.green}, ${C.greenDark})` : C.surfaceSolid,
+                    boxShadow: on ? C.shadowBrand : C.shadowSoft,
+                    color: on ? C.onAccent : C.text2,
+                  }}
+                >
+                  <span className="tile-art" style={{ background: on ? C.onAccent : C.fill2, color: C.green }}>
+                    {CATEGORY_ICON[c] ?? <SettingsIcon size={22} />}
+                  </span>
+                  <b>{c}</b>
+                  <small style={{ color: on ? 'rgba(255,255,255,.75)' : C.subtle }}>
+                    {countIn(c).toLocaleString('fa-IR')} خدمت
+                  </small>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── the service grid ── */}
+        <div className="row-head">
+          <h2 style={{ color: C.textStrong }}>خدمات ما</h2>
+          {cat && <button type="button" onClick={() => setCat('')} style={{ color: C.green }}>نمایش همه</button>}
+        </div>
+
+        {servicesLoading ? (
+          <div className="svc-grid">{[0, 1, 2, 3].map((i) => <div key={i} className="svc-skel" style={{ background: C.fill2 }} />)}</div>
+        ) : shown.length === 0 ? (
+          <p className="none" style={{ color: C.muted }}>خدمتی با این جستجو پیدا نشد.</p>
+        ) : (
+          <>
+            {live.length > 0 && (
+              <div className="svc-grid">
+                {live.map((s, i) => (
+                  <ServiceCard
+                    key={s.key}
+                    s={s}
+                    index={i}
+                    href={`/order/${encodeURIComponent(s.key)}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {soon.length > 0 && (
+              <div className="soon-block">
+                <p className="soon-title" style={{ color: C.text2 }}>
+                  <ClockIcon size={14} />
+                  به‌زودی اضافه می‌شود
+                  <span style={{ color: C.muted }}>{soon.length.toLocaleString('fa-IR')} خدمت</span>
+                </p>
+                <ul className="soon-list">
+                  {soon.map((s) => (
+                    <li key={s.key} style={{ background: C.fill2, color: C.text2 }}>
+                      {s.customName || s.serviceType}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── the other way in: describe the job, let workshops answer ── */}
+        <Link href="/requests/new" className="promo" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+          <span className="promo-art" style={{ background: alpha(C.statusMint, 13), color: C.statusMint }}><SparklesIcon size={26} /></span>
+          <div>
+            <b style={{ color: C.textStrong }}>نمی‌دانی کدام تعمیرگاه؟</b>
+            <p style={{ color: C.muted }}>بگو ماشینت چه می‌خواهد؛ تعمیرگاه‌ها قیمت و زمان می‌دهند و تو انتخاب می‌کنی.</p>
+          </div>
+          <i style={{ background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`, color: C.onAccent, boxShadow: C.shadowBrand }}>
+            <ChevronLeftIcon size={18} />
+          </i>
+        </Link>
+
+        {/* ── promo ── */}
+        <Link href="/workshops" className="promo" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+          <span className="promo-art" style={{ background: alpha(C.green, 12), color: C.green }}><StoreIcon size={26} /></span>
+          <div>
+            <b style={{ color: C.textStrong }}>تعمیرگاه‌های نزدیک تو</b>
+            <p style={{ color: C.muted }}>امتیاز و فاصله را ببین و مستقیم نوبت بگیر.</p>
+          </div>
+          <i style={{ background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`, color: C.onAccent, boxShadow: C.shadowBrand }}>
+            <ChevronLeftIcon size={18} />
+          </i>
+        </Link>
+
+        {/* ── shortcuts into the user's own data ── */}
+        <div className="row-head"><h2 style={{ color: C.textStrong }}>میان‌بُرها</h2></div>
+        <div className="shortcuts">
+          {SHORTCUTS.map((x) => (
+            <Link key={x.label} href={x.href} className="shortcut" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+              <span style={{ color: x.hue, background: alpha(x.hue, 11) }}>{x.icon}</span>
+              <b style={{ color: C.text }}>{x.label}</b>
+            </Link>
+          ))}
+        </div>
+
+        {/* ── the user's cars ── */}
+        <div className="row-head">
+          <h2 style={{ color: C.textStrong }}>خودروهای من</h2>
+          <Link href="/vehicles/new" style={{ color: C.green }}>افزودن</Link>
+        </div>
+
+        {loading ? (
+          <div style={{ background: C.surfaceSolid, borderRadius: 22, overflow: 'hidden' }}><SkeletonRow /><SkeletonRow /></div>
+        ) : vehicles.length === 0 ? (
+          <EmptyState
+            icon={<CarIcon size={30} />}
+            title="هنوز خودرویی ثبت نکردی"
+            sub="با ثبت خودرو، درخواست خدمت و یادآوری مدارک فعال می‌شود"
+            onAdd={() => router.push('/vehicles/new')}
+            btnLabel="افزودن خودرو"
+          />
+        ) : (
+          <div className="cars">
+            {vehicles.map((v) => {
+              const bad = expiryStatus(daysUntil(v.insuranceExpiry)) !== 'ok' || expiryStatus(daysUntil(v.technicalExpiry)) !== 'ok';
+              const hue = bad ? C.statusExpired : C.statusOk;
+              return (
+                <Link key={v.id} href={`/vehicles/${v.id}`} className="car" style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+                  <span style={{ color: hue, background: alpha(hue, 11) }}><CarIcon size={21} /></span>
+                  <div>
+                    <b style={{ color: C.textStrong }}>{v.make} {v.model}</b>
+                    <small style={{ color: C.muted }}>
+                      {v.year.toLocaleString('fa-IR', { useGrouping: false })} · {v.currentMileage.toLocaleString('fa-IR')} کیلومتر
+                    </small>
+                  </div>
+                  <em style={{ color: hue, background: alpha(hue, 10) }}>{bad ? 'بررسی' : 'سالم'}</em>
+                  <ChevronLeftIcon size={16} color={C.subtle} />
+                </Link>
+              );
+            })}
+            {alerts.length > 0 && (
+              <Link href="/reminders" className="alert-line" style={{ color: C.statusExpired, background: alpha(C.statusExpired, 9), border: `1px solid ${alpha(C.statusExpired, 22)}` }}>
+                {alerts.length.toLocaleString('fa-IR')} خودرو مدرک نزدیک به سررسید دارد
+              </Link>
+            )}
+          </div>
+        )}
+      </main>
+
+      <BottomNav />
+
+      <style>{`
+.home{min-height:100vh;background:var(--bg-gradient)}
+.home-main{max-width:900px;margin:0 auto;padding:8px 16px calc(104px + env(safe-area-inset-bottom))}
+.greet{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 2px 18px}
+.greet h1{margin:0;font-size:24px;font-weight:950;letter-spacing:-.5px}
+.greet p{margin:5px 0 0;font-size:13px;font-weight:700}
+.greet-side{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:900 17px var(--font-sans);text-decoration:none;flex-shrink:0}
+.status{display:grid;gap:var(--sp-2);margin-bottom:var(--sp-3)}
+.status-card{display:flex;align-items:center;gap:var(--sp-3);border-radius:var(--r-row);padding:13px 14px;text-decoration:none;transition:transform .16s ease}
+.status-card:hover{transform:translateY(-2px)}
+.status-card>span{width:42px;height:42px;border-radius:var(--r-plate);display:grid;place-items:center;flex-shrink:0}
+.status-card>div{flex:1;min-width:0}
+.status-card b{display:block;font-size:13.5px;font-weight:900}
+.status-card small{display:block;font-size:11.5px;margin-top:2px}
+.search{display:flex;align-items:center;gap:10px;border-radius:16px;padding:13px 15px;margin-bottom:18px}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:700 14px var(--font-sans);padding:11px 0;margin:-11px 0}
+.search button{border:0;background:transparent;cursor:pointer;font-size:13px}
+.tiles{display:flex;align-items:stretch;gap:10px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px;margin-bottom:6px}
+.tiles::-webkit-scrollbar{display:none}
+.tile{flex:0 0 auto;width:104px;border-radius:20px;padding:14px 10px;cursor:pointer;font-family:var(--font-sans);display:flex;flex-direction:column;align-items:center;gap:3px;align-self:flex-end;transition:transform .18s cubic-bezier(.16,1,.3,1),padding .18s ease}
+.tile:active{transform:scale(.97)}
+.tile-art{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:5px;transition:background .18s ease}
+.tile.on{padding:22px 10px 17px}
+.tile b{font-size:12px;font-weight:900;text-align:center;line-height:1.4;min-height:34px;display:flex;align-items:center}
+.tile small{font-size:10px;font-weight:800}
+.row-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:20px 2px 12px}
+.row-head h2{margin:0;font-size:17px;font-weight:950}
+.row-head a,.row-head button{font-size:12.5px;font-weight:800;text-decoration:none;border:0;background:transparent;cursor:pointer;font-family:var(--font-sans)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.none{font-size:13px;text-align:center;padding:26px 0}
+.promo{display:flex;align-items:center;gap:13px;border-radius:20px;padding:15px;text-decoration:none;margin-top:18px}
+.promo-art{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;flex-shrink:0}
+.promo div{flex:1;min-width:0}
+.promo b{font-size:14.5px;font-weight:950;display:block}
+.promo p{font-size:12px;line-height:1.75;margin:4px 0 0}
+.promo i{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex-shrink:0}
+.shortcuts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.shortcut{border-radius:18px;padding:13px 8px;text-decoration:none;display:grid;justify-items:center;gap:7px;transition:transform .16s ease}
+.shortcut:hover{transform:translateY(-2px)}
+.shortcut span{width:40px;height:40px;border-radius:14px;display:grid;place-items:center}
+.shortcut b{font-size:11px;font-weight:850;text-align:center}
+.cars{display:grid;gap:10px}
+.car{display:flex;align-items:center;gap:12px;border-radius:18px;padding:13px 14px;text-decoration:none}
+.car>span{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;flex-shrink:0}
+.car>div{flex:1;min-width:0}
+.car b,.car small{display:block}
+.car b{font-size:14px;font-weight:900}
+.car small{font-size:11.5px;margin-top:3px}
+.car em{font-style:normal;font-size:11px;font-weight:900;border-radius:999px;padding:5px 10px;white-space:nowrap}
+.alert-line{border-radius:16px;padding:11px 14px;font:800 12px var(--font-sans);text-decoration:none;text-align:center}
+@media(max-width:400px){.shortcuts{grid-template-columns:repeat(2,1fr)}}
+      `}</style>
+    </div>
+  );
+}

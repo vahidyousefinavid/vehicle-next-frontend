@@ -1,55 +1,303 @@
-"use client";
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+'use client';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, Role } from '@/lib/api';
-import { alpha, Button, C, Input } from '@/components/ui';
+import { api, PresetService, Role } from '@/lib/api';
+import Link from 'next/link';
+import { alpha, Button, C } from '@/components/ui';
+import ServiceCard from '@/components/ServiceCard';
 import ThemeToggle from '@/components/ThemeToggle';
+import { fa } from '@/components/ScreenKit';
 import {
-  BatteryIcon, BellIcon, CalendarIcon, CarIcon, CheckIcon, CloudIcon, CompassIcon, CopyIcon, DiscIcon,
-  DropletIcon, FuelIcon, GaugeIcon, LockIcon, NavigationIcon, PaintbrushIcon, PaperclipIcon, RoadIcon,
-  SearchIcon, ShieldIcon, SnowflakeIcon, StoreIcon, UserIcon, WrenchIcon, ZapIcon,
+  CarIcon, CheckIcon, ChevronLeftIcon, ClockIcon, LockIcon, SearchIcon,
+  ShieldIcon, StoreIcon, WrenchIcon, StarIcon, CalendarIcon, WalletIcon,
 } from '@/components/icons';
 
-type TabKey = 'car' | 'garage' | 'track';
-type Tone = { color: string; bg: string; border: string };
-type Service = { title: string; desc: string; hint: string; status: 'فعال' | 'به‌زودی'; icon: ReactNode; tone: Tone };
+/**
+ * The landing page.
+ *
+ * It used to open with a wall of service cards, two thirds of them labelled
+ * «به‌زودی» and unclickable — a visitor's first impression was a grid of things
+ * the product could not do, drawn at the same size as the things it could. Only
+ * the services that genuinely run get a card now; the rest are a compact list
+ * beneath, which keeps the promise visible without letting it crowd out the
+ * offer. The catalogue endpoint needs no token, so all of it is browsable and
+ * searchable before signing up — search is the call to action, and the account
+ * comes after the visitor has found what they came for.
+ */
 
-function homeFor(role: Role): string { if (role === 'mechanic') return '/mechanic'; if (role === 'seller') return '/seller/products'; return '/dashboard'; }
-const tones = {
-  green: { color: C.green, bg: alpha(C.green, 12), border: alpha(C.green, 32) },
-  red: { color: C.statusDanger, bg: alpha(C.statusDanger, 11), border: alpha(C.statusDanger, 28) },
-  blue: { color: C.statusInfo, bg: alpha(C.statusInfo, 11), border: alpha(C.statusInfo, 28) },
-  warn: { color: C.statusWarn, bg: alpha(C.statusWarn, 12), border: alpha(C.statusWarn, 30) },
-  mint: { color: C.statusMint, bg: alpha(C.statusMint, 11), border: alpha(C.statusMint, 28) },
-};
-const activeServices: Service[] = [
-  { title: 'تعویض باتری در محل', desc: 'وقتی ماشین روشن نمی‌شود، درخواست را سریع ثبت کن و روند پیگیری را ببین.', hint: 'مناسب خرابی ناگهانی و باتری ضعیف', status: 'فعال', icon: <BatteryIcon size={28} />, tone: tones.red },
-  { title: 'دیاگ و عیب‌یابی', desc: 'چراغ چک، خطای موتور و ایرادهای اولیه قبل از تعمیر بررسی می‌شود.', hint: 'برای تصمیم بهتر قبل از هزینه سنگین', status: 'فعال', icon: <GaugeIcon size={28} />, tone: tones.blue },
-  { title: 'چکاپ دوره‌ای و قبل سفر', desc: 'قبل از سفر یا در سرویس دوره‌ای، وضعیت باتری، دیاگ، ترمز، روغن و موارد ضروری بررسی می‌شود.', hint: 'برای اطمینان قبل از حرکت و پیشگیری از خرابی', status: 'فعال', icon: <WrenchIcon size={28} />, tone: tones.green },
+function homeFor(role: Role): string {
+  if (role === 'mechanic') return '/mechanic';
+  if (role === 'seller') return '/seller';
+  return '/dashboard';
+}
+
+const STEPS = [
+  { icon: <SearchIcon size={19} />, t: 'خدمت را انتخاب کن', d: 'از فهرست خدمات، آنچه ماشینت لازم دارد را بردار.' },
+  { icon: <StoreIcon size={19} />, t: 'تعمیرگاه را ببین', d: 'امتیاز، فاصله و قیمت تقریبی را مقایسه کن.' },
+  { icon: <CalendarIcon size={19} />, t: 'نوبت بگیر', d: 'روز و ساعت را بگذار؛ در تعمیرگاه یا در محل خودت.' },
 ];
-const upcomingServices: Service[] = [
-  { title: 'تعویض روغن', desc: 'روغن موتور، فیلتر و سرویس‌های دوره‌ای.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <DropletIcon size={24} />, tone: tones.warn },
-  { title: 'سرویس جلوبندی', desc: 'بررسی کمک، سیبک، طبق، فرمان و صداهای زیر خودرو.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <WrenchIcon size={24} />, tone: tones.green },
-  { title: 'لاستیک و پنچرگیری', desc: 'تعویض لاستیک، باد، پنچرگیری و سرویس چرخ.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <DiscIcon size={24} />, tone: tones.blue },
-  { title: 'کارواش و دیتیلینگ', desc: 'شست‌وشو، صفرشویی و زیبایی خودرو.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <ShieldIcon size={24} />, tone: tones.mint },
-  { title: 'کولر و برق خودرو', desc: 'کولر، دینام، باتری و خطاهای برقی.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <SnowflakeIcon size={24} />, tone: tones.blue },
-  { title: 'صافکاری و بدنه', desc: 'بدنه، رنگ، صافکاری و تخمین هزینه.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <PaintbrushIcon size={24} />, tone: tones.red },
-  { title: 'امداد جاده‌ای', desc: 'کمک فوری در مسیر و اتصال به امدادگر.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <RoadIcon size={24} />, tone: tones.green },
-  { title: 'سوخت و مصرف', desc: 'ثبت هزینه سوخت و تحلیل مصرف ماشین.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <FuelIcon size={24} />, tone: tones.warn },
-  { title: 'برق پیشرفته', desc: 'تست دینام، برق‌دزدی و سلامت سیستم برق.', hint: 'در نقشه توسعه', status: 'به‌زودی', icon: <ZapIcon size={24} />, tone: tones.mint },
-];
-const tabs = [
-  { key: 'car' as const, title: 'خدمات ماشین', sub: 'درخواست خدمت', icon: <WrenchIcon size={18} /> },
-  { key: 'garage' as const, title: 'ماشین و مدارک', sub: 'ثبت و مدیریت', icon: <CarIcon size={18} /> },
-  { key: 'track' as const, title: 'ردیابی و سوابق', sub: 'پیگیری و یادآوری', icon: <NavigationIcon size={18} /> },
-];
-function scrollToLogin(mode?: 'login' | 'register', role?: Role) { if (mode) window.dispatchEvent(new CustomEvent('vehicle:set-auth-mode', { detail: { mode, role } })); document.getElementById('login')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-function StatusPill({ label, tone }: { label: string; tone: Tone }) { return <span className="status-pill" style={{ color: tone.color, background: tone.bg, border: `1px solid ${tone.border}` }}>{label}</span>; }
-function ServiceCard({ service, disabled = false, featured = false }: { service: Service; disabled?: boolean; featured?: boolean }) { return <button type="button" disabled={disabled} onClick={() => !disabled && scrollToLogin('register','owner')} className={`premium-service ${featured ? 'featured' : ''} ${disabled ? 'disabled' : ''}`} style={{ background: C.surfaceSolid, border: `1px solid ${featured ? service.tone.border : C.borderStrong}`, boxShadow: featured ? C.shadowHero : C.shadowSoft }}><span className="service-glow" style={{ background: service.tone.bg }} /><span className="service-icon" style={{ color: service.tone.color, background: service.tone.bg, border: `1px solid ${service.tone.border}` }}>{service.icon}</span><StatusPill label={service.status} tone={service.tone} /><strong style={{ color: C.textStrong }}>{service.title}</strong><p style={{ color: C.text2 }}>{service.desc}</p><small style={{ color: C.muted }}>{service.hint}</small><span className="service-cta" style={{ color: disabled ? C.muted : service.tone.color }}>{disabled ? 'اطلاع‌رسانی بعد از فعال‌سازی' : 'ثبت درخواست'}<CheckIcon size={14} /></span></button>; }
-function Workbench() { const [active, setActive] = useState<TabKey>('car'); return <section id="services" className="workbench" style={{ background: C.surfaceSolid, border: `1px solid ${C.borderStrong}`, boxShadow: C.shadowHero }}><div className="workbench-head"><div><div className="section-eyebrow" style={{ color: C.green }}><CompassIcon size={15} /> مرکز عملیات خودرو</div><h2 style={{ color: C.textStrong }}>همه چیز دسته‌بندی شده؛ هر کار با چند کلیک</h2><p style={{ color: C.text2 }}>مثل اپلیکیشن‌های سرویس خارجی: اول دسته را انتخاب کن، بعد کارت خدمت یا عملیات مورد نیاز را بزن.</p></div><div className="tab-switch" style={{ background: C.fill1, border: `1px solid ${C.border}` }}>{tabs.map(t => <button type="button" key={t.key} onClick={() => setActive(t.key)} style={{ background: active === t.key ? `linear-gradient(135deg, ${C.green}, ${C.statusMint})` : C.surfaceSolid, color: active === t.key ? '#06130b' : C.textStrong, border: active === t.key ? `1px solid ${alpha(C.green, 70)}` : `1px solid ${C.borderStrong}`, boxShadow: active === t.key ? `0 18px 45px ${alpha(C.green, 22)}` : 'none' }}><span>{t.icon}</span><strong>{t.title}</strong><small>{t.sub}</small></button>)}</div></div>{active === 'car' && <div className="tab-panel"><div className="panel-title"><span style={{ color: C.green }}>فعال الان</span><h3 style={{ color: C.textStrong }}>خدمات قابل درخواست</h3></div><div className="active-grid">{activeServices.map((s, i) => <ServiceCard key={s.title} service={s} featured={i === 0} />)}</div><div className="panel-title soon-title"><span style={{ color: C.statusWarn }}>به‌زودی</span><h3 style={{ color: C.textStrong }}>خدمات بعدی ماشین</h3></div><div className="upcoming-grid">{upcomingServices.map(s => <ServiceCard key={s.title} service={s} disabled />)}</div></div>}{active === 'garage' && <div className="tab-panel split-panel"><div className="feature-copy"><span style={{ color: C.statusInfo }}>ماشین و مدارک</span><h3 style={{ color: C.textStrong }}>ثبت ماشین باید از درخواست خدمت جدا باشد</h3><p style={{ color: C.text2 }}>کاربر اول خودرو، پلاک، کیلومتر، بیمه، معاینه فنی و مدارک را وارد می‌کند؛ بعد درخواست‌های خدمات دقیق‌تر و سریع‌تر انجام می‌شود.</p><Button onClick={() => scrollToLogin('register','owner')} icon={<CarIcon size={16} />}>ثبت اولین ماشین</Button></div><div className="mini-actions">{[{t:'ثبت خودرو',d:'پلاک، مدل، کیلومتر',i:<CarIcon size={20}/>},{t:'مدارک و تاریخ‌ها',d:'بیمه، معاینه فنی، کارت ماشین',i:<PaperclipIcon size={20}/>},{t:'هزینه‌ها و سوابق',d:'تعمیرات، سرویس‌ها، خرج‌ها',i:<CopyIcon size={20}/>}].map(x=><div key={x.t} style={{background:C.fill2,border:`1px solid ${C.border}`}}><span style={{color:C.statusInfo,background:alpha(C.statusInfo,10)}}>{x.i}</span><strong style={{color:C.textStrong}}>{x.t}</strong><p style={{color:C.muted}}>{x.d}</p></div>)}</div></div>}{active === 'track' && <div className="tab-panel split-panel"><div className="feature-copy"><span style={{ color: C.statusWarn }}>ردیابی و یادآوری</span><h3 style={{ color: C.textStrong }}>پیگیری خودرو، مسیرها و هشدارها یک بخش جدا دارد</h3><p style={{ color: C.text2 }}>ردیابی، مسیرها، یادآوری سرویس، هشدار مدارک و سوابق در یک workspace جدا می‌آید تا صفحه خدمات شلوغ نشود.</p><Button variant="secondary" onClick={() => scrollToLogin('register','owner')} icon={<NavigationIcon size={16} />}>فعال‌سازی ردیابی</Button></div><div className="timeline-card" style={{ background: C.fill2, border: `1px solid ${C.border}` }}>{['ثبت مسیر و موقعیت', 'یادآوری قبل از سررسید', 'گزارش هزینه و سوابق'].map((x,i)=><div key={x}><b style={{color:C.statusWarn}}>{String(i+1).padStart(2,'0')}</b><span style={{color:C.textStrong}}>{x}</span><small style={{color:C.muted}}>کمتر از چند کلیک در داشبورد</small></div>)}</div></div>}</section>; }
-function RoleCards() { const items = [{r:'owner' as Role,t:'کاربر نهایی',d:'ثبت ماشین، درخواست خدمت، مدارک و ردیابی.',i:<UserIcon size={24}/>,tone:tones.green},{r:'mechanic' as Role,t:'مکانیک / تعمیرگاه',d:'درخواست‌ها، مشتری‌ها، خدمات و حسابداری.',i:<WrenchIcon size={24}/>,tone:tones.blue},{r:'seller' as Role,t:'فروشنده قطعه',d:'کالا، فروش، موجودی و حسابداری فروشگاه.',i:<StoreIcon size={24}/>,tone:tones.warn}]; return <section className="roles-section"><div className="section-header"><div className="section-eyebrow" style={{ color: C.green }}><UserIcon size={15}/> مسیر نقش‌ها</div><h2 style={{ color: C.textStrong }}>هر نوع کاربر مسیر خودش را دارد</h2><p style={{ color: C.text2 }}>کاربر نهایی، مکانیک و فروشنده لازم نیست بین پنل‌های نامربوط بگردند.</p></div><div className="role-grid-main">{items.map(x=><button key={x.r} type="button" onClick={()=>scrollToLogin('register',x.r)} style={{background:C.surfaceSolid,border:`1px solid ${C.borderStrong}`,boxShadow:C.shadowSoft}}><span style={{color:x.tone.color,background:x.tone.bg,border:`1px solid ${x.tone.border}`}}>{x.i}</span><strong style={{color:C.textStrong}}>{x.t}</strong><p style={{color:C.text2}}>{x.d}</p><em style={{color:x.tone.color}}>شروع مسیر</em></button>)}</div></section>; }
-function AuthCard() { const router = useRouter(); const [mode,setMode]=useState<'login'|'register'>('login'); const [phone,setPhone]=useState(''); const [code,setCode]=useState(''); const [otpSent,setOtpSent]=useState(false); const [otpLoading,setOtpLoading]=useState(false); const [cooldown,setCooldown]=useState(0); const [name,setName]=useState(''); const [role,setRole]=useState<Role>('owner'); const [workshopName,setWorkshopName]=useState(''); const [workshopAddress,setWorkshopAddress]=useState(''); const [loading,setLoading]=useState(false); const [error,setError]=useState(''); function editPhone(){setOtpSent(false);setCode('');setError('')} useEffect(()=>{const listener=(event:Event)=>{const detail=(event as CustomEvent<{mode?:'login'|'register';role?:Role}| 'login' | 'register'>).detail; const nextMode=typeof detail==='string'?detail:detail?.mode; const nextRole=typeof detail==='string'?undefined:detail?.role; if(nextMode==='login'||nextMode==='register'){setMode(nextMode);editPhone()} if(nextRole)setRole(nextRole)}; window.addEventListener('vehicle:set-auth-mode',listener); return()=>window.removeEventListener('vehicle:set-auth-mode',listener)},[]); useEffect(()=>{if(!localStorage.getItem('vtoken'))return; try{const u=JSON.parse(localStorage.getItem('vuser')||'{}'); router.replace(homeFor(u.role))}catch{router.replace('/dashboard')}},[router]); useEffect(()=>{if(cooldown<=0)return; const t=setTimeout(()=>setCooldown(c=>c-1),1000); return()=>clearTimeout(t)},[cooldown]); async function sendOtp(){setError('');setOtpLoading(true);try{await api.auth.requestOtp(phone);setOtpSent(true);setCooldown(60)}catch(err:any){setError(err.message)}finally{setOtpLoading(false)}} async function submit(e:React.FormEvent){e.preventDefault(); if(!otpSent)return sendOtp(); setLoading(true);setError('');try{const res=mode==='login'?await api.auth.login(phone,code):await api.auth.register({phone,code,name,role,workshopName,workshopAddress}); localStorage.setItem('vtoken',res.access_token); localStorage.setItem('vuser',JSON.stringify(res.user)); router.push(homeFor(res.user.role))}catch(err:any){setError(err.message)}finally{setLoading(false)}} const roles=[{v:'owner' as const,label:'کاربر نهایی',icon:<CarIcon size={17}/>},{v:'mechanic' as const,label:'مکانیک',icon:<WrenchIcon size={17}/>},{v:'seller' as const,label:'فروشنده',icon:<StoreIcon size={17}/>}]; return <section id="login" className="auth-layout"><div className="auth-copy"><div className="section-eyebrow" style={{color:C.green}}><LockIcon size={15}/> ورود بدون پیچیدگی</div><h2 style={{color:C.textStrong}}>نقش، موبایل، کد پیامک؛ تمام</h2><p style={{color:C.text2}}>ثبت‌نام حرفه‌ای ولی کوتاه است. فقط برای مکانیک و فروشنده، نام مرکز/فروشگاه بعد از انتخاب نقش نمایش داده می‌شود.</p></div><div className="auth-card" style={{background:C.surfaceSolid,border:`1px solid ${C.borderStrong}`,boxShadow:C.shadowCard}}><div className="auth-switch" style={{background:C.fill1,border:`1px solid ${C.border}`}}>{(['login','register'] as const).map(m=><button key={m} type="button" onClick={()=>{setMode(m);editPhone()}} style={{background:mode===m?C.textStrong:'transparent',color:mode===m?C.bg:C.muted}}>{m==='login'?'ورود':'ثبت‌نام'}</button>)}</div>{mode==='register'&&<div className="role-pills">{roles.map(opt=><button key={opt.v} type="button" onClick={()=>setRole(opt.v)} style={{background:role===opt.v?alpha(C.green,13):C.fill2,border:`1px solid ${role===opt.v?alpha(C.green,45):C.border}`,color:role===opt.v?C.textStrong:C.text2}}><span style={{color:role===opt.v?C.green:C.muted}}>{opt.icon}</span>{opt.label}</button>)}</div>}<form onSubmit={submit} className="auth-form">{mode==='register'&&<Input value={name} onChange={e=>setName(e.target.value)} placeholder="نام و نام خانوادگی" required/>}{mode==='register'&&(role==='mechanic'||role==='seller')&&<div className="compact-fields"><Input value={workshopName} onChange={e=>setWorkshopName(e.target.value)} placeholder={role==='mechanic'?'نام تعمیرگاه':'نام فروشگاه'} required/><Input value={workshopAddress} onChange={e=>setWorkshopAddress(e.target.value)} placeholder="آدرس یا محدوده فعالیت"/></div>}<Input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="شماره موبایل: 09123456789" type="tel" required readOnly={otpSent} dir="ltr" style={{textAlign:'left',opacity: otpSent ? 0.7 : 1}}/>{otpSent&&<div className="otp-row"><Input value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,4))} placeholder="کد ۴ رقمی" inputMode="numeric" autoFocus required dir="ltr" style={{textAlign:'center',letterSpacing:4,fontSize:18}}/><button type="button" onClick={sendOtp} disabled={cooldown>0||otpLoading} style={{color:cooldown>0?C.muted:C.green}}>{cooldown>0?`${cooldown} ثانیه`:'ارسال مجدد'}</button></div>}{otpSent&&<button type="button" onClick={editPhone} className="edit-phone" style={{color:C.green}}>ویرایش شماره موبایل</button>}{error&&<div className="form-error" style={{color:C.statusExpired,background:alpha(C.statusExpired,10),border:`1px solid ${alpha(C.statusExpired,22)}`}}>{error}</div>}<Button type="submit" loading={otpSent?loading:otpLoading} fullWidth size="lg">{!otpSent?'دریافت کد و ادامه':(mode==='login'?'ورود به برنامه':'ساخت حساب و ورود')}</Button></form></div></section>; }
-export default function LandingPage(){ return <main className="landing-page"><header className="topbar" style={{background:C.navBg,borderBottom:`1px solid ${C.border}`}}><div className="topbar-inner"><div className="brand"><span style={{color:C.green,background:alpha(C.green,12),border:`1px solid ${alpha(C.green,30)}`}}><CarIcon size={22}/></span><div><strong style={{color:C.textStrong}}>دستیار خودرو</strong><small style={{color:C.muted}}>مرکز خدمات و مدیریت ماشین</small></div></div><nav><button onClick={()=>document.getElementById('services')?.scrollIntoView({behavior:'smooth'})} style={{color:C.text2}}>مرکز خدمات</button><button onClick={()=>scrollToLogin('login')} style={{color:C.text2}}>ورود</button><ThemeToggle size={38}/></nav></div></header><section className="hero"><div className="hero-copy"><div className="section-eyebrow" style={{color:C.green}}><ShieldIcon size={15}/> طراحی حرفه‌ای و عملیاتی</div><h1 style={{color:C.textStrong}}>یک اپ شیک برای خدمات ماشین؛ ساده در استفاده، حرفه‌ای در طراحی</h1><p style={{color:C.text2}}>خدمات ماشین، ثبت خودرو و مدارک، ردیابی و سوابق در سه بخش جدا قرار گرفتند تا کاربر با چند کلیک کارش را انجام دهد.</p><div className="hero-actions"><Button size="lg" onClick={()=>scrollToLogin('register')} icon={<CheckIcon size={17}/>}>شروع سریع</Button><Button size="lg" variant="secondary" onClick={()=>document.getElementById('services')?.scrollIntoView({behavior:'smooth'})} icon={<SearchIcon size={17}/>}>دیدن مرکز خدمات</Button></div></div><div className="hero-device" style={{background:C.surfaceSolid,border:`1px solid ${C.borderStrong}`,boxShadow:C.shadowHero}}><div className="device-top"><span style={{background:alpha(C.green,12),color:C.green}}>امروز</span><strong style={{color:C.textStrong}}>چه کاری داری؟</strong></div><div className="device-tabs">{tabs.map((t,i)=><div key={t.key} style={{background:i===0?alpha(C.green,12):C.fill2,border:`1px solid ${i===0?alpha(C.green,28):C.border}`}}><span style={{color:i===0?C.green:C.muted}}>{t.icon}</span><b style={{color:C.textStrong}}>{t.title}</b><small style={{color:C.muted}}>{t.sub}</small></div>)}</div><div className="device-card" style={{background:alpha(C.statusDanger,10),border:`1px solid ${alpha(C.statusDanger,26)}`}}><BatteryIcon size={24} color={C.statusDanger}/><div><b style={{color:C.textStrong}}>تعویض باتری در محل</b><small style={{color:C.muted}}>ثبت درخواست در چند کلیک</small></div></div></div></section><RoleCards/><Workbench/><AuthCard/><footer className="landing-footer" style={{color:C.muted,borderTop:`1px solid ${C.border}`}}><span>دستیار خودرو</span><span>خدمات ماشین، مدیریت خودرو و ردیابی در سه workspace جدا</span></footer><style>{`
-.landing-page{min-height:100vh;overflow-x:hidden;background:var(--bg-gradient)}.topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(18px)}.topbar-inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:18px}.brand,.topbar nav,.hero-actions,.section-eyebrow,.service-cta{display:flex;align-items:center}.brand{gap:10px}.brand>span{width:42px;height:42px;border-radius:16px;display:grid;place-items:center}.brand strong,.brand small{display:block}.brand small{font-size:11px}.topbar nav{gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:5px}.topbar nav button{border:1px solid transparent;background:rgba(255,255,255,.03);font:900 12px var(--font-sans);padding:10px 14px;cursor:pointer;border-radius:13px}.topbar nav button:hover{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}.hero{max-width:1200px;margin:0 auto;padding:96px 20px 76px;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center}.hero-copy h1{font-size:clamp(38px,5.8vw,72px);line-height:1.13;letter-spacing:-1.4px;margin:0 0 20px;max-width:760px}.hero-copy p{font-size:17px;line-height:2;margin:0;max-width:650px}.hero-actions{gap:12px;margin-top:30px;flex-wrap:wrap}.section-eyebrow{gap:7px;font-size:12px;font-weight:950;margin-bottom:14px}.hero-device{border-radius:34px;padding:24px;min-height:460px}.device-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.device-top span{border-radius:999px;padding:7px 12px;font-size:12px;font-weight:950}.device-tabs{display:grid;gap:12px}.device-tabs div{border-radius:22px;padding:16px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}.device-tabs span{grid-row:span 2}.device-tabs b{font-size:15px}.device-tabs small{font-size:11px}.device-card{margin-top:20px;border-radius:26px;padding:20px;display:flex;gap:13px;align-items:center}.device-card b,.device-card small{display:block}.device-card small{font-size:11px;margin-top:4px}.roles-section,.workbench{max-width:1200px;margin:0 auto}.roles-section{padding:68px 20px}.section-header{max-width:760px;margin-bottom:28px}.section-header h2,.workbench h2,.auth-copy h2{font-size:clamp(26px,4vw,44px);line-height:1.3;margin:0 0 10px}.section-header p,.workbench-head p,.auth-copy p{font-size:14px;line-height:1.9;margin:0}.role-grid-main{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.role-grid-main button{min-height:244px;border-radius:30px;padding:24px;text-align:right;cursor:pointer;font-family:var(--font-sans);display:flex;flex-direction:column;align-items:flex-start}.role-grid-main span{width:56px;height:56px;border-radius:20px;display:grid;place-items:center}.role-grid-main strong{font-size:21px;margin-top:20px}.role-grid-main p{font-size:13px;line-height:1.8;margin:9px 0;color:var(--text-2)}.role-grid-main em{font-style:normal;font-size:12px;font-weight:950;margin-top:auto}.workbench{padding:34px;border-radius:36px}.workbench-head{display:grid;grid-template-columns:.9fr 1.1fr;gap:24px;align-items:end;margin-bottom:28px}.tab-switch{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-radius:28px;padding:10px;background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}.tab-switch button{border:1px solid transparent;border-radius:21px;padding:18px 14px;cursor:pointer;font-family:var(--font-sans);display:grid;grid-template-columns:auto 1fr;gap:3px 10px;text-align:right;align-items:center;min-height:78px;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}.tab-switch button:hover{transform:translateY(-1px);border-color:rgba(34,197,94,.45)}.tab-switch span{grid-row:span 2;width:38px;height:38px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.08)}.tab-switch strong{font-size:15px;font-weight:950}.tab-switch small{font-size:11px;opacity:.78;font-weight:800}.panel-title{display:flex;justify-content:space-between;align-items:end;margin:8px 0 16px}.panel-title span{font-size:12px;font-weight:950}.panel-title h3{margin:0;font-size:24px}.soon-title{margin-top:34px}.active-grid{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:16px}.upcoming-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.premium-service{position:relative;overflow:hidden;text-align:right;border-radius:30px;min-height:270px;padding:24px;cursor:pointer;font-family:var(--font-sans);display:flex;flex-direction:column;align-items:flex-start}.premium-service.featured{min-height:340px}.premium-service.disabled{cursor:default;opacity:.96}.service-glow{position:absolute;inset:auto -20% -35% -20%;height:46%;filter:blur(40px);opacity:.8}.service-icon{width:58px;height:58px;border-radius:22px;display:grid;place-items:center;position:relative;z-index:1}.status-pill{position:absolute;top:22px;left:22px;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:950}.premium-service strong{font-size:22px;line-height:1.45;margin-top:30px;position:relative;z-index:1}.premium-service p{font-size:13px;line-height:1.9;margin:10px 0 0;position:relative;z-index:1}.premium-service small{font-size:11px;line-height:1.7;margin-top:10px;position:relative;z-index:1}.service-cta{gap:6px;margin-top:auto;padding-top:18px;font-size:12px;font-weight:950;position:relative;z-index:1}.split-panel{display:grid;grid-template-columns:.85fr 1.15fr;gap:26px;align-items:center}.feature-copy span{font-size:12px;font-weight:950}.feature-copy h3{font-size:34px;line-height:1.35;margin:10px 0}.feature-copy p{font-size:14px;line-height:1.9;margin:0 0 20px}.mini-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.mini-actions div{border-radius:24px;padding:18px;min-height:170px}.mini-actions span{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;margin-bottom:16px}.mini-actions strong,.mini-actions p{display:block}.mini-actions p{font-size:12px;line-height:1.7}.timeline-card{border-radius:28px;padding:22px}.timeline-card div{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;padding:16px 0;border-bottom:1px solid var(--border)}.timeline-card div:last-child{border-bottom:0}.timeline-card b{grid-row:span 2}.timeline-card small{font-size:11px}.auth-layout{max-width:1080px;margin:96px auto;padding:0 20px;display:grid;grid-template-columns:.85fr 1.15fr;gap:30px;align-items:center}.auth-card{border-radius:32px;padding:24px}.auth-switch{display:grid;grid-template-columns:1fr 1fr;border-radius:18px;padding:5px;margin-bottom:14px}.auth-switch button{border:0;border-radius:14px;padding:12px;font:900 13px var(--font-sans);cursor:pointer}.role-pills,.compact-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.role-pills button{border-radius:16px;padding:11px 8px;font:900 12px var(--font-sans);cursor:pointer;display:flex;gap:6px;align-items:center;justify-content:center}.auth-form{display:flex;flex-direction:column;gap:12px}.compact-fields{grid-template-columns:1fr 1fr;margin:0}.otp-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.otp-row button,.edit-phone{border:0;background:transparent;cursor:pointer;font:800 12px var(--font-sans);white-space:nowrap}.form-error{border-radius:12px;padding:10px;font-size:12px;font-weight:800}.landing-footer{max-width:1200px;margin:0 auto;padding:24px 20px 42px;display:flex;justify-content:space-between;gap:16px;font-size:12px}@media(max-width:980px){.hero,.workbench-head,.split-panel,.auth-layout{grid-template-columns:1fr}.role-grid-main,.active-grid,.upcoming-grid,.mini-actions{grid-template-columns:1fr 1fr}.premium-service,.premium-service.featured{min-height:250px}}@media(max-width:620px){.topbar-inner,.hero,.roles-section,.workbench,.auth-layout{padding-left:14px;padding-right:14px}.topbar nav button:first-child{display:none}.hero{padding-top:58px}.hero-actions{display:grid}.role-grid-main,.active-grid,.upcoming-grid,.mini-actions,.role-pills,.compact-fields{grid-template-columns:1fr}.tab-switch{grid-template-columns:1fr}.workbench{border-radius:28px;padding-top:24px;padding-bottom:24px}.auth-card{padding:18px}.landing-footer{flex-direction:column}}
-`}</style></main> }
+
+export default function LandingPage() {
+  const router = useRouter();
+  const [services, setServices] = useState<PresetService[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [q, setQ] = useState('');
+  const [cat, setCat] = useState('');
+
+  useEffect(() => {
+    api.catalog.publicServices()
+      .then((r) => { setServices(r.items); setCategories(r.categories); })
+      .catch(() => {});
+  }, []);
+
+  const shown = useMemo(() => {
+    const needle = q.trim();
+    return services.filter((s) => {
+      if (cat && s.category !== cat) return false;
+      if (!needle) return true;
+      return `${s.customName ?? ''} ${s.serviceType} ${s.category}`.includes(needle);
+    });
+  }, [services, q, cat]);
+
+  // آنچه واقعاً ارائه می‌شود، کارت می‌گیرد؛ «به‌زودی»ها فقط یک فهرست فشرده‌اند.
+  const live = useMemo(() => shown.filter((s) => s.availableNow !== false), [shown]);
+  const soon = useMemo(() => shown.filter((s) => s.availableNow === false), [shown]);
+  const liveCount = services.filter((s) => s.availableNow !== false).length;
+
+
+  /* Sign-up used to be a card at the bottom of this page, reached by a scroll
+     and a custom event. It has its own screen now, so this is a plain link. */
+  const goAuth = (role?: Role) =>
+    router.push(`/login?mode=register${role ? `&role=${role}` : ''}`);
+
+  return (
+    <main className="lp">
+      <header className="lp-bar">
+        <div className="lp-brand">
+          <span style={{ color: C.green, background: alpha(C.green, 12) }}><CarIcon size={20} /></span>
+          <b style={{ color: C.textStrong }}>دستیار خودرو</b>
+        </div>
+        <nav>
+          <Link href="/login" className="lp-signin" style={{ color: C.text2 }}>ورود</Link>
+          <Link href="/login?mode=register" className="lp-signup"
+            style={{ background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`, color: C.onAccent, boxShadow: C.shadowBrand }}>
+            ثبت‌نام
+          </Link>
+          <ThemeToggle size={38} />
+        </nav>
+      </header>
+
+      {/* ── hero: the search is the call to action ── */}
+      <section className="lp-hero">
+        <p className="lp-eyebrow" style={{ color: C.green }}>خدمات خودرو، بدون تماس و چانه‌زنی</p>
+        <h1 style={{ color: C.textStrong }}>ماشینت چه لازم دارد؟</h1>
+        <p className="lp-sub" style={{ color: C.text2 }}>
+          خدمت را انتخاب کن، تعمیرگاه‌های نزدیک را با امتیاز و قیمت تقریبی ببین، و نوبت بگیر.
+        </p>
+
+        <div className="lp-search" style={{ background: C.surfaceSolid, boxShadow: C.shadowHero }}>
+          <SearchIcon size={19} color={C.muted} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="مثلاً تعویض روغن، ترمز، باتری..."
+            aria-label="جستجوی خدمت"
+            style={{ color: C.textStrong }}
+          />
+          <Button size="sm" onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}>جستجو</Button>
+        </div>
+
+        {services.length > 0 && (
+          <p className="lp-count" style={{ color: C.muted }}>
+            {fa(liveCount)} خدمت فعال{services.length > liveCount ? ` · ${fa(services.length - liveCount)} خدمت به‌زودی` : ''} · بدون ثبت‌نام ببین
+          </p>
+        )}
+      </section>
+
+      {/* ── the real catalogue, browsable before signing up ── */}
+      <section id="services" className="lp-services">
+        <div className="lp-head">
+          <h2 style={{ color: C.textStrong }}>خدمات موجود</h2>
+          <div className="lp-cats">
+            {['', ...categories].map((c) => {
+              const on = cat === c;
+              return (
+                <button
+                  key={c || 'all'}
+                  type="button"
+                  onClick={() => setCat(c)}
+                  style={{
+                    background: on ? `linear-gradient(140deg, ${C.green}, ${C.greenDark})` : C.surfaceSolid,
+                    color: on ? C.onAccent : C.text2,
+                    boxShadow: on ? C.shadowBrand : C.shadowSoft,
+                  }}
+                >{c || 'همه'}</button>
+              );
+            })}
+          </div>
+        </div>
+
+        {shown.length === 0 ? (
+          <p className="lp-empty" style={{ color: C.muted }}>
+            {services.length ? 'خدمتی با این جستجو پیدا نشد.' : 'در حال بارگذاری فهرست خدمات...'}
+          </p>
+        ) : (
+          <>
+            {live.length > 0 && (
+              <div className="svc-grid">
+                {live.map((s, i) => (
+                  <ServiceCard key={s.key} s={s} index={i} onClick={() => goAuth('owner')} />
+                ))}
+              </div>
+            )}
+
+            {soon.length > 0 && (
+              <div className="soon-block">
+                <p className="soon-title" style={{ color: C.text2 }}>
+                  <ClockIcon size={14} />
+                  به‌زودی اضافه می‌شود
+                  <span style={{ color: C.muted }}>{fa(soon.length)} خدمت</span>
+                </p>
+                <ul className="soon-list">
+                  {soon.map((s) => (
+                    <li key={s.key} style={{ background: C.fill2, color: C.text2 }}>
+                      {s.customName || s.serviceType}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* ── how it works ── */}
+      <section className="lp-steps">
+        <h2 style={{ color: C.textStrong }}>چطور کار می‌کند</h2>
+        <ol>
+          {STEPS.map((s, i) => (
+            <li key={s.t} style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+              <span style={{ background: alpha(C.green, 12), color: C.green }}>{s.icon}</span>
+              <b style={{ color: C.textStrong }}>{s.t}</b>
+              <p style={{ color: C.text2 }}>{s.d}</p>
+              <i style={{ color: C.subtle }}>{fa(i + 1)}</i>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* ── what keeps it honest ── */}
+      <section className="lp-trust">
+        {[
+          { icon: <StarIcon size={17} />, t: 'امتیاز واقعی مشتری‌ها', d: 'هر تعمیرگاه امتیاز و تعداد نظرش را کنار اسمش دارد.' },
+          { icon: <WalletIcon size={17} />, t: 'قیمت پیش از مراجعه', d: 'برآورد هزینه را قبل از ثبت درخواست می‌بینی؛ فاکتور نهایی را تعمیرگاه تایید می‌کند.' },
+          { icon: <ShieldIcon size={17} />, t: 'سوابق ماشینت یکجا', d: 'سرویس‌ها، مدارک و یادآوری بیمه و معاینه در یک پرونده می‌ماند.' },
+        ].map((x) => (
+          <div key={x.t} style={{ background: C.surfaceSolid, boxShadow: C.shadowSoft }}>
+            <span style={{ background: alpha(C.green, 11), color: C.green }}>{x.icon}</span>
+            <b style={{ color: C.textStrong }}>{x.t}</b>
+            <p style={{ color: C.muted }}>{x.d}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* ── the other side of the marketplace ── */}
+      <section className="lp-pro">
+        <div className="lp-pro-copy">
+          <h2>تعمیرگاه یا فروشگاه داری؟</h2>
+          <p>مشتری‌های نزدیکت پیدایت می‌کنند. نوبت، مشتری، انبار و حساب‌وکتاب هم همین‌جا جمع می‌شود.</p>
+        </div>
+        <div className="lp-pro-actions">
+          <Button size="lg" onClick={() => router.push('/join/mechanic')} icon={<WrenchIcon size={16} />}>ثبت تعمیرگاه</Button>
+          <Button size="lg" variant="secondary" onClick={() => goAuth('seller')} icon={<StoreIcon size={16} />}>ثبت فروشگاه</Button>
+        </div>
+      </section>
+
+      {/* ── the invitation; the form itself is a screen of its own now ── */}
+      <section className="lp-cta" style={{ background: C.surfaceSolid, boxShadow: C.shadowHero }}>
+        <span className="lp-cta-ico" style={{ background: alpha(C.green, 12), color: C.green }}><LockIcon size={22} /></span>
+        <div className="lp-cta-copy">
+          <h2 style={{ color: C.textStrong }}>با شماره موبایل وارد شو</h2>
+          <p style={{ color: C.text2 }}>
+            رمزی در کار نیست — یک کد چهار رقمی می‌فرستیم و تمام. حساب روی همین گوشی می‌ماند، پس لازم نیست هر بار دوباره وارد شوی.
+          </p>
+        </div>
+        <div className="lp-cta-actions">
+          <Button size="lg" onClick={() => router.push('/login?mode=register')}>ساخت حساب</Button>
+          <Button size="lg" variant="secondary" onClick={() => router.push('/login')}>ورود</Button>
+        </div>
+      </section>
+
+      <footer className="lp-foot" style={{ color: C.muted }}>
+        <span>دستیار خودرو</span>
+        <span>خدمات، سوابق و مدارک خودرو در یک برنامه</span>
+      </footer>
+
+      <style>{LP_CSS}</style>
+    </main>
+  );
+}
+
+const LP_CSS = `
+.lp-signin{font-size:13px;font-weight:800;text-decoration:none;padding:9px 6px;
+           min-height:44px;display:inline-flex;align-items:center;padding-inline:12px}
+.lp-signup{font-size:13px;font-weight:900;text-decoration:none;border-radius:13px;padding:10px 16px;
+           min-height:44px;display:inline-flex;align-items:center;
+           transition:transform var(--dur-press,120ms) var(--ease-soft,ease)}
+.lp-signup:active{transform:scale(.96)}
+.lp-cta{margin-top:var(--sp-6);border-radius:var(--r-sheet);padding:var(--sp-5) var(--sp-4);
+        display:grid;gap:var(--sp-3);justify-items:center;text-align:center}
+.lp-cta-ico{width:54px;height:54px;border-radius:18px;display:grid;place-items:center}
+.lp-cta-copy h2{margin:0;font-size:20px;font-weight:950;letter-spacing:-.3px;text-wrap:balance}
+.lp-cta-copy p{margin:var(--sp-2) 0 0;font-size:13px;line-height:2;max-width:46ch}
+.lp-cta-actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);width:100%;max-width:340px}
+@media (prefers-reduced-motion: reduce){ .lp-signup:active{transform:none} }
+
+.lp{min-height:100vh;background:var(--bg-gradient);overflow-x:hidden}
+.lp section{max-width:960px;margin:0 auto;padding-inline:var(--sp-4)}
+.lp-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-3) var(--sp-4);max-width:960px;margin:0 auto;backdrop-filter:blur(18px)}
+.lp-brand{display:flex;align-items:center;gap:var(--sp-2)}
+.lp-brand>span{width:40px;height:40px;border-radius:var(--r-plate);display:grid;place-items:center}
+.lp-brand b{font-size:15px;font-weight:950}
+.lp-bar nav{display:flex;align-items:center;gap:var(--sp-2)}
+.lp-bar nav button{border:0;background:transparent;font:900 13px var(--font-sans);cursor:pointer;padding:11px 14px;border-radius:var(--r-plate)}
+.lp-hero{padding-top:var(--sp-6);padding-bottom:var(--sp-5);text-align:center}
+.lp-eyebrow{display:inline-flex;align-items:center;gap:6px;margin:0 0 var(--sp-3);font-size:12px;font-weight:950}
+.lp-hero h1{margin:0;font-size:clamp(28px,7vw,52px);font-weight:950;line-height:1.2;letter-spacing:-1px;text-wrap:balance}
+.lp-sub{margin:var(--sp-3) auto 0;font-size:14.5px;line-height:1.9;max-width:44ch}
+.lp-search{display:flex;align-items:center;gap:var(--sp-2);border-radius:var(--r-card);padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);margin:var(--sp-5) auto 0;max-width:520px}
+.lp-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:700 14px var(--font-sans);padding:12px 0}
+.lp-count{margin:var(--sp-3) 0 0;font-size:12px;font-weight:800}
+.lp-services{padding-top:var(--sp-5)}
+.lp-head{display:flex;flex-direction:column;gap:var(--sp-3);margin-bottom:var(--sp-4)}
+.lp-head h2,.lp-steps h2{margin:0;font-size:19px;font-weight:950}
+.lp-cats{display:flex;gap:var(--sp-2);overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.lp-cats::-webkit-scrollbar{display:none}
+.lp-cats button{flex:0 0 auto;border:0;border-radius:999px;padding:11px 16px;font:900 12.5px var(--font-sans);cursor:pointer;transition:transform .16s ease}
+.lp-cats button:active{transform:scale(.97)}
+.lp-empty{text-align:center;padding:var(--sp-6) 0;font-size:13px}
+.lp-steps{padding-top:var(--sp-6)}
+.lp-steps ol{list-style:none;margin:var(--sp-4) 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:var(--sp-3)}
+.lp-steps li{position:relative;border-radius:var(--r-card);padding:var(--sp-4);overflow:hidden}
+.lp-steps li>span{width:44px;height:44px;border-radius:var(--r-plate);display:grid;place-items:center;margin-bottom:var(--sp-3)}
+.lp-steps b{display:block;font-size:14.5px;font-weight:900}
+.lp-steps p{margin:6px 0 0;font-size:12.5px;line-height:1.8}
+.lp-steps i{position:absolute;top:var(--sp-4);inset-inline-end:var(--sp-4);font-style:normal;font-size:13px;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums}
+.lp-trust{padding-top:var(--sp-6);display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:var(--sp-3)}
+.lp-trust>div{border-radius:var(--r-card);padding:var(--sp-4);display:grid;gap:var(--sp-2)}
+.lp-trust span{width:40px;height:40px;border-radius:var(--r-plate);display:grid;place-items:center}
+.lp-trust b{font-size:14px;font-weight:900}
+.lp-trust p{margin:0;font-size:12.5px;line-height:1.8}
+.lp-pro{position:relative;overflow:hidden;margin-top:var(--sp-6)!important;border-radius:var(--r-sheet);padding:var(--sp-5)!important;background:var(--surface-solid);border:1px solid var(--border);box-shadow:var(--shadow-soft);display:grid;gap:var(--sp-4)}
+/* one rule keys the panel; flooding it with the accent made the accent mean nothing */
+.lp-pro::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:3px;background:var(--green)}
+.lp-pro-copy h2{margin:0;font-size:21px;font-weight:950;color:var(--text-strong)}
+.lp-pro-copy p{margin:var(--sp-2) 0 0;font-size:13px;line-height:1.85;color:var(--text-2)}
+.lp-pro-actions{display:flex;gap:var(--sp-2);flex-wrap:wrap}
+.lp-pro-actions button{flex:1 1 160px}
+.lp-foot{max-width:960px;margin:var(--sp-7) auto 0;padding:var(--sp-4);display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--sp-2);font-size:11.5px}
+@media(min-width:760px){
+  .lp-head{flex-direction:row;align-items:center;justify-content:space-between}
+  .lp-pro{grid-template-columns:1.4fr 1fr;align-items:center}
+}
+`;
