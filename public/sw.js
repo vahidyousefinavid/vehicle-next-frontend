@@ -6,16 +6,26 @@
  * browser's error when the phone drops off the network.
  */
 
-const VERSION = 'v1';
+/* The build this worker belongs to, taken from its own registration URL
+   (`/sw.js?v=<buildId>`). Hard-coding it meant the file was byte-identical on
+   every deploy: the browser compared, found no change, and never installed a
+   new worker — so an installed app kept serving whatever it had cached, and
+   the asset cache grew a new build's chunks on top of every old one without
+   ever dropping them. Reading it from the URL makes each deploy a genuinely
+   different script, and makes the cache names below self-expiring. */
+const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
 const SHELL = `shell-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE = '/offline.html';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(SHELL)
-      .then((c) => c.addAll([OFFLINE, '/icon-192.png']))
-      .then(() => self.skipWaiting()),
+    /* No skipWaiting() here on purpose. A worker that activates immediately
+       swaps the asset cache under a page whose JS chunks came from the
+       previous build, which is how a running app suddenly 404s a chunk. The
+       new worker waits; the page notices it waiting, offers a reload, and only
+       then sends SKIP_WAITING below. */
+    caches.open(SHELL).then((c) => c.addAll([OFFLINE, '/icon-192.png'])),
   );
 });
 
@@ -25,6 +35,11 @@ self.addEventListener('activate', (event) => {
       .then((keys) => Promise.all(keys.filter((k) => k !== SHELL && k !== ASSETS).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
+});
+
+/* The page asks for the swap once the person has agreed to it. */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {

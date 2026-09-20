@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import WorkingHoursEditor from '@/components/WorkingHoursEditor';
+import { todayLine, type WorkingHours } from '@/lib/workingHours';
 import { api, PresetService, ImportServiceItem } from '@/lib/api';
 import { alpha, Button, C, Input, TextArea, Spinner } from '@/components/ui';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -18,12 +20,13 @@ import {
  * می‌پرسد و خدمات انتخاب‌شده در همان درخواست ثبت‌نام ثبت می‌شوند.
  */
 
-type StepKey = 'identity' | 'skills' | 'place' | 'verify';
+type StepKey = 'identity' | 'skills' | 'place' | 'hours' | 'verify';
 
 const STEPS: { key: StepKey; label: string; title: string; hint: string }[] = [
   { key: 'identity', label: 'معرفی',   title: 'تعمیرگاهت را معرفی کن',      hint: 'همین دو مورد برای ساختن پروفایل کافی است.' },
   { key: 'skills',   label: 'تخصص‌ها', title: 'چه کارهایی انجام می‌دهی؟',   hint: 'هر چه دقیق‌تر انتخاب کنی، مشتری مرتبط‌تری پیدا می‌کنی.' },
   { key: 'place',    label: 'محل کار', title: 'کجا خدمت می‌دهی؟',           hint: 'می‌توانی در تعمیرگاه، در محل مشتری، یا هر دو کار کنی.' },
+  { key: 'hours',    label: 'ساعت کاری', title: 'چه ساعتی باز هستی؟',        hint: 'یکی از بازه‌های آماده را بزن و بعد روزهای متفاوت را اصلاح کن.' },
   { key: 'verify',   label: 'تایید',   title: 'شماره‌ات را تایید کن',        hint: 'یک کد چهار رقمی برایت می‌فرستیم و تمام.' },
 ];
 
@@ -34,9 +37,10 @@ interface Draft {
   inShop: boolean; onSite: boolean;
   lat?: number; lng?: number;
   picked: string[];
+  workingHours: WorkingHours | null;
 }
 
-const emptyDraft: Draft = { name: '', workshopName: '', address: '', inShop: true, onSite: false, picked: [] };
+const emptyDraft: Draft = { name: '', workshopName: '', address: '', inShop: true, onSite: false, picked: [], workingHours: null };
 
 export default function JoinMechanicPage() {
   const router = useRouter();
@@ -123,7 +127,7 @@ export default function JoinMechanicPage() {
     }
     if (step === 1 && draft.picked.length === 0) return 'حداقل یک خدمت انتخاب کن';
     if (step === 2 && !draft.inShop && !draft.onSite) return 'حداقل یکی از حالت‌های ارائه را انتخاب کن';
-    if (step === 3) {
+    if (step === 4) {
       if (!/^09\d{9}$/.test(phone.trim())) return 'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود';
       if (otpSent && code.length !== 4) return 'کد چهار رقمی را وارد کن';
     }
@@ -178,6 +182,7 @@ export default function JoinMechanicPage() {
         workshopName: draft.workshopName.trim(),
         workshopAddress: draft.address.trim() || undefined,
         workshopLat: draft.lat, workshopLng: draft.lng,
+        workingHours: draft.workingHours ?? undefined,
         services: chosen,
       });
       localStorage.setItem('vtoken', res.access_token);
@@ -408,6 +413,20 @@ export default function JoinMechanicPage() {
 
           {step === 3 && (
             <div className="join-fields">
+              <WorkingHoursEditor
+                value={draft.workingHours}
+                onChange={(workingHours) => setDraft((d) => ({ ...d, workingHours }))}
+              />
+              <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.8, margin: 0 }}>
+                {draft.workingHours
+                  ? todayLine(draft.workingHours)
+                  : 'اگر الان وارد نکنی، ساعت کاری‌ات «اعلام‌نشده» می‌ماند و هر وقت خواستی از پروفایل اضافه‌اش می‌کنی.'}
+              </p>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="join-fields">
               <label style={{ color: C.muted }}>شماره موبایل</label>
               <Input
                 value={phone}
@@ -460,12 +479,12 @@ export default function JoinMechanicPage() {
                 ادامه
               </Button>
             )}
-            {step === 3 && !otpSent && (
+            {step === 4 && !otpSent && (
               <Button size="lg" fullWidth onClick={sendOtp} loading={busy} disabled={!!problem} icon={<PhoneIcon size={16} />}>
                 ارسال کد تایید
               </Button>
             )}
-            {step === 3 && otpSent && (
+            {step === 4 && otpSent && (
               <Button size="lg" fullWidth onClick={submit} loading={busy} disabled={!!problem} icon={<CheckIcon size={16} />}>
                 ساخت تعمیرگاه و ورود
               </Button>

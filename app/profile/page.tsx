@@ -8,19 +8,43 @@ import InteractiveMapPicker from '@/components/InteractiveMapPicker';
 import PushToggle from '@/components/PushToggle';
 import SmsToggle from '@/components/SmsToggle';
 import {
-  UserIcon, LogOutIcon, CarIcon, ChevronLeftIcon, WrenchIcon,
+  UserIcon, LogOutIcon, CarIcon, ChevronLeftIcon, ClockIcon, WrenchIcon,
   StoreIcon, CalendarIcon, BoxIcon, UsersIcon, CompassIcon, MessageIcon, SettingsIcon, PinIcon,
   BellIcon, WalletIcon,
   SparklesIcon,
 } from '@/components/icons';
 import { C, Card, Button, alpha} from '@/components/ui';
 import { api } from '@/lib/api';
+import WorkingHoursEditor from '@/components/WorkingHoursEditor';
+import { summarise, todayLine, isOpenNow, type WorkingHours } from '@/lib/workingHours';
 import { getToken, getUser, refreshUser, clearSession } from '@/lib/session';
+import { APP_VERSION, BUILD_ID, canInstall, isIosSafari, needsManualInstallHelp, promptInstall, INSTALLABILITY } from '@/lib/pwa';
+import { DownloadIcon } from '@/components/icons';
+
+/** ASCII digits to Persian. Version strings are text, not quantities. */
+const faDigits = (s: string) => s.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]);
 import type { User } from '@/lib/api';
 
 export default function ProfilePage() {
+  /* Installability is decided by the browser after load, and can change, so it
+     is state rather than a render-time read — reading it during render would
+     also disagree with the server and throw React #418. */
+  const [installable, setInstallable] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const sync = () => {
+      setInstallable(canInstall());
+      // every browser that will not hand over a prompt — iOS, Firefox, and
+      // Chrome before its engagement heuristic is met — still needs a route in
+      setShowHelp(needsManualInstallHelp());
+    };
+    sync();
+    window.addEventListener(INSTALLABILITY, sync);
+    return () => window.removeEventListener(INSTALLABILITY, sync);
+  }, []);
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return; }
@@ -88,6 +112,9 @@ export default function ProfilePage() {
 
             <div style={{ marginBottom: 12 }}>
               <WorkshopLocationCard user={user} onSaved={setUser} />
+              <div style={{ marginTop: 12 }}>
+                <WorkingHoursCard user={user} onSaved={setUser} />
+              </div>
             </div>
 
             <div style={{ marginBottom: 12 }}>
@@ -97,6 +124,7 @@ export default function ProfilePage() {
             <div style={{ marginBottom: 20 }}>
               <PushToggle />
             </div>
+
           </>
         ) : user?.role === 'seller' ? (
           <>
@@ -108,6 +136,9 @@ export default function ProfilePage() {
 
             <div style={{ marginBottom: 12 }}>
               <WorkshopLocationCard user={user} onSaved={setUser} />
+              <div style={{ marginTop: 12 }}>
+                <WorkingHoursCard user={user} onSaved={setUser} />
+              </div>
             </div>
 
             <div style={{ marginBottom: 12 }}>
@@ -143,6 +174,31 @@ export default function ProfilePage() {
           </>
         )}
 
+        {installable && (
+          <Card style={{ marginBottom: 12 }} padding="4px">
+            <MenuRow
+              icon={<DownloadIcon size={18} />}
+              label="نصب برنامه روی گوشی"
+              hint="سریع‌تر باز می‌شود و آفلاین هم کار می‌کند"
+              hue="var(--brand)"
+              onClick={() => { void promptInstall(); }}
+            />
+          </Card>
+        )}
+
+        {showHelp && (
+          <Card style={{ marginBottom: 12 }}>
+            <b style={{ display: 'block', fontSize: 13.5, fontWeight: 800, color: C.textStrong }}>
+              نصب برنامه روی گوشی
+            </b>
+            <p style={{ margin: '6px 0 0', fontSize: 12, lineHeight: 1.8, color: C.text2 }}>
+              {isIosSafari()
+                ? <>دکمهٔ هم‌رسانی <bdi>⎋</bdi> را در نوار پایین سافاری بزن و «Add to Home Screen» را انتخاب کن.</>
+                : <>از منوی مرورگر (<bdi>⋮</bdi>) گزینهٔ «نصب برنامه» یا «Add to Home screen» را بزن.</>}
+            </p>
+          </Card>
+        )}
+
         <button
           onClick={logout}
           style={{
@@ -158,7 +214,7 @@ export default function ProfilePage() {
         </button>
 
         <p style={{ textAlign: 'center', color: C.subtle, fontSize: 11, marginTop: 24 }}>
-          دستیار خودرو · نسخه ۱٫۰٫۰
+          دستیار خودرو · نسخه <bdi>{faDigits(APP_VERSION)}</bdi> · بیلد <bdi>{faDigits(BUILD_ID)}</bdi>
         </p>
       </main>
 
@@ -189,6 +245,83 @@ export default function ProfilePage() {
         @media (prefers-reduced-motion: reduce){ :global(.pf-row:active),:global(.pf-row:active .pf-ico){transform:none} }
       `}</style>
     </div>
+  );
+}
+
+function WorkingHoursCard({ user, onSaved }: { user: User; onSaved: (u: User) => void }) {
+  const [draft, setDraft] = useState<WorkingHours | null>(user.workingHours ?? null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const saved = user.workingHours ?? null;
+  const rows = summarise(saved);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+
+  async function save() {
+    setSaving(true);
+    setError('');
+    try {
+      const updated = await api.auth.updateProfile({ workingHours: draft });
+      localStorage.setItem('vuser', JSON.stringify(updated));
+      onSaved(updated);
+      setEditing(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const place = user.role === 'seller' ? 'فروشگاه' : 'تعمیرگاه';
+
+  return (
+    <Card>
+      <p style={{ fontSize: 12.5, fontWeight: 800, color: C.text, margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <ClockIcon size={15} /> ساعت کاری {place}
+      </p>
+
+      {!editing && (
+        <>
+          {rows.length === 0 ? (
+            <p style={{ fontSize: 12, lineHeight: 1.8, color: C.muted, margin: '0 0 10px' }}>
+              هنوز ساعت کاری وارد نکرده‌ای. تا وقتی خالی باشد، برای مشتری‌ها «اعلام‌نشده» نمایش داده می‌شود.
+            </p>
+          ) : (
+            <>
+              <p style={{ fontSize: 12, fontWeight: 800, margin: '0 0 8px', color: isOpenNow(saved) ? C.statusOk : C.muted }}>
+                {isOpenNow(saved) ? 'الان باز است' : 'الان بسته است'}
+                <span style={{ color: C.muted, fontWeight: 700, marginInlineStart: 6 }}>· {todayLine(saved)}</span>
+              </p>
+              <div style={{ display: 'grid', gap: 5, marginBottom: 10 }}>
+                {rows.map((r) => (
+                  <div key={r.days} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12 }}>
+                    <span style={{ color: C.text2 }}>{r.days}</span>
+                    <span style={{ color: r.hours === 'تعطیل' ? C.muted : C.text, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{r.hours}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          <Button variant="secondary" fullWidth onClick={() => { setDraft(saved); setEditing(true); }}>
+            {rows.length ? 'ویرایش ساعت کاری' : 'افزودن ساعت کاری'}
+          </Button>
+        </>
+      )}
+
+      {editing && (
+        <>
+          <WorkingHoursEditor value={draft} onChange={setDraft} />
+          {error && <p style={{ fontSize: 11, color: C.statusExpired, margin: '10px 0 0' }}>{error}</p>}
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <Button fullWidth loading={saving} disabled={!dirty} onClick={save}>ذخیره</Button>
+            <Button variant="secondary" fullWidth onClick={() => { setDraft(saved); setEditing(false); setError(''); }}>
+              انصراف
+            </Button>
+          </div>
+        </>
+      )}
+    </Card>
   );
 }
 

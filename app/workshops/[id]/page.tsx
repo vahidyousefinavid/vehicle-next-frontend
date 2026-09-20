@@ -11,8 +11,9 @@ import { api, WorkshopDetail, MechanicReview, MechanicServiceOffering, Vehicle, 
 import {
   C, Card, SectionCard, Button, FormField, Input, TextArea, Select, Sheet, EmptyState, Spinner, alpha } from '@/components/ui';
 import {
-  ChevronRightIcon, StoreIcon, StarIcon, PinIcon, CalendarIcon, MessageIcon, WrenchIcon,
+  ChevronRightIcon, StoreIcon, StarIcon, PinIcon, CalendarIcon, MessageIcon, WrenchIcon, ClockIcon,
 } from '@/components/icons';
+import { summarise, todayLine } from '@/lib/workingHours';
 
 export default function WorkshopDetailPage() {
   const router = useRouter();
@@ -68,6 +69,33 @@ export default function WorkshopDetailPage() {
               )}
             </div>
           </div>
+
+          {workshop.workingHours && (
+            <div style={{
+              marginTop: 12, padding: '11px 12px', borderRadius: 14,
+              background: C.fill1, border: `1px solid ${C.border}`,
+            }}>
+              <p style={{
+                margin: 0, fontSize: 12.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6,
+                color: workshop.openNow ? C.statusOk : C.muted,
+              }}>
+                <ClockIcon size={14} />
+                {workshop.openNow ? 'الان باز است' : 'الان بسته است'}
+                <span style={{ color: C.muted, fontWeight: 700 }}>· {todayLine(workshop.workingHours)}</span>
+              </p>
+              <div style={{ display: 'grid', gap: 4, marginTop: 8 }}>
+                {summarise(workshop.workingHours).map((r) => (
+                  <div key={r.days} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 11.5 }}>
+                    <span style={{ color: C.text2 }}>{r.days}</span>
+                    <span style={{
+                      color: r.hours === 'تعطیل' ? C.subtle : C.text,
+                      fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+                    }}>{r.hours}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <NeshanMap lat={workshop.workshopLat} lng={workshop.workshopLng} />
 

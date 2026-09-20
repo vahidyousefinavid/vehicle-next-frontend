@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { THEME_BOOT_SCRIPT, DEFAULT_THEME } from '@/lib/theme';
+import { PWA_BOOT_SCRIPT } from '@/lib/pwa';
 import PwaBoot from '@/components/PwaBoot';
 import InstallPrompt from '@/components/InstallPrompt';
+import UpdatePrompt from '@/components/UpdatePrompt';
 
 export const metadata: Metadata = {
   title: 'دستیار خودرو',
@@ -48,6 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Blocking, before first paint: no flash of the wrong theme. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        {/* Also blocking, and for the same reason: `beforeinstallprompt` fires
+            once and often before hydration. A listener attached from a
+            component effect loses that race, and the browser does not send the
+            event again — which is exactly how an installable app ends up with
+            no way to install it. */}
+        <script dangerouslySetInnerHTML={{ __html: PWA_BOOT_SCRIPT }} />
         {/* IRANSans is served from this origin (see globals.css), so there is
             no third-party DNS lookup or handshake in front of first paint.
 
@@ -65,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <PwaBoot />
         <InstallPrompt />
+        <UpdatePrompt />
       </body>
     </html>
   );

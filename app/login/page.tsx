@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { api, type Role } from '@/lib/api';
 import { C, alpha, Button, Input } from '@/components/ui';
 import OtpInput from '@/components/OtpInput';
+import WorkingHoursEditor from '@/components/WorkingHoursEditor';
+import { type WorkingHours } from '@/lib/workingHours';
 import { fa } from '@/components/ScreenKit';
 import {
   CarIcon, ChevronRightIcon, LockIcon, StoreIcon, WrenchIcon, ShieldIcon, CheckIcon,
@@ -45,6 +47,8 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [workshopName, setWorkshopName] = useState('');
   const [workshopAddress, setWorkshopAddress] = useState('');
+  /** ساعت کاری فروشگاه، همان موقع ثبت‌نام؛ اختیاری */
+  const [workingHours, setWorkingHours] = useState<WorkingHours | null>(null);
 
   const [cooldown, setCooldown] = useState(0);
   const [sending, setSending] = useState(false);
@@ -101,7 +105,10 @@ export default function LoginPage() {
     try {
       const res = mode === 'login'
         ? await api.auth.login(phone, entered)
-        : await api.auth.register({ phone, code: entered, name, role, workshopName, workshopAddress });
+        : await api.auth.register({
+            phone, code: entered, name, role, workshopName, workshopAddress,
+            workingHours: workingHours ?? undefined,
+          });
       localStorage.setItem('vtoken', res.access_token);
       localStorage.setItem('vuser', JSON.stringify(res.user));
       router.push(nextTarget || homeFor(res.user.role));
@@ -222,6 +229,10 @@ export default function LoginPage() {
                       <span style={{ color: C.muted }}>آدرس یا محدوده فعالیت</span>
                       <Input value={workshopAddress} onChange={(e) => setWorkshopAddress(e.target.value)} placeholder="مثلاً تهران، پیروزی" />
                     </label>
+                    <div className="au-f">
+                      <span style={{ color: C.muted }}>ساعت کاری <i style={{ fontStyle: 'normal', color: C.subtle }}>(اختیاری)</i></span>
+                      <WorkingHoursEditor value={workingHours} onChange={setWorkingHours} />
+                    </div>
                   </>
                 )}
                 <label className="au-f">

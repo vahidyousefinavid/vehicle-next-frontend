@@ -2,18 +2,10 @@
 import { useEffect, useState } from 'react';
 import { C, alpha } from './ui';
 import { XIcon, DownloadIcon } from './icons';
+import { canInstall, isIosSafari, isStandalone, promptInstall, INSTALLABILITY } from '@/lib/pwa';
 
 const DISMISSED = 'v-install-dismissed';
 const SNOOZE_DAYS = 14;
-
-type Choice = { outcome: 'accepted' | 'dismissed' };
-type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<Choice> };
-
-function standalone() {
-  if (typeof window === 'undefined') return true;
-  return window.matchMedia('(display-mode: standalone)').matches
-    || (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-}
 
 function snoozed() {
   try {
@@ -33,26 +25,22 @@ function snoozed() {
  * for two weeks.
  */
 export default function InstallPrompt() {
-  const [evt, setEvt] = useState<InstallEvent | null>(null);
+  const [ready, setReady] = useState(false);
   const [ios, setIos] = useState(false);
   const [open, setOpen] = useState(false);
   const [lift, setLift] = useState(14);
 
   useEffect(() => {
-    if (standalone() || snoozed()) return;
+    if (isStandalone() || snoozed()) return;
 
-    const onPrompt = (e: Event) => {
-      e.preventDefault();               // keep Chrome's own mini-bar away
-      setEvt(e as InstallEvent);
-      setOpen(true);
-    };
-    window.addEventListener('beforeinstallprompt', onPrompt);
+    /* The <head> script captured the event long before this mounted; this
+       only reacts to it being there, and to it arriving late. */
+    const sync = () => { if (canInstall()) { setReady(true); setOpen(true); } };
+    sync();
+    window.addEventListener(INSTALLABILITY, sync);
 
-    // iOS Safari: no event will ever come, so decide from the platform.
-    const ua = navigator.userAgent;
-    const isIos = /iphone|ipad|ipod/i.test(ua);
-    const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
-    if (isIos && isSafari) { setIos(true); setOpen(true); }
+    // iOS Safari fires no event ever, so decide from the platform.
+    if (isIosSafari()) { setIos(true); setOpen(true); }
 
     // Sit above the tab bar where there is one, at the edge where there is not.
     const bar = document.querySelector('.tabbar');
@@ -61,7 +49,7 @@ export default function InstallPrompt() {
     const onInstalled = () => setOpen(false);
     window.addEventListener('appinstalled', onInstalled);
     return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener(INSTALLABILITY, sync);
       window.removeEventListener('appinstalled', onInstalled);
     };
   }, []);
@@ -72,9 +60,7 @@ export default function InstallPrompt() {
   }
 
   async function install() {
-    if (!evt) return;
-    await evt.prompt();
-    const { outcome } = await evt.userChoice;
+    const outcome = await promptInstall();
     if (outcome === 'accepted') setOpen(false); else close();
   }
 
@@ -102,7 +88,10 @@ export default function InstallPrompt() {
             <p style={{ color: C.text2 }}>بدون فروشگاه، در چند ثانیه. سریع‌تر باز می‌شود و دیگر لازم نیست هر بار وارد شوی.</p>
           )}
         </div>
-        {!ios && (
+        {/* only offer the button when the browser has actually handed over a
+            prompt to replay — on iOS, and before the event arrives, the copy
+            above is the whole of what we can honestly offer */}
+        {!ios && ready && (
           <button type="button" onClick={install} className="ip-go"
             style={{ background: `linear-gradient(135deg, ${C.green}, ${C.greenDark})`, color: C.onAccent, boxShadow: C.shadowBrand }}>
             <DownloadIcon size={15} />نصب

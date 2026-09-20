@@ -1,6 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { api } from '@/lib/api';
+import { BUILD_ID } from '@/lib/pwa';
 
 const LAST_REFRESH = 'v-token-refreshed';
 const EVERY = 6 * 3600 * 1000;   // at most once every six hours
@@ -21,9 +22,15 @@ const EVERY = 6 * 3600 * 1000;   // at most once every six hours
  */
 export default function PwaBoot() {
   useEffect(() => {
+    /* Registered with the build id in the URL. The worker reads it back out
+       of its own location for its cache names, and — more importantly — a new
+       build is a different script URL, which is the only thing that makes the
+       browser install an updated worker at all. Registering a bare '/sw.js'
+       every time left the app pinned to whatever it first cached. */
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register(`/sw.js?v=${BUILD_ID}`).catch(() => {});
     }
+
     if (navigator.storage?.persist) {
       navigator.storage.persisted()
         .then((already) => { if (!already) return navigator.storage.persist(); })

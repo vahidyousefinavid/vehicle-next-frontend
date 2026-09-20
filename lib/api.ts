@@ -497,6 +497,8 @@ export type Role = 'owner' | 'mechanic' | 'seller';
 export interface RegisterInput {
   phone: string; code: string; name: string; role?: Role; workshopName?: string; workshopAddress?: string;
   workshopLat?: number; workshopLng?: number;
+  /** ساعت کاری، همان موقع ثبت‌نام؛ اختیاری است */
+  workingHours?: WorkingHours;
   /** تخصص‌هایی که مکانیک هنگام ثبت‌نام انتخاب کرده؛ همان‌جا به خدماتش اضافه می‌شوند */
   services?: ImportServiceItem[];
 }
@@ -510,16 +512,22 @@ export interface UpsertProductInput {
 }
 
 export interface AuthRes { access_token: string; user: User }
+export type { WorkingHours, DayPlan, Interval } from './workingHours';
+import type { WorkingHours } from './workingHours';
+
 export interface User {
   id: string; phone: string; name: string; role: Role;
   workshopName?: string | null; workshopAddress?: string | null;
   workshopLat?: number | null; workshopLng?: number | null;
+  /** ساعت کاری — null means never set, which is not the same as closed */
+  workingHours?: WorkingHours | null;
   smsNotifications?: boolean;
 }
 export interface UpdateProfileInput {
   name?: string;
   workshopName?: string; workshopAddress?: string;
   workshopLat?: number; workshopLng?: number;
+  workingHours?: WorkingHours | null;
   smsNotifications?: boolean;
 }
 
@@ -568,10 +576,15 @@ export interface Workshop {
   /** چه خدماتی می‌دهد — کارت باید به «کار من را می‌کنند؟» جواب بدهد.
    *  نام «services» روی WorkshopDetail برای شکل کامل رزرو شده است. */
   serviceNames?: string[]; serviceTypes?: string[]; serviceCount?: number; onSite?: boolean;
+  /** محاسبه‌شده روی سرور به وقت تهران — کلاینت ساعت گوشی را قضاوت نمی‌کند */
+  openNow?: boolean;
+  /** آیا اصلاً ساعت کاری اعلام کرده؛ «اعلام‌نشده» با «بسته» یکی نیست */
+  hasHours?: boolean;
 }
 
 export interface WorkshopDetail extends Workshop {
   phone?: string;
+  workingHours?: WorkingHours | null;
   services: MechanicServiceOffering[];
 }
 

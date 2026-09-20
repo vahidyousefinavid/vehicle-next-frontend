@@ -8,7 +8,7 @@ import { api, Workshop } from '@/lib/api';
 import { C, alpha, Button } from '@/components/ui';
 import { fa } from '@/components/ScreenKit';
 import {
-  CompassIcon, StoreIcon, StarIcon, PinIcon, SearchIcon, HomeIcon, ChevronLeftIcon, XIcon,
+  CompassIcon, StoreIcon, StarIcon, PinIcon, SearchIcon, HomeIcon, ChevronLeftIcon, XIcon, ClockIcon
 } from '@/components/icons';
 
 /**
@@ -216,11 +216,21 @@ export default function WorkshopsPage() {
                       </span>
                     )}
 
-                    {w.onSite && (
-                      <span className="ws-onsite" style={{ color: C.green }}>
-                        <HomeIcon size={12} />در محل تو هم خدمت می‌دهد
-                      </span>
-                    )}
+                    <span className="ws-flags">
+                      {w.hasHours && (
+                        <i className="ws-open" style={{
+                          background: alpha(w.openNow ? C.statusOk : C.statusNeutral, 12),
+                          color: w.openNow ? C.statusOk : C.statusNeutral,
+                        }}>
+                          <ClockIcon size={11} />{w.openNow ? 'باز است' : 'بسته است'}
+                        </i>
+                      )}
+                      {w.onSite && (
+                        <i className="ws-onsite" style={{ color: C.green }}>
+                          <HomeIcon size={12} />در محل تو هم خدمت می‌دهد
+                        </i>
+                      )}
+                    </span>
                   </span>
                   <ChevronLeftIcon size={16} color={C.subtle} />
                 </Link>
@@ -244,6 +254,9 @@ export default function WorkshopsPage() {
         .ws-find button{border:0;cursor:pointer;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex-shrink:0}
         .ws-tools{display:flex;align-items:center;gap:8px;margin-bottom:11px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
         .ws-tools::-webkit-scrollbar{display:none}
+        .ws-flags{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .ws-open{font-style:normal;display:inline-flex;align-items:center;gap:4px;
+                 font-size:11px;font-weight:900;padding:3px 8px;border-radius:999px}
         .ws-chip{flex-shrink:0;border:0;cursor:pointer;border-radius:13px;padding:10px 13px;font:800 12.5px var(--font-sans);
                  display:inline-flex;align-items:center;gap:6px;
                  transition:background var(--dur-move,260ms) var(--ease-soft,ease),box-shadow var(--dur-move,260ms) var(--ease-soft,ease),transform var(--dur-press,120ms) var(--ease-soft,ease)}
